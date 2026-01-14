@@ -29,6 +29,8 @@ from lineupiq.data.fetchers import (
 from lineupiq.data.storage import (
     DATA_DIR,
     get_cache_path,
+    load_player_stats_cached,
+    load_schedules_cached,
     load_with_cache,
 )
 
@@ -43,4 +45,7 @@ __all__ = [
     "DATA_DIR",
     "get_cache_path",
     "load_with_cache",
+    # Convenience functions (cached loading)
+    "load_player_stats_cached",
+    "load_schedules_cached",
 ]

@@ -135,3 +135,78 @@ def load_with_cache(
     df = fetcher()
     save_parquet(df, cache_path)
     return df
+
+
+# =============================================================================
+# High-level convenience functions combining fetchers with caching
+# =============================================================================
+
+
+def load_player_stats_cached(
+    seasons: list[int],
+    max_age_days: int = 7,
+    force_refresh: bool = False,
+) -> pl.DataFrame:
+    """Load player stats with per-season caching.
+
+    Each season is cached independently, so requesting [2023, 2024] after
+    having cached 2024 will only fetch 2023.
+
+    Args:
+        seasons: List of seasons to load (e.g., [2023, 2024]).
+        max_age_days: Cache freshness threshold.
+        force_refresh: Force re-fetch from nflreadpy.
+
+    Returns:
+        Combined DataFrame for all requested seasons.
+
+    Example:
+        >>> df = load_player_stats_cached([2024])
+        >>> df.shape[0] > 0
+        True
+    """
+    from lineupiq.data.fetchers import fetch_player_stats
+
+    dfs = []
+    for season in seasons:
+        df = load_with_cache(
+            data_type="player_stats",
+            key=str(season),
+            fetcher=lambda s=season: fetch_player_stats([s]),
+            max_age_days=max_age_days,
+            force_refresh=force_refresh,
+        )
+        dfs.append(df)
+    return pl.concat(dfs) if dfs else pl.DataFrame()
+
+
+def load_schedules_cached(
+    seasons: list[int] | None = None,
+    max_age_days: int = 7,
+    force_refresh: bool = False,
+) -> pl.DataFrame:
+    """Load schedules with caching.
+
+    Args:
+        seasons: Seasons to load (None = all available).
+        max_age_days: Cache freshness threshold.
+        force_refresh: Force re-fetch.
+
+    Returns:
+        Schedules DataFrame.
+
+    Example:
+        >>> df = load_schedules_cached([2024])
+        >>> "temp" in df.columns
+        True
+    """
+    from lineupiq.data.fetchers import fetch_schedules
+
+    key = "all" if seasons is None else "_".join(map(str, sorted(seasons)))
+    return load_with_cache(
+        data_type="schedules",
+        key=key,
+        fetcher=lambda: fetch_schedules(seasons),
+        max_age_days=max_age_days,
+        force_refresh=force_refresh,
+    )
