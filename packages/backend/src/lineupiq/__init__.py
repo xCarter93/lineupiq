@@ -13,3 +13,16 @@ Core functionality:
 """
 
 __version__ = "0.1.0"
+
+
+def check_nflreadpy() -> bool:
+    """Verify nflreadpy is installed and importable.
+
+    Returns:
+        bool: True if nflreadpy is available, False otherwise.
+    """
+    try:
+        import nflreadpy
+        return True
+    except ImportError:
+        return False
