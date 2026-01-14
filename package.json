@@ -1,0 +1,13 @@
+{
+  "name": "lineupiq",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "pnpm --filter frontend dev",
+    "build": "pnpm --filter frontend build",
+    "lint": "pnpm --filter frontend lint",
+    "dev:all": "pnpm -r dev",
+    "build:all": "pnpm -r build",
+    "lint:all": "pnpm -r lint"
+  }
+}
