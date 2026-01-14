@@ -1,0 +1,56 @@
+# Node
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+*.pyo
+*.pyd
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+coverage/
+.coverage
+htmlcov/
+
+# ML/Data
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+*.onnx
+*.parquet
+data/raw/
+data/processed/
+models/
