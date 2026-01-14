@@ -1,0 +1,161 @@
+# Roadmap: LineupIQ
+
+## Overview
+
+Build a fantasy football prediction app from the ground up: establish a Python/Next.js monorepo, create a robust data pipeline from nflreadpy, engineer high-signal features, train ML models that predict individual player stats, expose predictions via API, store app state in Convex, and deliver a matchup simulation UI. Each phase builds on the previous, prioritizing model accuracy over UI polish.
+
+## Domain Expertise
+
+None
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+Decimal phases appear between their surrounding integers in numeric order.
+
+- [ ] **Phase 1: Foundation** - Monorepo structure, package setup, dev environment
+- [ ] **Phase 2: Data Pipeline** - nflreadpy integration, data fetching, raw data storage
+- [ ] **Phase 3: Data Processing** - Cleaning, transformations, player/team normalization
+- [ ] **Phase 4: Feature Engineering** - Rolling stats, opponent strength, weather features
+- [ ] **Phase 5: Model Development** - Training pipeline, model architecture, cross-validation
+- [ ] **Phase 6: Model Evaluation** - Performance metrics, feature importance, overfitting checks
+- [ ] **Phase 7: Prediction API** - Python API endpoints, inference pipeline, caching
+- [ ] **Phase 8: Convex Backend** - Schema, scoring configs, prediction storage
+- [ ] **Phase 9: Matchup UI** - Player selection, opponent selection, stat display
+- [ ] **Phase 10: Integration & Polish** - End-to-end flow, error handling, UX refinement
+
+## Phase Details
+
+### Phase 1: Foundation
+**Goal**: Establish monorepo with Python ML backend and Next.js frontend, all tooling configured
+**Depends on**: Nothing (first phase)
+**Research**: Unlikely (standard monorepo setup)
+**Plans**: TBD
+
+Plans:
+- [ ] 01-01: Monorepo structure with pnpm workspaces
+- [ ] 01-02: Python backend setup with uv
+- [ ] 01-03: Next.js frontend with Shadcn preset
+
+### Phase 2: Data Pipeline
+**Goal**: Fetch and store historical NFL data from nflreadpy (1999-2025)
+**Depends on**: Phase 1
+**Research**: Likely (nflreadpy API patterns)
+**Research topics**: nflreadpy function signatures, data schemas, best practices for large dataset handling
+**Plans**: TBD
+
+Plans:
+- [ ] 02-01: nflreadpy integration and data fetching scripts
+- [ ] 02-02: Raw data storage structure and caching
+
+### Phase 3: Data Processing
+**Goal**: Clean, transform, and normalize raw NFL data for ML consumption
+**Depends on**: Phase 2
+**Research**: Unlikely (standard pandas/data work)
+**Plans**: TBD
+
+Plans:
+- [ ] 03-01: Data cleaning and validation
+- [ ] 03-02: Player/team ID normalization
+- [ ] 03-03: Weekly stat aggregations
+
+### Phase 4: Feature Engineering
+**Goal**: Create ML-ready features: rolling stats, opponent strength, weather factors
+**Depends on**: Phase 3
+**Research**: Unlikely (domain logic, internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 04-01: Rolling window stats (3-week lookback)
+- [ ] 04-02: Opponent defensive strength metrics
+- [ ] 04-03: Weather and venue features
+
+### Phase 5: Model Development
+**Goal**: Build and train ML models for stat prediction (passing/rushing/receiving)
+**Depends on**: Phase 4
+**Research**: Likely (ML architecture decisions)
+**Research topics**: XGBoost vs Random Forest for stat prediction, hyperparameter tuning strategies, handling position-specific models
+**Plans**: TBD
+
+Plans:
+- [ ] 05-01: Training pipeline infrastructure
+- [ ] 05-02: QB passing stat models
+- [ ] 05-03: RB rushing stat models
+- [ ] 05-04: WR/TE receiving stat models
+
+### Phase 6: Model Evaluation
+**Goal**: Validate model accuracy, analyze feature importance, prevent overfitting
+**Depends on**: Phase 5
+**Research**: Unlikely (standard ML metrics)
+**Plans**: TBD
+
+Plans:
+- [ ] 06-01: Cross-validation and metrics
+- [ ] 06-02: Feature importance analysis
+- [ ] 06-03: Overfitting detection and correction
+
+### Phase 7: Prediction API
+**Goal**: Python API endpoints for inference with prediction caching
+**Depends on**: Phase 6
+**Research**: Unlikely (standard Python API patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 07-01: FastAPI setup and model loading
+- [ ] 07-02: Prediction endpoints by position
+- [ ] 07-03: Response caching layer
+
+### Phase 8: Convex Backend
+**Goal**: Convex schema for scoring configs, cached predictions, app state
+**Depends on**: Phase 7
+**Research**: Likely (Convex schema patterns)
+**Research topics**: Convex schema design, mutation patterns, query optimization for prediction data
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01: Convex schema and setup
+- [ ] 08-02: Scoring configuration CRUD
+- [ ] 08-03: Prediction storage and retrieval
+
+### Phase 9: Matchup UI
+**Goal**: Frontend for selecting players, opponents, and viewing projected stats
+**Depends on**: Phase 8
+**Research**: Unlikely (Next.js + Shadcn patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01: Player selection component
+- [ ] 09-02: Opponent/matchup selection
+- [ ] 09-03: Stat projection display
+
+### Phase 10: Integration & Polish
+**Goal**: End-to-end flow working, error handling, UX polish
+**Depends on**: Phase 9
+**Research**: Unlikely (internal patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 10-01: End-to-end integration testing
+- [ ] 10-02: Error handling and edge cases
+- [ ] 10-03: UX refinements
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Foundation | 0/3 | Not started | - |
+| 2. Data Pipeline | 0/2 | Not started | - |
+| 3. Data Processing | 0/3 | Not started | - |
+| 4. Feature Engineering | 0/3 | Not started | - |
+| 5. Model Development | 0/4 | Not started | - |
+| 6. Model Evaluation | 0/3 | Not started | - |
+| 7. Prediction API | 0/3 | Not started | - |
+| 8. Convex Backend | 0/3 | Not started | - |
+| 9. Matchup UI | 0/3 | Not started | - |
+| 10. Integration & Polish | 0/3 | Not started | - |
