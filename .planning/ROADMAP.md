@@ -48,7 +48,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 02-01: nflreadpy integration and data fetching scripts
+- [x] 02-01: nflreadpy integration and data fetching scripts
 - [ ] 02-02: Raw data storage structure and caching
 
 ### Phase 3: Data Processing
@@ -150,7 +150,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-14 |
-| 2. Data Pipeline | 0/2 | Not started | - |
+| 2. Data Pipeline | 1/2 | In progress | - |
 | 3. Data Processing | 0/3 | Not started | - |
 | 4. Feature Engineering | 0/3 | Not started | - |
 | 5. Model Development | 0/4 | Not started | - |
