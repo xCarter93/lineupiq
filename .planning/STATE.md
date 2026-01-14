@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Phase: 2 of 10 (Data Pipeline)
-Plan: 1 of 2 in current phase
-Status: In progress
-Last activity: 2026-01-14 — Completed 02-01-PLAN.md
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-01-14 — Completed 02-02-PLAN.md
 
-Progress: ████████████████░░░░░░░░░░░░░░ 13%
+Progress: █████████████████████░░░░░░░░░ 17%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 4.6 min
-- Total execution time: 0.31 hours
+- Total plans completed: 5
+- Average duration: 4.1 min
+- Total execution time: 0.34 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3/3 | 15.5 min | 5.2 min |
-| 02-data-pipeline | 1/2 | 3 min | 3 min |
+| 02-data-pipeline | 2/2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (1 min), 01-02 (2.5 min), 01-03 (12 min), 02-01 (3 min)
-- Trend: Data pipeline in progress
+- Last 5 plans: 01-02 (2.5 min), 01-03 (12 min), 02-01 (3 min), 02-02 (2 min)
+- Trend: Data pipeline complete, ready for Phase 3
 
 ## Accumulated Context
 
@@ -54,6 +54,9 @@ Recent decisions affecting current work:
 | 01-03 | Zinc base + emerald accent | Per PROJECT.md theme requirements |
 | 02-01 | Return Polars DataFrames natively | nflreadpy returns Polars, avoid conversion overhead |
 | 02-01 | SeasonList type alias | Consistent typing for seasons parameter across functions |
+| 02-02 | Parquet format for storage | Efficient columnar format, preserves types, fast reads |
+| 02-02 | Per-season caching strategy | Independent cache per season enables incremental updates |
+| 02-02 | 7-day cache freshness default | Balance fresh data vs network calls |
 
 ### Pending Todos
 
@@ -65,6 +68,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-14T21:23:13Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-01-14T21:27:50Z
+Stopped at: Completed 02-02-PLAN.md (Phase 2 complete)
 Resume file: None
