@@ -33,3 +33,7 @@ htmlcov/
 *.pkl
 *.joblib
 models/
+
+# Data files (large, regeneratable)
+data/raw/**/*.parquet
+!data/raw/*/.gitkeep
