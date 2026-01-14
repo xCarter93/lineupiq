@@ -36,7 +36,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: TBD
 
 Plans:
-- [ ] 01-01: Monorepo structure with pnpm workspaces
+- [x] 01-01: Monorepo structure with pnpm workspaces
 - [ ] 01-02: Python backend setup with uv
 - [ ] 01-03: Next.js frontend with Shadcn preset
 
@@ -149,7 +149,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 1/3 | In progress | - |
 | 2. Data Pipeline | 0/2 | Not started | - |
 | 3. Data Processing | 0/3 | Not started | - |
 | 4. Feature Engineering | 0/3 | Not started | - |
