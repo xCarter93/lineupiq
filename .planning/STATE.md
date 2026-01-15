@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 13 of 17 (K/DEF Models + Training Improvements)
-Plan: 5 of 8 in current phase
+Plan: 6 of 8 in current phase
 Status: In progress
-Last activity: 2026-01-15 — Completed 13-05-PLAN.md (Kicker Models + API)
+Last activity: 2026-01-15 — Completed 13-06-PLAN.md (Defense Models + API)
 
-Progress: █████░░░░░ 63% (Phase 13 in progress)
+Progress: █████████░ 75% (Phase 13 in progress)
 
 ## Performance Metrics
 
@@ -69,6 +69,8 @@ Progress: █████░░░░░ 63% (Phase 13 in progress)
 | 13-02 | CV (coeff of variation) for normalized volatility | Identifies boom/bust players across stat scales |
 | 13-05 | LightGBM default for kicker models | 7x speedup from Phase 13-01 |
 | 13-05 | 30 Optuna trials per kicker target | Balance training time vs optimization |
+| 13-06 | Defense uses def_ prefix columns | nflreadpy team_stats column naming convention |
+| 13-06 | 5 defense target models | Covers main fantasy DST scoring categories |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -88,6 +90,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 13-05-PLAN.md (Kicker Models + API)
+Stopped at: Completed 13-06-PLAN.md (Defense Models + API)
 Resume file: None
-Next action: Continue Wave 2 plans (13-06, 13-07) or Wave 3 (13-08)
+Next action: Continue Wave 2 plan (13-07) or Wave 3 (13-08)
