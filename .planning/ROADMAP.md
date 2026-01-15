@@ -7,6 +7,7 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 ## Milestones
 
 - ✅ **[v1.0 MVP](milestones/v1.0-ROADMAP.md)** — Phases 1-10 (shipped 2026-01-15)
+- 🚧 **v1.1 Model Confidence** — Phases 11-17 (in progress)
 
 ## Completed Milestones
 
@@ -28,19 +29,89 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 
 </details>
 
+### 🚧 v1.1 Model Confidence (In Progress)
+
+**Milestone Goal:** Research-first ML improvements, expand to all positions (K/DEF), and build user trust through data-rich visualizations.
+
+#### Phase 11: ML Pipeline Audit & Research
+
+**Goal**: Review current ML practices, research alternatives, document recommendations
+**Depends on**: v1.0 MVP complete
+**Research**: Likely (explicit research phase)
+**Research topics**: Data cleaning best practices, null handling strategies, feature completeness audit, model architecture options (XGBoost vs ensemble vs neural nets), sports analytics papers
+
+Plans:
+- [ ] 11-01: TBD (run /gsd:plan-phase 11 to break down)
+
+#### Phase 12: ML Pipeline Improvements
+
+**Goal**: Implement research findings (data cleaning, features, model architecture)
+**Depends on**: Phase 11
+**Research**: Unlikely (implementing findings from research phase)
+
+Plans:
+- [ ] 12-01: TBD
+
+#### Phase 13: K/DEF Models
+
+**Goal**: Add kicker and defense position predictions
+**Depends on**: Phase 12
+**Research**: Likely (new model architecture decisions)
+**Research topics**: Kicker modeling (team-based vs individual), defense stat predictions, fantasy scoring for special teams
+
+Plans:
+- [ ] 13-01: TBD
+
+#### Phase 14: Complete Fantasy Stats
+
+**Goal**: Add missing stats to scoring calculations and UI display
+**Depends on**: Phase 13
+**Research**: Unlikely (extending existing patterns)
+
+Plans:
+- [ ] 14-01: TBD
+
+#### Phase 15: Full Roster + Historical Data
+
+**Goal**: Import current 2025-26 roster, add 3-year historical display
+**Depends on**: Phase 14
+**Research**: Unlikely (nflreadpy already in codebase)
+
+Plans:
+- [ ] 15-01: TBD
+
+#### Phase 16: UI Data Visualization
+
+**Goal**: Recharts integration for stats and history visualization
+**Depends on**: Phase 15
+**Research**: Likely (new library integration)
+**Research topics**: Recharts API, chart types for sports data, responsive charting patterns
+
+Plans:
+- [ ] 16-01: TBD
+
+#### Phase 17: Model Explainability UI
+
+**Goal**: Feature contribution bars and prediction context
+**Depends on**: Phase 16
+**Research**: Unlikely (implementing known pattern)
+
+Plans:
+- [ ] 17-01: TBD
+
 ## Progress
 
-| Milestone | Phases | Plans | Status | Shipped |
-|-----------|--------|-------|--------|---------|
-| v1.0 MVP | 1-10 | 30/30 | ✅ Complete | 2026-01-15 |
+| Phase | Milestone | Plans | Status | Completed |
+|-------|-----------|-------|--------|-----------|
+| 1-10 | v1.0 MVP | 30/30 | ✅ Complete | 2026-01-15 |
+| 11. ML Pipeline Audit | v1.1 | 0/? | Not started | - |
+| 12. ML Pipeline Improvements | v1.1 | 0/? | Not started | - |
+| 13. K/DEF Models | v1.1 | 0/? | Not started | - |
+| 14. Complete Fantasy Stats | v1.1 | 0/? | Not started | - |
+| 15. Full Roster + Historical | v1.1 | 0/? | Not started | - |
+| 16. UI Data Visualization | v1.1 | 0/? | Not started | - |
+| 17. Model Explainability UI | v1.1 | 0/? | Not started | - |
 
 ---
 
-**Project Status:** v1.0 MVP Complete
-
-Future versions could add:
-- K/DEF predictions
-- User authentication
-- Mobile-responsive design
-- Monte Carlo simulations
-- Multiple scoring formats
+**Project Status:** v1.1 Model Confidence in progress
