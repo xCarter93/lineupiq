@@ -274,3 +274,143 @@ def clean_player_stats(df: pl.DataFrame) -> pl.DataFrame:
 
     logger.info(f"Cleaning pipeline complete: {df.shape}")
     return df
+
+
+# =============================================================================
+# Schedule cleaning functions
+# =============================================================================
+
+# ML-relevant schedule columns
+SCHEDULE_ML_COLUMNS = [
+    "game_id",
+    "season",
+    "week",
+    "game_type",
+    "gameday",
+    "home_team",
+    "away_team",
+    "home_score",
+    "away_score",
+    "temp",
+    "wind",
+    "roof",
+    "surface",
+    "stadium_id",
+]
+
+# Default values for dome games (indoor)
+DEFAULT_TEMP = 65
+DEFAULT_WIND = 5
+
+# Roof values that indicate a dome
+DOME_ROOF_VALUES = frozenset({"dome", "closed"})
+
+
+def clean_schedules(df: pl.DataFrame) -> pl.DataFrame:
+    """Clean schedule data for ML consumption.
+
+    Processing steps:
+    - Remove rows where game_id is null
+    - Remove rows where season or week is null
+    - Select ML-relevant columns
+    - Fill null temp/wind with defaults for dome games
+    - Normalize roof to boolean is_dome
+
+    Args:
+        df: Raw schedules DataFrame from nflreadpy.
+
+    Returns:
+        Cleaned DataFrame with is_dome boolean and filled weather data.
+
+    Example:
+        >>> df = pl.DataFrame({
+        ...     "game_id": ["2024_01_SEA_DEN", None],
+        ...     "season": [2024, 2024],
+        ...     "week": [1, 2],
+        ...     "roof": ["dome", "outdoors"],
+        ...     "temp": [None, 65.0],
+        ...     "wind": [None, 10.0],
+        ...     "game_type": ["REG", "REG"],
+        ...     "gameday": ["2024-09-08", "2024-09-15"],
+        ...     "home_team": ["SEA", "DEN"],
+        ...     "away_team": ["DEN", "SEA"],
+        ...     "home_score": [21, 14],
+        ...     "away_score": [14, 21],
+        ...     "surface": ["fieldturf", "grass"],
+        ...     "stadium_id": ["SEA00", "DEN00"]
+        ... })
+        >>> result = clean_schedules(df)
+        >>> len(result)
+        1
+        >>> result["is_dome"][0]
+        True
+    """
+    initial_count = len(df)
+    logger.info(f"Starting schedule cleaning ({initial_count} rows)")
+
+    # Remove null game_id
+    df = df.filter(pl.col("game_id").is_not_null())
+    after_game_id = len(df)
+    removed_game_id = initial_count - after_game_id
+    if removed_game_id > 0:
+        logger.info(f"Removed {removed_game_id} rows with null game_id")
+
+    # Remove null season
+    df = df.filter(pl.col("season").is_not_null())
+    after_season = len(df)
+    removed_season = after_game_id - after_season
+    if removed_season > 0:
+        logger.info(f"Removed {removed_season} rows with null season")
+
+    # Remove null week
+    df = df.filter(pl.col("week").is_not_null())
+    after_week = len(df)
+    removed_week = after_season - after_week
+    if removed_week > 0:
+        logger.info(f"Removed {removed_week} rows with null week")
+
+    # Select ML-relevant columns (only those that exist)
+    existing_columns = [col for col in SCHEDULE_ML_COLUMNS if col in df.columns]
+    df = df.select(existing_columns)
+    logger.debug(f"Selected {len(existing_columns)} schedule columns")
+
+    # Create is_dome boolean from roof column
+    if "roof" in df.columns:
+        df = df.with_columns(
+            pl.col("roof")
+            .str.to_lowercase()
+            .is_in(DOME_ROOF_VALUES)
+            .alias("is_dome")
+        )
+    else:
+        # Default to False if no roof column
+        df = df.with_columns(pl.lit(False).alias("is_dome"))
+
+    # Fill null temp/wind with defaults for dome games
+    if "temp" in df.columns:
+        df = df.with_columns(
+            pl.when(pl.col("temp").is_null() & pl.col("is_dome"))
+            .then(DEFAULT_TEMP)
+            .otherwise(pl.col("temp"))
+            .alias("temp")
+        )
+
+    if "wind" in df.columns:
+        df = df.with_columns(
+            pl.when(pl.col("wind").is_null() & pl.col("is_dome"))
+            .then(DEFAULT_WIND)
+            .otherwise(pl.col("wind"))
+            .alias("wind")
+        )
+
+    # Drop the original roof column since we now have is_dome
+    if "roof" in df.columns:
+        df = df.drop("roof")
+
+    total_removed = initial_count - len(df)
+    logger.info(
+        f"Schedule cleaning complete: {initial_count} -> {len(df)} rows "
+        f"({total_removed} removed)"
+    )
+
+    return df
