@@ -5,7 +5,7 @@ This module provides the training infrastructure for XGBoost models with:
 - Optuna hyperparameter tuning
 - TimeSeriesSplit validation (avoids temporal data leakage)
 - Model persistence with joblib
-- Position-specific training modules (QB, RB, WR, TE, K)
+- Position-specific training modules (QB, RB, WR, TE, K, DEF)
 - Model evaluation with standard regression metrics
 - Model diagnostics and overfitting detection
 - Feature importance analysis with SHAP and XGBoost native importance
@@ -26,6 +26,7 @@ Submodules:
 - rb: RB-specific model training
 - receiver: WR and TE model training
 - kicker: K-specific model training
+- defense: DEF team defense model training
 
 Example:
     >>> from lineupiq.models import train_model, tune_hyperparameters
@@ -92,6 +93,10 @@ from lineupiq.models.kicker import (
     KICKER_TARGETS,
     train_kicker_models,
 )
+from lineupiq.models.defense import (
+    DEF_TARGETS,
+    train_defense_models,
+)
 from lineupiq.models.training import (
     create_study,
     get_xgb_params,
@@ -156,6 +161,9 @@ __all__ = [
     # Kicker Models
     "KICKER_TARGETS",
     "train_kicker_models",
+    # Defense Models
+    "DEF_TARGETS",
+    "train_defense_models",
     # Uncertainty / Prediction Intervals
     "calibrate_intervals",
     "predict_with_intervals",
