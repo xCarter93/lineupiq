@@ -93,8 +93,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 06-01: Cross-validation and metrics
-- [ ] 06-02: Feature importance analysis
+- [x] 06-01: Cross-validation and metrics
+- [x] 06-02: Feature importance analysis
 - [ ] 06-03: Overfitting detection and correction
 
 ### Phase 7: Prediction API
@@ -154,7 +154,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Data Processing | 3/3 | Complete | 2026-01-15 |
 | 4. Feature Engineering | 3/3 | Complete | 2026-01-15 |
 | 5. Model Development | 4/4 | Complete | 2026-01-15 |
-| 6. Model Evaluation | 0/3 | Not started | - |
+| 6. Model Evaluation | 2/3 | In progress | - |
 | 7. Prediction API | 0/3 | Not started | - |
 | 8. Convex Backend | 0/3 | Not started | - |
 | 9. Matchup UI | 0/3 | Not started | - |
