@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Accurate stat-level predictions from well-engineered features and properly trained models.
-**Current focus:** Phase 2 — Data Pipeline
+**Current focus:** Phase 3 — Data Processing
 
 ## Current Position
 
-Phase: 2 of 10 (Data Pipeline)
-Plan: 2 of 2 in current phase
-Status: Phase complete
-Last activity: 2026-01-14 — Completed 02-02-PLAN.md
+Phase: 3 of 10 (Data Processing)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-15 — Completed 03-01-PLAN.md
 
-Progress: █████████████████████░░░░░░░░░ 17%
+Progress: ██████████████████████░░░░░░░░ 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 4.1 min
-- Total execution time: 0.34 hours
+- Total plans completed: 6
+- Average duration: 3.9 min
+- Total execution time: 0.39 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: █████████████████████░░�
 |-------|-------|-------|----------|
 | 01-foundation | 3/3 | 15.5 min | 5.2 min |
 | 02-data-pipeline | 2/2 | 5 min | 2.5 min |
+| 03-data-processing | 1/3 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (2.5 min), 01-03 (12 min), 02-01 (3 min), 02-02 (2 min)
-- Trend: Data pipeline complete, ready for Phase 3
+- Last 5 plans: 01-03 (12 min), 02-01 (3 min), 02-02 (2 min), 03-01 (3 min)
+- Trend: Data cleaning complete, normalization next
 
 ## Accumulated Context
 
@@ -57,6 +58,9 @@ Recent decisions affecting current work:
 | 02-02 | Parquet format for storage | Efficient columnar format, preserves types, fast reads |
 | 02-02 | Per-season caching strategy | Independent cache per season enables incremental updates |
 | 02-02 | 7-day cache freshness default | Balance fresh data vs network calls |
+| 03-01 | Cap yards at 600, TDs at 8 | Conservative outlier boundaries based on NFL records |
+| 03-01 | is_dome boolean from roof column | Simplified weather feature logic |
+| 03-01 | Default dome temp/wind to 65/5 | Reasonable indoor conditions when data missing |
 
 ### Pending Todos
 
@@ -68,6 +72,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-14T21:27:50Z
-Stopped at: Completed 02-02-PLAN.md (Phase 2 complete)
+Last session: 2026-01-15T00:06:42Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
