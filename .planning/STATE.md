@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 11 of 17 (ML Pipeline Audit & Research)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-01-15 — Completed 11-01-PLAN.md
+Phase: 12 of 17 (ML Pipeline Improvements)
+Plan: 1 of 5 in current phase
+Status: In progress
+Last activity: 2026-01-15 — Completed 12-03-PLAN.md
 
-Progress: █░░░░░░░░░ 14%
+Progress: ██░░░░░░░░ 17%
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: █░░░░░░░░░ 14%
 | 11 | Prediction intervals highest priority | MAPIE CQR provides guarantees with ~100 LOC |
 | 11 | LightGBM before ensembles | 7x speedup enables experimentation first |
 | 11 | Defer KNN imputation | A/B test after baseline improvements |
+| 12 | Separate modelMetrics/overallMetrics tables | Efficient queries for different access patterns |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -68,5 +69,5 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 11-01-PLAN.md (Phase 11 complete)
+Stopped at: Completed 12-03-PLAN.md (Phase 12 in progress)
 Resume file: None
