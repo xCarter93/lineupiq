@@ -65,6 +65,8 @@ Progress: █████░░░░░ 50% (Phase 13 in progress)
 | 13-04 | ESPN Standard as default scoring | Industry standard, widely recognized |
 | 13-04 | Expected value for kicker scoring | Accounts for success probability in predictions |
 | 13-04 | 75% success rate for 50+ yard FGs | NFL average lower for long-distance attempts |
+| 13-02 | Shift(1) for rolling feature leakage prevention | Only prior games used, never current game |
+| 13-02 | CV (coeff of variation) for normalized volatility | Identifies boom/bust players across stat scales |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -84,6 +86,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 13-01-PLAN.md (LightGBM Migration)
+Stopped at: Completed 13-02-PLAN.md (Team Strength & Volatility Features)
 Resume file: None
-Next action: Continue Wave 1 plans (13-02, 13-03, 13-04) or Wave 2 plans (13-05, 13-06, 13-07)
+Next action: Continue Wave 2 plans (13-05, 13-06, 13-07) or Wave 3 (13-08)
