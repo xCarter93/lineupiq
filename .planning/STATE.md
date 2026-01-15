@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 13 of 17 (K/DEF Models + Training Improvements)
-Plan: 7 of 8 in current phase
-Status: In progress
-Last activity: 2026-01-15 — Completed 13-07-PLAN.md (Retrain Skill Position Models)
+Plan: 8 of 8 in current phase
+Status: Phase complete
+Last activity: 2026-01-15 — Completed 13-08-PLAN.md (Backtest All Models)
 
-Progress: █████████░ 88% (Phase 13 in progress)
+Progress: █████████░ 94% (Phase 13 complete, ready for Phase 14)
 
 ## Performance Metrics
 
@@ -73,6 +73,9 @@ Progress: █████████░ 88% (Phase 13 in progress)
 | 13-06 | 5 defense target models | Covers main fantasy DST scoring categories |
 | 13-07 | LightGBM default for all skill positions | Consistent with 13-01, enables faster experimentation |
 | 13-07 | train_receiver_models() convenience function | Easier to train WR + TE together |
+| 13-08 | 2024 as holdout season for backtesting | 2025 data may be incomplete |
+| 13-08 | K/DEF lower accuracy expected | High-variance events limit predictability |
+| 13-08 | Convex metrics storage deferred | Optional, documented in BACKTEST_RESULTS.md |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -92,6 +95,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 13-07-PLAN.md (Retrain Skill Position Models)
+Stopped at: Completed 13-08-PLAN.md (Backtest All Models) - Phase 13 complete
 Resume file: None
-Next action: Execute Wave 3 plan (13-08 Backtest)
+Next action: Plan Phase 14 (Complete Fantasy Stats)
