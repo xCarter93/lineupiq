@@ -213,7 +213,7 @@ def tune_hyperparameters(
             params = get_xgb_params(trial)
         _, scores = train_model(X, y, params=params, n_splits=n_splits, model_type=model_type)
         # Return mean negative RMSE (minimize this)
-        return -scores.mean()
+        return float(-scores.mean())
 
     # Create study and optimize
     study = create_study(direction="minimize")
