@@ -127,24 +127,28 @@ export default function MatchupPage() {
             {/* Success State - Two column layout */}
             {(prediction || isLoading) && !error && (
               <div className="space-y-6">
-                {/* Fantasy Points Card - Hero */}
-                <FantasyPointsCard
-                  points={fantasyPoints}
-                  breakdown={pointsBreakdown}
-                  scoringConfigName={scoringConfigName}
-                  isLoading={isLoading}
-                />
+                {/* Fantasy Points Card - Hero (appears first) */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <FantasyPointsCard
+                    points={fantasyPoints}
+                    breakdown={pointsBreakdown}
+                    scoringConfigName={scoringConfigName}
+                    isLoading={isLoading}
+                  />
+                </div>
 
-                {/* Stat Projection */}
-                <StatProjection
-                  position={
-                    matchupData.position as "QB" | "RB" | "WR" | "TE"
-                  }
-                  prediction={prediction!}
-                  playerName={matchupData.playerName}
-                  opponentTeam={matchupData.opponentTeam}
-                  isLoading={isLoading}
-                />
+                {/* Stat Projection (appears 100ms later) */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
+                  <StatProjection
+                    position={
+                      matchupData.position as "QB" | "RB" | "WR" | "TE"
+                    }
+                    prediction={prediction!}
+                    playerName={matchupData.playerName}
+                    opponentTeam={matchupData.opponentTeam}
+                    isLoading={isLoading}
+                  />
+                </div>
               </div>
             )}
           </div>
