@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 export interface Player {
   _id: string;
@@ -88,7 +89,10 @@ export function PlayerSelect({
 
   if (isLoading) {
     return (
-      <div className="h-11 w-full animate-pulse rounded-lg bg-muted/50" />
+      <div className="h-11 w-full flex items-center justify-center rounded-lg border border-border/50 bg-white">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Loading players...</span>
+      </div>
     );
   }
 
