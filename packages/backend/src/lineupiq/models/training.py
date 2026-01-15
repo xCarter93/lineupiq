@@ -123,8 +123,9 @@ def train_model(
     y: NDArray[np.floating[Any]],
     params: dict[str, Any] | None = None,
     n_splits: int = 5,
-) -> tuple[XGBRegressor, NDArray[np.floating[Any]]]:
-    """Train XGBRegressor with TimeSeriesSplit cross-validation.
+    model_type: ModelType = "lightgbm",
+) -> tuple[XGBRegressor | LGBMRegressor, NDArray[np.floating[Any]]]:
+    """Train model with TimeSeriesSplit cross-validation.
 
     Uses TimeSeriesSplit to maintain temporal integrity - training data always
     comes before validation data, preventing future data leakage.
@@ -132,8 +133,9 @@ def train_model(
     Args:
         X: Feature matrix of shape (n_samples, n_features).
         y: Target array of shape (n_samples,).
-        params: XGBoost parameters. If None, uses defaults.
+        params: Model parameters. If None, uses defaults.
         n_splits: Number of CV splits (default: 5).
+        model_type: "xgboost" or "lightgbm" (default: "lightgbm").
 
     Returns:
         Tuple of (trained model, array of CV scores).
@@ -149,9 +151,13 @@ def train_model(
     if params is None:
         params = {}
 
-    # Add random_state for reproducibility
-    model_params = {**params, "random_state": 42}
-    model = XGBRegressor(**model_params)
+    # Create model based on type
+    if model_type == "lightgbm":
+        model_params = {**params, "random_state": 42, "verbosity": -1}
+        model: XGBRegressor | LGBMRegressor = LGBMRegressor(**model_params)
+    else:
+        model_params = {**params, "random_state": 42}
+        model = XGBRegressor(**model_params)
 
     # TimeSeriesSplit respects temporal ordering - no shuffle
     tscv = TimeSeriesSplit(n_splits=n_splits)
@@ -165,7 +171,9 @@ def train_model(
     # Fit on full data after CV for final model
     model.fit(X, y)
 
-    logger.info(f"Trained model with mean CV score: {scores.mean():.4f} (+/- {scores.std():.4f})")
+    logger.info(
+        f"Trained {model_type} model with mean CV score: {scores.mean():.4f} (+/- {scores.std():.4f})"
+    )
 
     return model, scores
 
