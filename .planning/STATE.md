@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 13 of 17 (K/DEF Models + Training Improvements)
-Plan: 4 of 8 in current phase
+Plan: 5 of 8 in current phase
 Status: In progress
-Last activity: 2026-01-15 — Completed 13-04-PLAN.md (Complete Fantasy Scoring Config)
+Last activity: 2026-01-15 — Completed 13-05-PLAN.md (Kicker Models + API)
 
-Progress: █████░░░░░ 50% (Phase 13 in progress)
+Progress: █████░░░░░ 63% (Phase 13 in progress)
 
 ## Performance Metrics
 
@@ -67,6 +67,8 @@ Progress: █████░░░░░ 50% (Phase 13 in progress)
 | 13-04 | 75% success rate for 50+ yard FGs | NFL average lower for long-distance attempts |
 | 13-02 | Shift(1) for rolling feature leakage prevention | Only prior games used, never current game |
 | 13-02 | CV (coeff of variation) for normalized volatility | Identifies boom/bust players across stat scales |
+| 13-05 | LightGBM default for kicker models | 7x speedup from Phase 13-01 |
+| 13-05 | 30 Optuna trials per kicker target | Balance training time vs optimization |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -86,6 +88,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 13-02-PLAN.md (Team Strength & Volatility Features)
+Stopped at: Completed 13-05-PLAN.md (Kicker Models + API)
 Resume file: None
-Next action: Continue Wave 2 plans (13-05, 13-06, 13-07) or Wave 3 (13-08)
+Next action: Continue Wave 2 plans (13-06, 13-07) or Wave 3 (13-08)
