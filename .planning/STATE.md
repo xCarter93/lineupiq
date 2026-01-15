@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Phase: 3 of 10 (Data Processing)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-15 — Completed 03-01-PLAN.md
+Last activity: 2026-01-15 — Completed 03-02-PLAN.md
 
-Progress: ██████████████████████░░░░░░░░ 20%
+Progress: ███████████████████████░░░░░░░ 23%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 3.9 min
-- Total execution time: 0.39 hours
+- Total plans completed: 7
+- Average duration: 3.8 min
+- Total execution time: 0.44 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: ██████████████████████░�
 |-------|-------|-------|----------|
 | 01-foundation | 3/3 | 15.5 min | 5.2 min |
 | 02-data-pipeline | 2/2 | 5 min | 2.5 min |
-| 03-data-processing | 1/3 | 3 min | 3 min |
+| 03-data-processing | 2/3 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (12 min), 02-01 (3 min), 02-02 (2 min), 03-01 (3 min)
-- Trend: Data cleaning complete, normalization next
+- Last 5 plans: 02-01 (3 min), 02-02 (2 min), 03-01 (3 min), 03-02 (3 min)
+- Trend: Normalization complete, aggregations next
 
 ## Accumulated Context
 
@@ -61,6 +61,9 @@ Recent decisions affecting current work:
 | 03-01 | Cap yards at 600, TDs at 8 | Conservative outlier boundaries based on NFL records |
 | 03-01 | is_dome boolean from roof column | Simplified weather feature logic |
 | 03-01 | Default dome temp/wind to 65/5 | Reasonable indoor conditions when data missing |
+| 03-02 | Map historical teams to current | OAK->LV, STL->LA, SD->LAC, PHO->ARI |
+| 03-02 | Group FB with RB | Fullbacks grouped with running backs for fantasy |
+| 03-02 | Create lowercase player_key | Enables case-insensitive player matching |
 
 ### Pending Todos
 
@@ -72,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T00:06:42Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-01-15T00:11:51Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

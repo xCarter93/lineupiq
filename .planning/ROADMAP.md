@@ -59,7 +59,7 @@ Plans:
 
 Plans:
 - [x] 03-01: Data cleaning and validation
-- [ ] 03-02: Player/team ID normalization
+- [x] 03-02: Player/team ID normalization
 - [ ] 03-03: Weekly stat aggregations
 
 ### Phase 4: Feature Engineering
@@ -151,7 +151,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-14 |
 | 2. Data Pipeline | 2/2 | Complete | 2026-01-14 |
-| 3. Data Processing | 1/3 | In progress | - |
+| 3. Data Processing | 2/3 | In progress | - |
 | 4. Feature Engineering | 0/3 | Not started | - |
 | 5. Model Development | 0/4 | Not started | - |
 | 6. Model Evaluation | 0/3 | Not started | - |
