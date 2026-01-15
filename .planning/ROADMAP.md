@@ -56,15 +56,21 @@ Plans:
 - [x] 12-04: Validation API endpoints — completed 2026-01-15
 - [x] 12-05: Model Confidence UI — completed 2026-01-15
 
-#### Phase 13: K/DEF Models
+#### Phase 13: K/DEF Models + Training Improvements
 
-**Goal**: Add kicker and defense position predictions
+**Goal**: Add kicker/defense positions, implement Phase 11 audit improvements, complete fantasy scoring
 **Depends on**: Phase 12
-**Research**: Likely (new model architecture decisions)
-**Research topics**: Kicker modeling (team-based vs individual), defense stat predictions, fantasy scoring for special teams
+**Research**: No (data exploration complete)
 
 Plans:
-- [ ] 13-01: TBD
+- [ ] 13-01: LightGBM Migration (wave 1)
+- [ ] 13-02: Team Strength & Volatility Features (wave 1)
+- [ ] 13-03: K/DEF Data Pipeline (wave 1)
+- [ ] 13-04: Complete Fantasy Scoring Config (wave 1)
+- [ ] 13-05: Kicker Models + API (wave 2)
+- [ ] 13-06: Defense Models + API (wave 2)
+- [ ] 13-07: Retrain Skill Position Models (wave 2)
+- [ ] 13-08: Backtest All Models (wave 3)
 
 #### Phase 14: Complete Fantasy Stats
 
@@ -110,7 +116,7 @@ Plans:
 | 1-10 | v1.0 MVP | 30/30 | ✅ Complete | 2026-01-15 |
 | 11. ML Pipeline Audit | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
 | 12. ML Pipeline Improvements | v1.1 | 5/5 | ✅ Complete | 2026-01-15 |
-| 13. K/DEF Models | v1.1 | 0/? | Not started | - |
+| 13. K/DEF + Training | v1.1 | 0/8 | 📋 Planned | - |
 | 14. Complete Fantasy Stats | v1.1 | 0/? | Not started | - |
 | 15. Full Roster + Historical | v1.1 | 0/? | Not started | - |
 | 16. UI Data Visualization | v1.1 | 0/? | Not started | - |

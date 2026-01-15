@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 12 of 17 (ML Pipeline Improvements)
-Plan: 5 of 5 in current phase
-Status: Complete
-Last activity: 2026-01-15 — Completed 12-05-PLAN.md
+Phase: 13 of 17 (K/DEF Models + Training Improvements)
+Plan: 0 of 8 in current phase
+Status: Planned, ready to execute
+Last activity: 2026-01-15 — Created 8 plans for Phase 13
 
-Progress: █████████░ 100% (Phase 12 complete)
+Progress: ░░░░░░░░░░ 0% (Phase 13 planned)
 
 ## Performance Metrics
 
@@ -56,6 +56,10 @@ Progress: █████████░ 100% (Phase 12 complete)
 | 12 | Three-tier confidence (High/Med/Low) | Simple user-facing metric based on R2 + accuracy |
 | 12 | Convex-first with API fallback | Hook checks Convex cache first, fetches from API if null |
 | 12 | ModelConfidence in page.tsx not form | MatchupForm is input-only, results render in page |
+| 13 | LightGBM as default, keep XGBoost option | 7x speed + flexibility for comparison |
+| 13 | Team-level defense (not individual) | Fantasy uses team DST, not individual defenders |
+| 13 | Kicker predictions: FG by distance + XP | Match ESPN scoring granularity |
+| 13 | Bundle audit improvements with K/DEF | Train everything together for consistency |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -75,5 +79,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 12-05-PLAN.md (Phase 12 complete, 5/5 plans done)
+Stopped at: Phase 13 planning complete (8 plans created)
 Resume file: None
+Next action: `/gsd:execute-phase 13`
