@@ -17,6 +17,8 @@ import {
   type PointsBreakdown,
 } from "@/lib/fantasy-points";
 import { useDefaultScoringConfig } from "@/hooks/useScoringConfigs";
+import { useModelMetrics } from "@/hooks/useModelMetrics";
+import { ModelConfidence } from "@/components/matchup/ModelConfidence";
 
 // Default scoring config (Standard) as fallback while Convex loads
 const DEFAULT_SCORING_CONFIG: ScoringConfig = {
@@ -33,6 +35,13 @@ export default function MatchupPage() {
 
   // Get default scoring config from Convex
   const { config: convexConfig } = useDefaultScoringConfig();
+
+  // Get model metrics for confidence display
+  const {
+    overallAccuracy,
+    overallConfidence,
+    isLoading: metricsLoading,
+  } = useModelMetrics();
 
   // Use Convex config if available, otherwise use default
   const scoringConfig: ScoringConfig = convexConfig
@@ -127,8 +136,22 @@ export default function MatchupPage() {
             {/* Success State - Two column layout */}
             {(prediction || isLoading) && !error && (
               <div className="space-y-6">
-                {/* Fantasy Points Card - Hero (appears first) */}
+                {/* Model Confidence Indicator */}
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                  <div className="bg-white rounded-xl shadow-sm px-6 py-4 flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      Model Performance
+                    </span>
+                    <ModelConfidence
+                      accuracyPct={overallAccuracy}
+                      confidence={overallConfidence}
+                      isLoading={metricsLoading}
+                    />
+                  </div>
+                </div>
+
+                {/* Fantasy Points Card - Hero (appears first) */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
                   <FantasyPointsCard
                     points={fantasyPoints}
                     breakdown={pointsBreakdown}
@@ -137,8 +160,8 @@ export default function MatchupPage() {
                   />
                 </div>
 
-                {/* Stat Projection (appears 100ms later) */}
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-100">
+                {/* Stat Projection (appears after fantasy points) */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
                   <StatProjection
                     position={
                       matchupData.position as "QB" | "RB" | "WR" | "TE"
