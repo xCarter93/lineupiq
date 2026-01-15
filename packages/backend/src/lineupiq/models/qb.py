@@ -1,12 +1,13 @@
 """
 QB-specific model training module.
 
-Provides functions for training XGBoost models on quarterback stats:
+Provides functions for training ML models on quarterback stats:
 - passing_yards: Total passing yards per game
 - passing_tds: Number of passing touchdowns per game
 
 Uses Optuna hyperparameter tuning and TimeSeriesSplit validation
-to create accurate prediction models.
+to create accurate prediction models. Supports both XGBoost and LightGBM
+(LightGBM default for 7x faster training).
 
 Key functions:
 - prepare_qb_data: Filter and prepare QB-specific features/targets
@@ -19,11 +20,10 @@ from typing import Any
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
-from xgboost import XGBRegressor
 
 from lineupiq.features.pipeline import build_features, get_feature_columns
 from lineupiq.models.persistence import save_model
-from lineupiq.models.training import train_model, tune_hyperparameters
+from lineupiq.models.training import ModelType, train_model, tune_hyperparameters
 
 logger = logging.getLogger(__name__)
 
@@ -88,9 +88,10 @@ def prepare_qb_data(
 
 
 def train_qb_models(
-    seasons: list[int],
+    seasons: list[int] | None = None,
     n_trials: int = 50,
-) -> dict[str, tuple[XGBRegressor, dict[str, Any]]]:
+    model_type: ModelType = "lightgbm",
+) -> dict[str, tuple[Any, dict[str, Any]]]:
     """Train and persist QB models for all target stats.
 
     Loads features for specified seasons, prepares QB data, then for each
@@ -100,8 +101,9 @@ def train_qb_models(
     3. Saves model with metadata
 
     Args:
-        seasons: List of seasons to train on (e.g., [2021, 2022, 2023, 2024]).
+        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
         n_trials: Number of Optuna trials for hyperparameter tuning (default: 50).
+        model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
 
     Returns:
         Dict mapping target name to (model, metrics) tuple where metrics contains:
@@ -109,6 +111,7 @@ def train_qb_models(
         - cv_rmse_std: Standard deviation of CV RMSE
         - best_params: Best hyperparameters from Optuna
         - n_samples: Number of training samples
+        - model_type: The model type used for training
 
     Example:
         >>> results = train_qb_models([2023, 2024], n_trials=10)
@@ -118,7 +121,10 @@ def train_qb_models(
         >>> "cv_rmse_mean" in metrics
         True
     """
-    logger.info(f"Training QB models for seasons {seasons} with {n_trials} trials")
+    if seasons is None:
+        seasons = [2021, 2022, 2023, 2024]
+
+    logger.info(f"Training QB models for seasons {seasons} with {n_trials} trials using {model_type}")
 
     # Load features
     df = build_features(seasons)
@@ -126,21 +132,26 @@ def train_qb_models(
     # Prepare QB-specific data
     X, y_dict = prepare_qb_data(df)
 
-    results: dict[str, tuple[XGBRegressor, dict[str, Any]]] = {}
+    results: dict[str, tuple[Any, dict[str, Any]]] = {}
 
     for target in QB_TARGETS:
         logger.info(f"Training model for QB {target}...")
         y = y_dict[target]
 
         # Run hyperparameter tuning
-        best_params, study = tune_hyperparameters(X, y, n_trials=n_trials)
+        best_params, study = tune_hyperparameters(
+            X, y, n_trials=n_trials, model_type=model_type
+        )
 
         # Train final model with best parameters
-        model, cv_scores = train_model(X, y, params=best_params)
+        model, cv_scores = train_model(X, y, params=best_params, model_type=model_type)
 
         # Calculate metrics (scores are negative RMSE, so negate)
         cv_rmse = -cv_scores
         metrics = {
+            "position": "QB",
+            "target": target,
+            "model_type": model_type,
             "cv_rmse_mean": float(cv_rmse.mean()),
             "cv_rmse_std": float(cv_rmse.std()),
             "best_params": best_params,
