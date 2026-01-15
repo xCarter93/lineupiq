@@ -84,21 +84,26 @@ export type AnyPrediction =
 
 /**
  * Calculate fantasy points for a QB prediction.
- * Formula: (passing_yards / yardsPerPoint) + (passing_tds * tdPoints)
+ * Includes passing, rushing, interceptions, and fumbles.
  */
 export function calculateQBPoints(
   prediction: QBPrediction,
   config: ScoringConfig
 ): number {
-  const yardPoints = prediction.passing_yards / config.passing.yardsPerPoint;
-  const tdPoints = prediction.passing_tds * config.passing.tdPoints;
-  return Math.round((yardPoints + tdPoints) * 10) / 10;
+  const passYardPoints = prediction.passing_yards / config.passing.yardsPerPoint;
+  const passTdPoints = prediction.passing_tds * config.passing.tdPoints;
+  const intPoints = prediction.interceptions * config.passing.intPoints; // intPoints is negative
+  const rushYardPoints = prediction.rushing_yards / config.rushing.yardsPerPoint;
+  const rushTdPoints = prediction.rushing_tds * config.rushing.tdPoints;
+  const fumblePoints = prediction.fumbles_lost * -2; // -2 pts per fumble
+
+  const total = passYardPoints + passTdPoints + intPoints + rushYardPoints + rushTdPoints + fumblePoints;
+  return Math.round(total * 10) / 10;
 }
 
 /**
  * Calculate fantasy points for an RB prediction.
- * Combines rushing and receiving contributions.
- * Note: API doesn't predict receiving TDs for RBs.
+ * Combines rushing and receiving contributions, including fumbles.
  */
 export function calculateRBPoints(
   prediction: RBPrediction,
@@ -107,15 +112,17 @@ export function calculateRBPoints(
   const rushYardPoints = prediction.rushing_yards / config.rushing.yardsPerPoint;
   const rushTdPoints = prediction.rushing_tds * config.rushing.tdPoints;
   const recYardPoints = prediction.receiving_yards / config.receiving.yardsPerPoint;
+  const recTdPoints = prediction.receiving_tds * config.receiving.tdPoints;
   const receptionPoints = prediction.receptions * config.receiving.receptionPoints;
+  const fumblePoints = prediction.fumbles_lost * -2; // -2 pts per fumble
 
-  const total = rushYardPoints + rushTdPoints + recYardPoints + receptionPoints;
+  const total = rushYardPoints + rushTdPoints + recYardPoints + recTdPoints + receptionPoints + fumblePoints;
   return Math.round(total * 10) / 10;
 }
 
 /**
  * Calculate fantasy points for a WR/TE prediction.
- * Formula: (receiving_yards / yardsPerPoint) + (receiving_tds * tdPoints) + (receptions * receptionPoints)
+ * Includes receiving stats and fumbles.
  */
 export function calculateReceiverPoints(
   prediction: ReceiverPrediction,
@@ -124,8 +131,9 @@ export function calculateReceiverPoints(
   const yardPoints = prediction.receiving_yards / config.receiving.yardsPerPoint;
   const tdPoints = prediction.receiving_tds * config.receiving.tdPoints;
   const receptionPoints = prediction.receptions * config.receiving.receptionPoints;
+  const fumblePoints = prediction.fumbles_lost * -2; // -2 pts per fumble
 
-  const total = yardPoints + tdPoints + receptionPoints;
+  const total = yardPoints + tdPoints + receptionPoints + fumblePoints;
   return Math.round(total * 10) / 10;
 }
 
@@ -232,18 +240,42 @@ export function getPointsBreakdown(
   if (pos === "QB") {
     const qb = prediction as QBPrediction;
     const c = config as ScoringConfig;
-    const yardPoints = Math.round((qb.passing_yards / c.passing.yardsPerPoint) * 10) / 10;
-    const tdPoints = Math.round(qb.passing_tds * c.passing.tdPoints * 10) / 10;
+    const passYardPoints = Math.round((qb.passing_yards / c.passing.yardsPerPoint) * 10) / 10;
+    const passTdPoints = Math.round(qb.passing_tds * c.passing.tdPoints * 10) / 10;
+    const intPoints = Math.round(qb.interceptions * c.passing.intPoints * 10) / 10;
+    const rushYardPoints = Math.round((qb.rushing_yards / c.rushing.yardsPerPoint) * 10) / 10;
+    const rushTdPoints = Math.round(qb.rushing_tds * c.rushing.tdPoints * 10) / 10;
+    const fumblePoints = Math.round(qb.fumbles_lost * -2 * 10) / 10;
 
     categories.push({
       label: "Passing Yards",
-      points: yardPoints,
+      points: passYardPoints,
       detail: `${qb.passing_yards.toFixed(1)} yards`,
     });
     categories.push({
       label: "Passing TDs",
-      points: tdPoints,
+      points: passTdPoints,
       detail: `${qb.passing_tds.toFixed(1)} TDs x ${c.passing.tdPoints} pts`,
+    });
+    categories.push({
+      label: "Interceptions",
+      points: intPoints,
+      detail: `${qb.interceptions.toFixed(1)} INTs x ${c.passing.intPoints} pts`,
+    });
+    categories.push({
+      label: "Rushing Yards",
+      points: rushYardPoints,
+      detail: `${qb.rushing_yards.toFixed(1)} yards`,
+    });
+    categories.push({
+      label: "Rushing TDs",
+      points: rushTdPoints,
+      detail: `${qb.rushing_tds.toFixed(1)} TDs x ${c.rushing.tdPoints} pts`,
+    });
+    categories.push({
+      label: "Fumbles Lost",
+      points: fumblePoints,
+      detail: `${qb.fumbles_lost.toFixed(1)} fumbles x -2 pts`,
     });
   } else if (pos === "RB") {
     const rb = prediction as RBPrediction;
@@ -251,7 +283,9 @@ export function getPointsBreakdown(
     const rushYardPoints = Math.round((rb.rushing_yards / c.rushing.yardsPerPoint) * 10) / 10;
     const rushTdPoints = Math.round(rb.rushing_tds * c.rushing.tdPoints * 10) / 10;
     const recYardPoints = Math.round((rb.receiving_yards / c.receiving.yardsPerPoint) * 10) / 10;
+    const recTdPoints = Math.round(rb.receiving_tds * c.receiving.tdPoints * 10) / 10;
     const receptionPoints = Math.round(rb.receptions * c.receiving.receptionPoints * 10) / 10;
+    const fumblePoints = Math.round(rb.fumbles_lost * -2 * 10) / 10;
 
     categories.push({
       label: "Rushing Yards",
@@ -268,6 +302,11 @@ export function getPointsBreakdown(
       points: recYardPoints,
       detail: `${rb.receiving_yards.toFixed(1)} yards`,
     });
+    categories.push({
+      label: "Receiving TDs",
+      points: recTdPoints,
+      detail: `${rb.receiving_tds.toFixed(1)} TDs x ${c.receiving.tdPoints} pts`,
+    });
     if (c.receiving.receptionPoints > 0) {
       categories.push({
         label: "Receptions",
@@ -275,12 +314,18 @@ export function getPointsBreakdown(
         detail: `${rb.receptions.toFixed(1)} rec x ${c.receiving.receptionPoints} pts`,
       });
     }
+    categories.push({
+      label: "Fumbles Lost",
+      points: fumblePoints,
+      detail: `${rb.fumbles_lost.toFixed(1)} fumbles x -2 pts`,
+    });
   } else if (pos === "WR" || pos === "TE") {
     const rec = prediction as ReceiverPrediction;
     const c = config as ScoringConfig;
     const yardPoints = Math.round((rec.receiving_yards / c.receiving.yardsPerPoint) * 10) / 10;
     const tdPoints = Math.round(rec.receiving_tds * c.receiving.tdPoints * 10) / 10;
     const receptionPoints = Math.round(rec.receptions * c.receiving.receptionPoints * 10) / 10;
+    const fumblePoints = Math.round(rec.fumbles_lost * -2 * 10) / 10;
 
     categories.push({
       label: "Receiving Yards",
@@ -299,6 +344,11 @@ export function getPointsBreakdown(
         detail: `${rec.receptions.toFixed(1)} rec x ${c.receiving.receptionPoints} pts`,
       });
     }
+    categories.push({
+      label: "Fumbles Lost",
+      points: fumblePoints,
+      detail: `${rec.fumbles_lost.toFixed(1)} fumbles x -2 pts`,
+    });
   } else if (pos === "K") {
     const k = prediction as KickerPrediction;
     const kc = (config as FullScoringConfig).kicking;
