@@ -153,3 +153,78 @@ class ReceiverPredictionResponse(BaseModel):
             ]
         }
     }
+
+
+class KickerPredictionRequest(BaseModel):
+    """Request schema for kicker predictions.
+
+    Contains rolling stat features for kicker model inference.
+    """
+
+    fg_att_roll3: float = Field(
+        ..., description="3-week rolling average of FG attempts"
+    )
+    pat_att_roll3: float = Field(
+        ..., description="3-week rolling average of PAT attempts"
+    )
+    fg_pct_roll3: float = Field(
+        ..., description="3-week rolling average of FG percentage"
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "fg_att_roll3": 2.5,
+                    "pat_att_roll3": 3.2,
+                    "fg_pct_roll3": 0.85,
+                }
+            ]
+        }
+    }
+
+
+class KickerPrediction(BaseModel):
+    """Kicker stat predictions."""
+
+    fg_att: float = Field(..., description="Predicted total FG attempts")
+    fg_att_0_39: float = Field(..., description="Predicted short FG attempts (0-39 yards)")
+    fg_att_40_49: float = Field(..., description="Predicted medium FG attempts (40-49 yards)")
+    fg_att_50_plus: float = Field(..., description="Predicted long FG attempts (50+ yards)")
+    pat_att: float = Field(..., description="Predicted extra point attempts")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "fg_att": 2.3,
+                    "fg_att_0_39": 1.2,
+                    "fg_att_40_49": 0.7,
+                    "fg_att_50_plus": 0.4,
+                    "pat_att": 3.5,
+                }
+            ]
+        }
+    }
+
+
+class KickerPredictionResponse(BaseModel):
+    """API response for kicker prediction."""
+
+    predictions: KickerPrediction = Field(..., description="Kicker stat predictions")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "predictions": {
+                        "fg_att": 2.3,
+                        "fg_att_0_39": 1.2,
+                        "fg_att_40_49": 0.7,
+                        "fg_att_50_plus": 0.4,
+                        "pat_att": 3.5,
+                    }
+                }
+            ]
+        }
+    }
