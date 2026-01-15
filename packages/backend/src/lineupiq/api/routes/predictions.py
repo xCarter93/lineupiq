@@ -2,11 +2,13 @@
 Prediction routes for all positions (QB, RB, WR, TE).
 
 Each endpoint accepts feature values and returns predicted stats
-for the specified position.
+for the specified position. Responses are cached to reduce redundant
+model inference.
 """
 
 import numpy as np
 from fastapi import APIRouter, Request
+from fastapi.responses import JSONResponse
 
 from lineupiq.api.models_loader import get_position_models
 from lineupiq.api.schemas import (
@@ -45,47 +47,70 @@ def prepare_features(request: PredictionRequest) -> np.ndarray:
     return np.array([feature_values], dtype=np.float32)
 
 
-@router.post("/qb", response_model=QBPredictionResponse)
-async def predict_qb(request: PredictionRequest, req: Request) -> QBPredictionResponse:
+@router.post("/qb")
+async def predict_qb(request: PredictionRequest, req: Request) -> JSONResponse:
     """Predict QB passing stats.
 
     Takes feature values and returns predicted passing yards and TDs.
+    Responses are cached to reduce redundant inference.
 
     Args:
         request: PredictionRequest with all 17 feature fields.
         req: FastAPI Request object for accessing app state.
 
     Returns:
-        QBPredictionResponse with passing_yards and passing_tds.
+        JSONResponse with passing_yards, passing_tds, and X-Cache header.
     """
+    position = "QB"
+    features_dict = request.model_dump()
+    cache = req.app.state.cache
+
+    # Check cache
+    cached = cache.get(position, features_dict)
+    if cached is not None:
+        return JSONResponse(content=cached, headers={"X-Cache": "HIT"})
+
+    # Cache miss - run prediction
     features = prepare_features(request)
-    models = get_position_models(req.app.state.models, "QB")
+    models = get_position_models(req.app.state.models, position)
 
     passing_yards = round(float(models["passing_yards"].predict(features)[0]), 1)
     passing_tds = round(float(models["passing_tds"].predict(features)[0]), 1)
 
-    return QBPredictionResponse(
-        passing_yards=passing_yards,
-        passing_tds=passing_tds,
-    )
+    response_data = {"passing_yards": passing_yards, "passing_tds": passing_tds}
+
+    # Store in cache
+    cache.set(position, features_dict, response_data)
+
+    return JSONResponse(content=response_data, headers={"X-Cache": "MISS"})
 
 
-@router.post("/rb", response_model=RBPredictionResponse)
-async def predict_rb(request: PredictionRequest, req: Request) -> RBPredictionResponse:
+@router.post("/rb")
+async def predict_rb(request: PredictionRequest, req: Request) -> JSONResponse:
     """Predict RB rushing and receiving stats.
 
     Takes feature values and returns predicted rushing yards, TDs, carries,
-    receiving yards, and receptions.
+    receiving yards, and receptions. Responses are cached.
 
     Args:
         request: PredictionRequest with all 17 feature fields.
         req: FastAPI Request object for accessing app state.
 
     Returns:
-        RBPredictionResponse with all 5 stat predictions.
+        JSONResponse with all 5 stat predictions and X-Cache header.
     """
+    position = "RB"
+    features_dict = request.model_dump()
+    cache = req.app.state.cache
+
+    # Check cache
+    cached = cache.get(position, features_dict)
+    if cached is not None:
+        return JSONResponse(content=cached, headers={"X-Cache": "HIT"})
+
+    # Cache miss - run prediction
     features = prepare_features(request)
-    models = get_position_models(req.app.state.models, "RB")
+    models = get_position_models(req.app.state.models, position)
 
     rushing_yards = round(float(models["rushing_yards"].predict(features)[0]), 1)
     rushing_tds = round(float(models["rushing_tds"].predict(features)[0]), 1)
@@ -93,68 +118,101 @@ async def predict_rb(request: PredictionRequest, req: Request) -> RBPredictionRe
     receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
     receptions = round(float(models["receptions"].predict(features)[0]), 1)
 
-    return RBPredictionResponse(
-        rushing_yards=rushing_yards,
-        rushing_tds=rushing_tds,
-        carries=carries,
-        receiving_yards=receiving_yards,
-        receptions=receptions,
-    )
+    response_data = {
+        "rushing_yards": rushing_yards,
+        "rushing_tds": rushing_tds,
+        "carries": carries,
+        "receiving_yards": receiving_yards,
+        "receptions": receptions,
+    }
+
+    # Store in cache
+    cache.set(position, features_dict, response_data)
+
+    return JSONResponse(content=response_data, headers={"X-Cache": "MISS"})
 
 
-@router.post("/wr", response_model=ReceiverPredictionResponse)
-async def predict_wr(
-    request: PredictionRequest, req: Request
-) -> ReceiverPredictionResponse:
+@router.post("/wr")
+async def predict_wr(request: PredictionRequest, req: Request) -> JSONResponse:
     """Predict WR receiving stats.
 
     Takes feature values and returns predicted receiving yards, TDs, and receptions.
+    Responses are cached.
 
     Args:
         request: PredictionRequest with all 17 feature fields.
         req: FastAPI Request object for accessing app state.
 
     Returns:
-        ReceiverPredictionResponse with receiving_yards, receiving_tds, and receptions.
+        JSONResponse with receiving_yards, receiving_tds, receptions, and X-Cache header.
     """
+    position = "WR"
+    features_dict = request.model_dump()
+    cache = req.app.state.cache
+
+    # Check cache
+    cached = cache.get(position, features_dict)
+    if cached is not None:
+        return JSONResponse(content=cached, headers={"X-Cache": "HIT"})
+
+    # Cache miss - run prediction
     features = prepare_features(request)
-    models = get_position_models(req.app.state.models, "WR")
+    models = get_position_models(req.app.state.models, position)
 
     receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
     receiving_tds = round(float(models["receiving_tds"].predict(features)[0]), 1)
     receptions = round(float(models["receptions"].predict(features)[0]), 1)
 
-    return ReceiverPredictionResponse(
-        receiving_yards=receiving_yards,
-        receiving_tds=receiving_tds,
-        receptions=receptions,
-    )
+    response_data = {
+        "receiving_yards": receiving_yards,
+        "receiving_tds": receiving_tds,
+        "receptions": receptions,
+    }
+
+    # Store in cache
+    cache.set(position, features_dict, response_data)
+
+    return JSONResponse(content=response_data, headers={"X-Cache": "MISS"})
 
 
-@router.post("/te", response_model=ReceiverPredictionResponse)
-async def predict_te(
-    request: PredictionRequest, req: Request
-) -> ReceiverPredictionResponse:
+@router.post("/te")
+async def predict_te(request: PredictionRequest, req: Request) -> JSONResponse:
     """Predict TE receiving stats.
 
     Takes feature values and returns predicted receiving yards, TDs, and receptions.
+    Responses are cached.
 
     Args:
         request: PredictionRequest with all 17 feature fields.
         req: FastAPI Request object for accessing app state.
 
     Returns:
-        ReceiverPredictionResponse with receiving_yards, receiving_tds, and receptions.
+        JSONResponse with receiving_yards, receiving_tds, receptions, and X-Cache header.
     """
+    position = "TE"
+    features_dict = request.model_dump()
+    cache = req.app.state.cache
+
+    # Check cache
+    cached = cache.get(position, features_dict)
+    if cached is not None:
+        return JSONResponse(content=cached, headers={"X-Cache": "HIT"})
+
+    # Cache miss - run prediction
     features = prepare_features(request)
-    models = get_position_models(req.app.state.models, "TE")
+    models = get_position_models(req.app.state.models, position)
 
     receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
     receiving_tds = round(float(models["receiving_tds"].predict(features)[0]), 1)
     receptions = round(float(models["receptions"].predict(features)[0]), 1)
 
-    return ReceiverPredictionResponse(
-        receiving_yards=receiving_yards,
-        receiving_tds=receiving_tds,
-        receptions=receptions,
-    )
+    response_data = {
+        "receiving_yards": receiving_yards,
+        "receiving_tds": receiving_tds,
+        "receptions": receptions,
+    }
+
+    # Store in cache
+    cache.set(position, features_dict, response_data)
+
+    return JSONResponse(content=response_data, headers={"X-Cache": "MISS"})
