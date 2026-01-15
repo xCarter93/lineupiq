@@ -116,7 +116,11 @@ export function StatProjection({
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-8">
+    <div
+      className="bg-white rounded-xl shadow-sm p-8"
+      role="region"
+      aria-label={`Projected stats for ${playerName} versus ${opponentTeam}`}
+    >
       <div className="mb-6">
         <SectionLabel className="block mb-2">PROJECTED STATS</SectionLabel>
         <p className="text-muted-foreground">

@@ -46,7 +46,12 @@ export function FantasyPointsCard({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-8 md:p-10">
+    <div
+      className="bg-white rounded-xl shadow-sm p-8 md:p-10"
+      role="region"
+      aria-label="Fantasy points projection"
+      aria-live="polite"
+    >
       {/* Header */}
       <div className="mb-6">
         <SectionLabel className="block mb-2">FANTASY POINTS</SectionLabel>
