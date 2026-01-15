@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 12 of 17 (ML Pipeline Improvements)
-Plan: 2 of 5 in current phase
+Plan: 3 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-15 — Completed 12-02-PLAN.md
+Last activity: 2026-01-15 — Completed 12-01-PLAN.md
 
-Progress: ██░░░░░░░░ 19%
+Progress: ███░░░░░░░ 20%
 
 ## Performance Metrics
 
@@ -52,6 +52,8 @@ Progress: ██░░░░░░░░ 19%
 | 12 | Separate modelMetrics/overallMetrics tables | Efficient queries for different access patterns |
 | 12 | Split conformal over MAPIE wrapper | Works with existing trained models without retraining |
 | 12 | 90% confidence intervals (alpha=0.1) | Informative bounds without excessive uncertainty |
+| 12 | Accuracy % formula: 100*(1-MAE/mean) | Intuitive 0-100% scale for user trust |
+| 12 | Three-tier confidence (High/Med/Low) | Simple user-facing metric based on R2 + accuracy |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -71,5 +73,5 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 12-02-PLAN.md (Phase 12 in progress)
+Stopped at: Completed 12-01-PLAN.md (Phase 12 in progress, 3/5 plans done)
 Resume file: None
