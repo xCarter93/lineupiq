@@ -70,7 +70,7 @@ Plans:
 
 Plans:
 - [ ] 04-01: Rolling window stats (3-week lookback)
-- [ ] 04-02: Opponent defensive strength metrics
+- [x] 04-02: Opponent defensive strength metrics
 - [ ] 04-03: Weather and venue features
 
 ### Phase 5: Model Development
@@ -152,7 +152,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Foundation | 3/3 | Complete | 2026-01-14 |
 | 2. Data Pipeline | 2/2 | Complete | 2026-01-14 |
 | 3. Data Processing | 3/3 | Complete | 2026-01-15 |
-| 4. Feature Engineering | 0/3 | Not started | - |
+| 4. Feature Engineering | 1/3 | In progress | - |
 | 5. Model Development | 0/4 | Not started | - |
 | 6. Model Evaluation | 0/3 | Not started | - |
 | 7. Prediction API | 0/3 | Not started | - |

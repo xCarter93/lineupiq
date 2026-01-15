@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 
 ## Current Position
 
-Phase: 3 of 10 (Data Processing)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-15 — Completed 03-03-PLAN.md
+Phase: 4 of 10 (Feature Engineering)
+Plan: 2 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-15 — Completed 04-02-PLAN.md
 
-Progress: ██████████████████████████░░░░ 27%
+Progress: ████████████████████████████░░ 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 3.8 min
-- Total execution time: 0.51 hours
+- Total plans completed: 9
+- Average duration: 3.7 min
+- Total execution time: 0.56 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: ███████████████████████�
 | 01-foundation | 3/3 | 15.5 min | 5.2 min |
 | 02-data-pipeline | 2/2 | 5 min | 2.5 min |
 | 03-data-processing | 3/3 | 10 min | 3.3 min |
+| 04-feature-engineering | 1/3 | 3 min | 3.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (2 min), 03-01 (3 min), 03-02 (3 min), 03-03 (4 min)
-- Trend: Data processing complete, ready for feature engineering
+- Last 5 plans: 03-01 (3 min), 03-02 (3 min), 03-03 (4 min), 04-02 (3 min)
+- Trend: Feature engineering in progress, opponent features complete
 
 ## Accumulated Context
 
@@ -67,6 +68,9 @@ Recent decisions affecting current work:
 | 03-03 | temp_normalized = (temp-65)/20 | Center around comfortable temp, scale to ~[-2, 2] |
 | 03-03 | wind_normalized = wind/15 | Scale to ~[0, 2] for typical conditions |
 | 03-03 | Support both 'team' and 'recent_team' | Flexibility for different data source naming |
+| 04-02 | Rank 1 = best defense | Fewest yards allowed = best, helps model understand matchup difficulty |
+| 04-02 | opp_strength 0=best, 1=worst | 0=hardest matchup (best defense), 1=easiest matchup |
+| 04-02 | Rankings use prior weeks only | Avoid data leakage - week N uses weeks 1 to N-1 |
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T00:18:10Z
-Stopped at: Completed 03-03-PLAN.md (Phase 3 complete)
+Last session: 2026-01-15T00:28:28Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
