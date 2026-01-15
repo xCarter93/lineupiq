@@ -13,6 +13,7 @@ Submodules:
 - training: Model training and hyperparameter tuning
 - persistence: Model save/load utilities
 - evaluation: Model evaluation metrics and holdout validation
+- diagnostics: Overfitting detection and train/test comparison
 - qb: QB-specific model training
 - rb: RB-specific model training
 - receiver: WR and TE model training
@@ -24,8 +25,16 @@ Example:
     >>> from lineupiq.models import train_rb_models, RB_TARGETS
     >>> from lineupiq.models import train_wr_models, train_te_models, RECEIVER_TARGETS
     >>> from lineupiq.models import evaluate_model, evaluate_all_models
+    >>> from lineupiq.models import run_diagnostics, run_all_diagnostics
 """
 
+from lineupiq.models.diagnostics import (
+    compute_overfit_ratio,
+    compute_train_metrics,
+    diagnose_overfitting,
+    run_all_diagnostics,
+    run_diagnostics,
+)
 from lineupiq.models.evaluation import (
     calculate_metrics,
     create_holdout_split,
@@ -75,6 +84,12 @@ __all__ = [
     "create_holdout_split",
     "evaluate_model",
     "evaluate_all_models",
+    # Diagnostics
+    "compute_train_metrics",
+    "compute_overfit_ratio",
+    "diagnose_overfitting",
+    "run_diagnostics",
+    "run_all_diagnostics",
     # QB Models
     "QB_TARGETS",
     "prepare_qb_data",
