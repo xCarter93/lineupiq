@@ -3,6 +3,9 @@ Rolling window statistics for player performance features.
 
 Computes rolling averages over a configurable window to capture recent form,
 which is more predictive than career averages or single-game stats.
+
+Also provides volatility metrics (rolling std, coefficient of variation)
+to identify boom/bust players who may need different prediction approaches.
 """
 
 import logging
@@ -99,3 +102,100 @@ def compute_rolling_stats(df: pl.DataFrame, window: int = 3) -> pl.DataFrame:
     logger.info(f"Rolling stats computed. Added {len(new_cols)} columns: {new_cols}")
 
     return df
+
+
+def compute_volatility_features(
+    df: pl.DataFrame,
+    stat_columns: list[str],
+    window: int = 3,
+) -> pl.DataFrame:
+    """Compute player volatility metrics for boom/bust identification.
+
+    Volatility metrics help models distinguish between consistent players
+    and high-variance performers who may need different prediction approaches.
+
+    Args:
+        df: DataFrame with player stats, must have player_id, season, week columns.
+        stat_columns: Which stat columns to compute volatility for.
+        window: Rolling window size (default: 3 games).
+
+    Returns:
+        DataFrame with original columns plus:
+        - {stat}_std{window}: Rolling standard deviation
+        - {stat}_cv{window}: Coefficient of variation (std/mean)
+    """
+    logger.info(f"Computing volatility features for {len(stat_columns)} stats")
+
+    # Filter to columns that exist
+    existing = [c for c in stat_columns if c in df.columns]
+    if not existing:
+        logger.warning("No matching stat columns found for volatility")
+        return df
+
+    # Sort for rolling calculations
+    result = df.sort(["player_id", "season", "week"])
+
+    # Compute rolling std and CV for each stat
+    new_cols = []
+    for col in existing:
+        # Rolling std with shift to avoid leakage
+        std_col = (
+            pl.col(col)
+            .shift(1)
+            .rolling_std(window_size=window, min_samples=2)
+            .over("player_id")
+            .alias(f"{col}_std{window}")
+        )
+
+        # Rolling mean for CV calculation (also shifted)
+        mean_expr = (
+            pl.col(col)
+            .shift(1)
+            .rolling_mean(window_size=window, min_samples=1)
+            .over("player_id")
+        )
+
+        # CV = std / mean (handle division by zero)
+        cv_col = (
+            pl.when(mean_expr > 0)
+            .then(
+                pl.col(col)
+                .shift(1)
+                .rolling_std(window_size=window, min_samples=2)
+                .over("player_id")
+                / mean_expr
+            )
+            .otherwise(0.0)
+            .alias(f"{col}_cv{window}")
+        )
+
+        new_cols.extend([std_col, cv_col])
+
+    result = result.with_columns(new_cols)
+
+    # Fill nulls with 0 (no variance for new players)
+    volatility_cols = [f"{c}_std{window}" for c in existing] + [f"{c}_cv{window}" for c in existing]
+    for col_name in volatility_cols:
+        if col_name in result.columns:
+            result = result.with_columns(pl.col(col_name).fill_null(0.0))
+
+    logger.info(f"Added {len(volatility_cols)} volatility features")
+
+    return result
+
+
+def get_volatility_columns(stat_columns: list[str], window: int = 3) -> list[str]:
+    """Return list of volatility feature column names.
+
+    Args:
+        stat_columns: Base stat columns used for volatility.
+        window: Rolling window size.
+
+    Returns:
+        List of volatility column names (std and cv for each stat).
+    """
+    cols = []
+    for col in stat_columns:
+        cols.append(f"{col}_std{window}")
+        cols.append(f"{col}_cv{window}")
+    return cols
