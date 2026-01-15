@@ -5,6 +5,12 @@ This module provides feature computation utilities for building ML-ready
 datasets from processed player stats.
 
 Public API:
+    Pipeline (Main Entry Point):
+        build_features: Build complete ML-ready feature dataset
+        get_feature_columns: Get list of feature column names
+        get_target_columns: Get position-specific target columns
+        save_features: Save features to Parquet file
+
     Rolling Statistics:
         compute_rolling_stats: Compute rolling window averages for player stats
 
@@ -19,9 +25,20 @@ from lineupiq.features.opponent_features import (
     compute_defensive_rankings,
     compute_defensive_stats,
 )
+from lineupiq.features.pipeline import (
+    build_features,
+    get_feature_columns,
+    get_target_columns,
+    save_features,
+)
 from lineupiq.features.rolling_stats import compute_rolling_stats
 
 __all__ = [
+    # Pipeline (Main Entry Point)
+    "build_features",
+    "get_feature_columns",
+    "get_target_columns",
+    "save_features",
     # Rolling Statistics
     "compute_rolling_stats",
     # Opponent Features
