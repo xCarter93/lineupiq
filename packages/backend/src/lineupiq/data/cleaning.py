@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 NUMERIC_STAT_COLUMNS = [
     "passing_yards",
     "passing_tds",
-    "interceptions",
+    "passing_interceptions",  # Raw column name from nflreadpy
     "rushing_yards",
     "rushing_tds",
     "carries",
@@ -26,6 +26,9 @@ NUMERIC_STAT_COLUMNS = [
     "receiving_yards",
     "receiving_tds",
     "targets",
+    "rushing_fumbles_lost",
+    "receiving_fumbles_lost",
+    "sack_fumbles_lost",  # Fumbles from sacks (for QB fumbles_lost calculation)
 ]
 
 # ML-relevant columns to select
@@ -44,15 +47,17 @@ ML_IDENTIFIER_COLUMNS = [
 ML_PASSING_COLUMNS = [
     "passing_yards",
     "passing_tds",
-    "interceptions",
+    "passing_interceptions",  # Raw column name from nflreadpy
     "attempts",
     "completions",
+    "sack_fumbles_lost",  # Fumbles from sacks (for QB fumbles_lost calculation)
 ]
 
 ML_RUSHING_COLUMNS = [
     "rushing_yards",
     "rushing_tds",
     "carries",
+    "rushing_fumbles_lost",
 ]
 
 ML_RECEIVING_COLUMNS = [
@@ -60,6 +65,7 @@ ML_RECEIVING_COLUMNS = [
     "receiving_yards",
     "receiving_tds",
     "targets",
+    "receiving_fumbles_lost",
 ]
 
 ML_FANTASY_COLUMNS = [
