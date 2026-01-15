@@ -114,24 +114,52 @@ export function createDefaultFeatures(
 
 /**
  * Make a prediction request to the Python API.
+ * Handles network errors, API errors, and timeouts with specific error messages.
  */
 async function makePredictionRequest<T>(
   position: string,
   features: PredictionFeatures
 ): Promise<T> {
-  const response = await fetch(
-    `${API_BASE_URL}/predict/${position.toLowerCase()}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(features),
-    }
-  );
+  // Set up 10 second timeout
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `${API_BASE_URL}/predict/${position.toLowerCase()}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(features),
+        signal: controller.signal,
+      }
+    );
+  } catch (error) {
+    clearTimeout(timeoutId);
+    // Check if it was a timeout (AbortError)
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Prediction request timed out");
+    }
+    // Network error (fetch failed)
+    throw new Error("Could not connect to prediction API");
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  // Handle HTTP errors
   if (!response.ok) {
     const errorText = await response.text();
+
+    // 5xx server errors
+    if (response.status >= 500) {
+      throw new Error("Prediction service error");
+    }
+
+    // 4xx client errors - include response body
     throw new Error(
       `Prediction API error (${response.status}): ${errorText || response.statusText}`
     );
