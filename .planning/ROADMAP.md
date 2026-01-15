@@ -138,7 +138,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [x] 10-01: End-to-end integration testing
+- [x] 10-01: Homepage and navigation
 - [x] 10-02: Error handling and edge cases
 - [ ] 10-03: UX refinements
 
