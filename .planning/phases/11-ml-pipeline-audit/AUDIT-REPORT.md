@@ -271,3 +271,205 @@ The evaluation module (`packages/backend/src/lineupiq/models/`) provides solid b
 **Risk:** LOW - MAPIE is battle-tested, minimal code changes
 
 ---
+
+## Implementation Roadmap
+
+### Priority 1: Quick Wins (Low effort, High value)
+
+#### 1.1 Add MAPIE for Prediction Intervals
+
+**Why:** Users need confidence bounds. This is the biggest gap with the simplest fix.
+
+**Implementation:**
+- Add `packages/backend/src/lineupiq/models/uncertainty.py`
+- Integrate `MapieQuantileRegressor` wrapper around existing XGBoost models
+- Add `packages/backend/src/lineupiq/models/calibration.py` for validation
+
+**Files to modify:**
+| File | Change |
+|------|--------|
+| `models/uncertainty.py` | NEW: MAPIE integration (~100 LOC) |
+| `models/calibration.py` | NEW: Coverage/width metrics (~50 LOC) |
+| `models/training.py` | Update to support uncertainty wrapper |
+
+**Dependencies:** `uv add mapie`
+
+**Estimated effort:** 1-2 plans
+
+**Research confidence:** HIGH (MAPIE docs verified, CQR handles heteroscedasticity)
+
+---
+
+### Priority 2: Performance (Medium effort, High value)
+
+#### 2.1 Evaluate LightGBM as XGBoost Alternative
+
+**Why:** 7x faster training enables more Optuna trials. Better categorical handling for team IDs.
+
+**Implementation:**
+- Add LightGBM support to training pipeline
+- Run comparison benchmark (XGBoost vs LightGBM on same data)
+- If LightGBM competitive or better, make it default
+
+**Files to modify:**
+| File | Change |
+|------|--------|
+| `models/training.py` | Add `get_lgb_params()`, LightGBM training path |
+| `models/qb.py` | Update to support model_type parameter |
+| `models/rb.py` | Update to support model_type parameter |
+| `models/receiver.py` | Update to support model_type parameter |
+
+**Dependencies:** `uv add lightgbm`
+
+**Estimated effort:** 1 plan
+
+**Research confidence:** HIGH (LightGBM vs XGBoost well-documented)
+
+---
+
+### Priority 3: Accuracy (Medium effort, Medium value)
+
+#### 3.1 Add Team Offensive Strength Features
+
+**Why:** Individual player stats correlate with team performance. Missing context.
+
+**Implementation:**
+- Add `packages/backend/src/lineupiq/features/team_strength.py`
+- Compute rolling team offensive metrics (points per game, yards per game)
+- Join with player features
+
+**Files to modify:**
+| File | Change |
+|------|--------|
+| `features/team_strength.py` | NEW: Team rolling metrics (~150 LOC) |
+| `features/pipeline.py` | Add team strength to feature pipeline |
+
+**Estimated effort:** 1 plan
+
+**Research confidence:** MEDIUM (sports analytics consensus, but need to validate on our data)
+
+#### 3.2 Add Player Consistency/Volatility Metrics
+
+**Why:** High-variance players (boom/bust WRs) need different handling than consistent performers.
+
+**Implementation:**
+- Extend `rolling_stats.py` with rolling standard deviation
+- Add coefficient of variation (CV = std/mean)
+- Consider streak indicators
+
+**Files to modify:**
+| File | Change |
+|------|--------|
+| `features/rolling_stats.py` | Add rolling std, CV calculations |
+| `features/pipeline.py` | Add new features to feature list |
+
+**Estimated effort:** 1 plan
+
+**Research confidence:** MEDIUM (standard approach, need validation)
+
+---
+
+### Priority 4: Future (High effort, Variable value)
+
+#### 4.1 Stacking Ensemble (XGBoost + LightGBM + CatBoost)
+
+**Why:** Research shows 10-20% accuracy gains. But higher complexity.
+
+**When to implement:** After Priority 1-3 measured. Only if single models plateau.
+
+**Dependencies:** LightGBM, CatBoost both working and validated
+
+**Files to modify:**
+| File | Change |
+|------|--------|
+| `models/ensemble.py` | NEW: StackingRegressor wrapper |
+| `models/training.py` | Add ensemble training mode |
+
+**Estimated effort:** 2 plans
+
+**Research confidence:** MEDIUM (NBA research showed gains, unclear if same for NFL stat prediction)
+
+#### 4.2 KNN Imputation for Correlated Features
+
+**Why:** Better than fill-with-0 for preserving feature relationships.
+
+**When to implement:** After baseline accuracy established. A/B test against current approach.
+
+**Files to modify:**
+| File | Change |
+|------|--------|
+| `data/imputation.py` | NEW: KNN imputation module |
+| `data/cleaning.py` | Optional imputation path |
+
+**Estimated effort:** 1 plan
+
+**Research confidence:** MEDIUM (standard ML approach, but NFL data has semantic zeros)
+
+---
+
+## Phase 12 Recommended Scope
+
+Based on this audit, Phase 12 should focus on **Priority 1 and Priority 2** improvements:
+
+### Phase 12 Plans (Recommended)
+
+| Plan | Focus | Deliverable |
+|------|-------|-------------|
+| **12-01** | MAPIE Integration | `uncertainty.py`, `calibration.py`, prediction intervals working |
+| **12-02** | LightGBM Evaluation | LightGBM support in training, benchmark comparison |
+| **12-03** | Team Strength Features | `team_strength.py`, features integrated into pipeline |
+| **12-04** | Player Volatility | Rolling std/CV features, updated pipeline |
+
+### Deferred to Phase 13+
+
+- Stacking ensemble (wait for single model improvements to measure)
+- KNN imputation (A/B test after baseline established)
+- Dynamic rolling windows (low expected impact)
+
+---
+
+## Summary
+
+### Current State
+
+The v1.0 ML pipeline is **solid but has room for improvement**:
+
+| Component | Status | Key Gap |
+|-----------|--------|---------|
+| **Data Pipeline** | GOOD | Fill-with-0 suboptimal but works |
+| **Model Architecture** | GOOD | XGBoost + Optuna well-configured |
+| **Features** | GOOD | 17 features, missing team context |
+| **Evaluation** | OK | **No prediction intervals (critical gap)** |
+
+### Key Findings
+
+1. **Prediction intervals are the biggest gap** - Users need confidence bounds. MAPIE provides this with minimal code.
+
+2. **LightGBM offers quick wins** - 7x faster, native categoricals, competitive accuracy.
+
+3. **Feature engineering has low-hanging fruit** - Team strength and player consistency are missing.
+
+4. **Ensembles and advanced imputation should wait** - Higher complexity, measure baseline first.
+
+### Phase 12 Priority
+
+```
+Priority 1: MAPIE for prediction intervals (HIGH value, LOW effort)
+Priority 2: LightGBM evaluation (HIGH value, MEDIUM effort)
+Priority 3: New features (MEDIUM value, MEDIUM effort)
+Priority 4: Ensemble/imputation (defer until above measured)
+```
+
+### Success Metrics for Phase 12
+
+| Metric | Current | Target |
+|--------|---------|--------|
+| Prediction intervals | None | 90% coverage on holdout |
+| Training time | ~2min/model | <30s/model (with LightGBM) |
+| Feature count | 17 | 22-25 (add team/consistency) |
+| RMSE improvement | Baseline | Measure lift from new features |
+
+---
+
+*Report completed: 2026-01-15*
+*Ready for Phase 12 planning*
