@@ -2,32 +2,22 @@
 
 import { useState } from "react";
 import { SectionLabel } from "@/components/ui/section-label";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { PositionFilter } from "@/components/matchup/PositionFilter";
-import { PlayerSelect, Player } from "@/components/matchup/PlayerSelect";
+import { MatchupForm, MatchupData } from "@/components/matchup/MatchupForm";
 
 export default function MatchupPage() {
-  const [selectedPosition, setSelectedPosition] = useState("all");
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
+  const [matchupData, setMatchupData] = useState<MatchupData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handlePositionChange = (position: string) => {
-    setSelectedPosition(position);
-    // Clear selected player when position changes
-    setSelectedPlayer(null);
-    setSelectedPlayerId(null);
+  const handleSubmit = (matchup: MatchupData) => {
+    setIsLoading(true);
+    // Store matchup data and log to console (prediction display in 09-03)
+    console.log("Matchup submitted:", matchup);
+    setMatchupData(matchup);
+    // Simulate loading state for UI feedback
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
   };
-
-  const handlePlayerSelect = (playerId: string, player: Player) => {
-    setSelectedPlayerId(playerId);
-    setSelectedPlayer(player);
-  };
-
-  // Map position filter to correct type for PlayerSelect
-  const positionFilter =
-    selectedPosition === "all"
-      ? undefined
-      : (selectedPosition.toUpperCase() as "QB" | "RB" | "WR" | "TE");
 
   return (
     <div className="min-h-screen">
@@ -35,61 +25,41 @@ export default function MatchupPage() {
         {/* Hero Section */}
         <div className="mb-12">
           <SectionLabel className="mb-4 block">MATCHUP SIMULATOR</SectionLabel>
-          <h1 className="text-4xl font-bold text-foreground mb-3">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-3">
             Build Your Matchup
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Select a player and opponent to see projected stats
+          <p className="text-lg text-muted-foreground max-w-2xl">
+            Select a player and opponent to see ML-powered stat projections
           </p>
         </div>
 
-        {/* Player Selection Card */}
-        <Card className="rounded-xl shadow-sm border-0 bg-card">
-          <CardHeader className="pb-6">
-            <CardTitle className="text-3xl font-bold">Select Player</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Position Filter */}
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Position
-              </label>
-              <PositionFilter
-                selected={selectedPosition}
-                onSelect={handlePositionChange}
-              />
-            </div>
+        {/* Matchup Form */}
+        <MatchupForm onSubmit={handleSubmit} isLoading={isLoading} />
 
-            {/* Player Select */}
-            <div>
-              <label className="text-sm font-medium text-muted-foreground mb-2 block">
-                Player
-              </label>
-              <PlayerSelect
-                position={positionFilter}
-                value={selectedPlayerId}
-                onSelect={handlePlayerSelect}
-                placeholder="Search players..."
-              />
+        {/* Results Section - placeholder for 09-03 */}
+        {matchupData && !isLoading && (
+          <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
+            <SectionLabel className="mb-4 block">MATCHUP CONFIGURED</SectionLabel>
+            <p className="text-foreground">
+              <span className="font-semibold">{matchupData.playerName}</span>
+              <span className="text-muted-foreground"> ({matchupData.position})</span>
+              {" vs "}
+              <span className="font-semibold">{matchupData.opponentTeam}</span>
+              {" "}
+              <span className="text-muted-foreground">
+                (Week {matchupData.week}, {matchupData.season})
+              </span>
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {matchupData.isHome ? "Home" : "Away"} game
+            </p>
+            <div className="mt-4 p-4 bg-muted/20 rounded-lg border border-border/30">
+              <p className="text-sm text-muted-foreground">
+                Prediction results will be displayed here in the next phase (09-03).
+              </p>
             </div>
-
-            {/* Selected Player Display */}
-            {selectedPlayer && (
-              <div className="bg-muted/30 rounded-lg p-4">
-                <div className="flex items-center gap-4">
-                  <div>
-                    <p className="font-semibold text-foreground">
-                      {selectedPlayer.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedPlayer.position} {"\u00B7"} {selectedPlayer.team}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          </div>
+        )}
       </div>
     </div>
   );
