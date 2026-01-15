@@ -9,6 +9,9 @@ This module provides the training infrastructure for XGBoost models with:
 - Model evaluation with standard regression metrics
 - Model diagnostics and overfitting detection
 - Feature importance analysis with SHAP and XGBoost native importance
+- Backtesting infrastructure for holdout validation
+- Accuracy metrics and confidence ratings
+- Prediction intervals via conformal prediction
 
 Submodules:
 - training: Model training and hyperparameter tuning
@@ -16,6 +19,9 @@ Submodules:
 - evaluation: Model evaluation metrics and holdout validation
 - diagnostics: Overfitting detection and train/test comparison
 - importance: Feature importance analysis (SHAP + XGBoost)
+- backtesting: Holdout validation and backtest execution
+- accuracy: Model-level accuracy metrics and confidence ratings
+- uncertainty: Prediction intervals via conformal prediction
 - qb: QB-specific model training
 - rb: RB-specific model training
 - receiver: WR and TE model training
@@ -28,8 +34,19 @@ Example:
     >>> from lineupiq.models import train_wr_models, train_te_models, RECEIVER_TARGETS
     >>> from lineupiq.models import evaluate_model, evaluate_all_models
     >>> from lineupiq.models import analyze_feature_importance, get_xgb_importance
+    >>> from lineupiq.models import load_holdout_data, run_all_backtests, summarize_backtest_results
 """
 
+from lineupiq.models.accuracy import (
+    calculate_confidence_rating,
+    calculate_model_accuracy,
+    summarize_backtest_results,
+)
+from lineupiq.models.backtesting import (
+    load_holdout_data,
+    run_all_backtests,
+    run_backtest,
+)
 from lineupiq.models.diagnostics import (
     compute_overfit_ratio,
     compute_train_metrics,
@@ -76,6 +93,13 @@ from lineupiq.models.training import (
     train_model,
     tune_hyperparameters,
 )
+from lineupiq.models.uncertainty import (
+    calibrate_intervals,
+    calculate_interval_width,
+    format_interval_response,
+    get_interval_coverage,
+    predict_with_intervals,
+)
 
 __all__ = [
     # Training
@@ -116,4 +140,10 @@ __all__ = [
     "prepare_receiver_data",
     "train_wr_models",
     "train_te_models",
+    # Uncertainty / Prediction Intervals
+    "calibrate_intervals",
+    "predict_with_intervals",
+    "format_interval_response",
+    "calculate_interval_width",
+    "get_interval_coverage",
 ]
