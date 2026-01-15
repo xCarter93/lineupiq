@@ -1,14 +1,15 @@
 """
 ML training utilities with Optuna hyperparameter tuning and TimeSeriesSplit validation.
 
-Provides training infrastructure for XGBoost models with proper temporal validation
-to avoid data leakage in time-series sports data.
+Provides training infrastructure for XGBoost and LightGBM models with proper temporal
+validation to avoid data leakage in time-series sports data.
 
 Key functions:
 - create_study: Create Optuna study for hyperparameter search
 - get_xgb_params: Generate XGBoost params from Optuna trial
-- train_model: Train XGBRegressor with TimeSeriesSplit CV
-- tune_hyperparameters: Run full Optuna optimization
+- get_lgb_params: Generate LightGBM params from Optuna trial
+- train_model: Train model with TimeSeriesSplit CV (supports both XGBoost/LightGBM)
+- tune_hyperparameters: Run full Optuna optimization (supports both XGBoost/LightGBM)
 """
 
 import logging
@@ -183,17 +184,16 @@ def tune_hyperparameters(
     y: NDArray[np.floating[Any]],
     n_trials: int = 50,
     n_splits: int = 5,
+    model_type: ModelType = "lightgbm",
 ) -> tuple[dict[str, Any], optuna.Study]:
     """Run Optuna hyperparameter optimization.
-
-    Creates objective function using get_xgb_params + train_model,
-    minimizes negative RMSE to find best hyperparameters.
 
     Args:
         X: Feature matrix of shape (n_samples, n_features).
         y: Target array of shape (n_samples,).
         n_trials: Number of Optuna trials to run (default: 50).
         n_splits: Number of CV splits per trial (default: 5).
+        model_type: "xgboost" or "lightgbm" (default: "lightgbm").
 
     Returns:
         Tuple of (best parameters dict, Optuna study object).
@@ -202,13 +202,16 @@ def tune_hyperparameters(
         >>> X = np.random.randn(100, 5)
         >>> y = np.random.randn(100)
         >>> best_params, study = tune_hyperparameters(X, y, n_trials=5, n_splits=3)
-        >>> "max_depth" in best_params
+        >>> "num_leaves" in best_params  # LightGBM param
         True
     """
     def objective(trial: optuna.Trial) -> float:
         """Objective function for Optuna optimization."""
-        params = get_xgb_params(trial)
-        _, scores = train_model(X, y, params=params, n_splits=n_splits)
+        if model_type == "lightgbm":
+            params = get_lgb_params(trial)
+        else:
+            params = get_xgb_params(trial)
+        _, scores = train_model(X, y, params=params, n_splits=n_splits, model_type=model_type)
         # Return mean negative RMSE (minimize this)
         return -scores.mean()
 
@@ -221,7 +224,7 @@ def tune_hyperparameters(
     study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
 
     best_params = study.best_params
-    logger.info(f"Best trial value (negative RMSE): {study.best_value:.4f}")
+    logger.info(f"Best {model_type} trial value: {study.best_value:.4f}")
     logger.info(f"Best parameters: {best_params}")
 
     return best_params, study
