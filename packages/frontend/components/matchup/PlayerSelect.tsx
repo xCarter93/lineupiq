@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { usePlayers, usePlayersByPosition } from "@/hooks/usePlayers";
 import {
   Combobox,
@@ -10,6 +12,7 @@ import {
   ComboboxItem,
   ComboboxEmpty,
 } from "@/components/ui/combobox";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export interface Player {
@@ -34,6 +37,7 @@ export function PlayerSelect({
   placeholder = "Search players...",
 }: PlayerSelectProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSeeding, setIsSeeding] = useState(false);
 
   // Use appropriate hook based on whether position filter is applied
   const { players: allPlayers, isLoading: allLoading } = usePlayers();
@@ -41,8 +45,23 @@ export function PlayerSelect({
     position ?? "QB"
   );
 
+  // Seed mutation
+  const seedPlayers = useMutation(api.seedPlayers.seedSamplePlayers);
+
   const isLoading = position ? positionLoading : allLoading;
   const rawPlayers = position ? positionPlayers : allPlayers;
+
+  // Check if no players exist at all
+  const hasNoPlayers = !allLoading && (!allPlayers || allPlayers.length === 0);
+
+  const handleSeedPlayers = async () => {
+    setIsSeeding(true);
+    try {
+      await seedPlayers();
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   // Filter players by search query
   const filteredPlayers = useMemo(() => {
@@ -69,7 +88,30 @@ export function PlayerSelect({
 
   if (isLoading) {
     return (
-      <div className="h-8 w-full animate-pulse rounded-lg bg-muted/50" />
+      <div className="h-11 w-full animate-pulse rounded-lg bg-muted/50" />
+    );
+  }
+
+  // Show seed button when no players exist
+  if (hasNoPlayers) {
+    return (
+      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border border-dashed border-border/50">
+        <div className="flex-1">
+          <p className="text-sm text-muted-foreground">
+            No players in database. Seed sample players to test the UI.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleSeedPlayers}
+          disabled={isSeeding}
+          className="shrink-0"
+        >
+          {isSeeding ? "Seeding..." : "Seed Players"}
+        </Button>
+      </div>
     );
   }
 
