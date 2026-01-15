@@ -138,8 +138,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 10-01: End-to-end integration testing
-- [ ] 10-02: Error handling and edge cases
+- [x] 10-01: End-to-end integration testing
+- [x] 10-02: Error handling and edge cases
 - [ ] 10-03: UX refinements
 
 ## Progress
@@ -158,4 +158,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Prediction API | 3/3 | Complete | 2026-01-15 |
 | 8. Convex Backend | 3/3 | Complete | 2026-01-15 |
 | 9. Matchup UI | 3/3 | Complete | 2026-01-15 |
-| 10. Integration & Polish | 0/3 | Not started | - |
+| 10. Integration & Polish | 2/3 | In progress | - |
