@@ -77,6 +77,9 @@ Recent decisions affecting current work:
 | 05-01 | shap>=0.50.0 with prerelease deps | Required for Python 3.11 compatibility |
 | 05-01 | TimeSeriesSplit n_splits=5 default | Standard temporal CV avoiding leakage |
 | 05-01 | Models stored in packages/backend/models/ | Separate from source code, gitignored |
+| 05-02 | 6 seasons training data (2019-2024) | Provides ~3,770 QB samples for robust training |
+| 05-02 | max_depth=3 optimal for QB models | Low complexity prevents overfitting on sports data |
+| 05-02 | Tests allow small negative predictions | XGBoost regression behavior on synthetic data |
 | 05-03 | 5 RB targets trained | rushing_yards, rushing_tds, carries, receiving_yards, receptions |
 | 05-03 | 50 Optuna trials per target | Balance training time vs optimization quality |
 
@@ -90,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T01:22:07Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-01-15T01:22:41Z
+Stopped at: Completed 05-02-PLAN.md (re-executed with updated QB models)
 Resume file: None
