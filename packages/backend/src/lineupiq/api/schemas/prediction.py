@@ -171,11 +171,17 @@ class ReceiverPredictionResponse(BaseModel):
     receiving_yards: float = Field(..., description="Predicted receiving yards")
     receiving_tds: float = Field(..., description="Predicted receiving TDs")
     receptions: float = Field(..., description="Predicted receptions")
+    fumbles_lost: float = Field(..., description="Predicted fumbles lost")
 
     model_config = {
         "json_schema_extra": {
             "examples": [
-                {"receiving_yards": 68.4, "receiving_tds": 0.5, "receptions": 5.2}
+                {
+                    "receiving_yards": 68.4,
+                    "receiving_tds": 0.5,
+                    "receptions": 5.2,
+                    "fumbles_lost": 0.02,
+                }
             ]
         }
     }

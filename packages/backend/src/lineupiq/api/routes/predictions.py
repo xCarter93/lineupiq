@@ -165,15 +165,15 @@ async def predict_rb(request: PredictionRequest, req: Request) -> JSONResponse:
 async def predict_wr(request: PredictionRequest, req: Request) -> JSONResponse:
     """Predict WR receiving stats.
 
-    Takes feature values and returns predicted receiving yards, TDs, and receptions.
-    Responses are cached.
+    Takes feature values and returns predicted receiving yards, TDs, receptions,
+    and fumbles lost. Responses are cached.
 
     Args:
         request: PredictionRequest with all 17 feature fields.
         req: FastAPI Request object for accessing app state.
 
     Returns:
-        JSONResponse with receiving_yards, receiving_tds, receptions, and X-Cache header.
+        JSONResponse with all 4 WR stat predictions and X-Cache header.
     """
     position = "WR"
     features_dict = request.model_dump()
@@ -189,13 +189,15 @@ async def predict_wr(request: PredictionRequest, req: Request) -> JSONResponse:
     models = get_position_models(req.app.state.models, position)
 
     receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
-    receiving_tds = round(float(models["receiving_tds"].predict(features)[0]), 1)
+    receiving_tds = max(0.0, round(float(models["receiving_tds"].predict(features)[0]), 1))
     receptions = round(float(models["receptions"].predict(features)[0]), 1)
+    fumbles_lost = max(0.0, round(float(models["fumbles_lost"].predict(features)[0]), 2))
 
     response_data = {
         "receiving_yards": receiving_yards,
         "receiving_tds": receiving_tds,
         "receptions": receptions,
+        "fumbles_lost": fumbles_lost,
     }
 
     # Store in cache
@@ -208,15 +210,15 @@ async def predict_wr(request: PredictionRequest, req: Request) -> JSONResponse:
 async def predict_te(request: PredictionRequest, req: Request) -> JSONResponse:
     """Predict TE receiving stats.
 
-    Takes feature values and returns predicted receiving yards, TDs, and receptions.
-    Responses are cached.
+    Takes feature values and returns predicted receiving yards, TDs, receptions,
+    and fumbles lost. Responses are cached.
 
     Args:
         request: PredictionRequest with all 17 feature fields.
         req: FastAPI Request object for accessing app state.
 
     Returns:
-        JSONResponse with receiving_yards, receiving_tds, receptions, and X-Cache header.
+        JSONResponse with all 4 TE stat predictions and X-Cache header.
     """
     position = "TE"
     features_dict = request.model_dump()
@@ -232,13 +234,15 @@ async def predict_te(request: PredictionRequest, req: Request) -> JSONResponse:
     models = get_position_models(req.app.state.models, position)
 
     receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
-    receiving_tds = round(float(models["receiving_tds"].predict(features)[0]), 1)
+    receiving_tds = max(0.0, round(float(models["receiving_tds"].predict(features)[0]), 1))
     receptions = round(float(models["receptions"].predict(features)[0]), 1)
+    fumbles_lost = max(0.0, round(float(models["fumbles_lost"].predict(features)[0]), 2))
 
     response_data = {
         "receiving_yards": receiving_yards,
         "receiving_tds": receiving_tds,
         "receptions": receptions,
+        "fumbles_lost": fumbles_lost,
     }
 
     # Store in cache
