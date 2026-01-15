@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 14 of 17 (Complete Fantasy Stats)
-Plan: 1 of 3 in current phase
-Status: Plan 14-01 complete
-Last activity: 2026-01-15 — Completed 14-01-PLAN.md (QB Complete Stats)
+Plan: 2 of 3 in current phase
+Status: Plan 14-02 complete
+Last activity: 2026-01-15 — Completed 14-02-PLAN.md (RB Complete Stats)
 
-Progress: █████████░ 95% (Plan 14-01 complete, ready for 14-02)
+Progress: █████████░ 96% (Plan 14-02 complete, ready for 14-03)
 
 ## Performance Metrics
 
@@ -79,6 +79,9 @@ Progress: █████████░ 95% (Plan 14-01 complete, ready for 14-
 | 14-01 | Column mapping in prepare_qb_data() | Keeps changes scoped to QB module vs pipeline-wide |
 | 14-01 | 30 Optuna trials for QB models | Balance training time vs optimization |
 | 14-01 | Non-negative clamping for count stats | Prevent negative interceptions/fumbles predictions |
+| 14-02 | Combined fumbles_lost in prepare_rb_data() | Sum of rushing + receiving fumbles for fantasy scoring |
+| 14-02 | Add fumble columns to ML_COLUMNS | Ensures data flows through cleaning pipeline |
+| 14-02 | Non-negative guards for RB count stats | Consistent with 14-01 approach for TDs/fumbles |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -98,6 +101,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 14-01-PLAN.md (QB Complete Stats)
+Stopped at: Completed 14-02-PLAN.md (RB Complete Stats)
 Resume file: None
-Next action: Execute 14-02-PLAN.md (RB Complete Stats)
+Next action: Execute 14-03-PLAN.md (WR/TE Complete Stats)
