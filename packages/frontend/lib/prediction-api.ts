@@ -226,3 +226,73 @@ export async function predict(
       throw new Error(`Unsupported position: ${position}`);
   }
 }
+
+// =============================================================================
+// Validation Metrics API
+// =============================================================================
+
+/**
+ * Per-model validation metrics.
+ */
+export interface ModelMetrics {
+  position: string;
+  target: string;
+  accuracy_pct: number;
+  confidence: string;
+  mae: number;
+  rmse: number;
+  r2: number;
+  sample_count: number;
+}
+
+/**
+ * Aggregate metrics across all models.
+ */
+export interface OverallMetrics {
+  overall_accuracy_pct: number;
+  overall_confidence: string;
+  model_count: number;
+}
+
+/**
+ * Response from the validation metrics endpoint.
+ */
+export interface ValidationResponse {
+  overall: OverallMetrics;
+  by_model: ModelMetrics[];
+  validation_season: number;
+}
+
+/**
+ * Fetch model validation metrics from the backend.
+ * Used to display model confidence indicators in the UI.
+ */
+export async function fetchValidationMetrics(
+  season: number = 2025
+): Promise<ValidationResponse> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  let response: Response;
+
+  try {
+    response = await fetch(
+      `${API_BASE_URL}/api/validation/metrics?season=${season}`,
+      { signal: controller.signal }
+    );
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Validation metrics request timed out");
+    }
+    throw new Error("Could not connect to validation API");
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Validation fetch failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
