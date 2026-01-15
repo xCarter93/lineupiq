@@ -6,8 +6,12 @@ that were not seen during training, allowing true out-of-sample validation.
 
 Key functions:
 - load_holdout_data: Load and process a holdout season through the feature pipeline
+- load_kicker_holdout_data: Load kicker holdout data for backtesting
+- load_defense_holdout_data: Load defense holdout data for backtesting
 - run_backtest: Run a single model on holdout data and collect predictions vs actuals
 - run_all_backtests: Run all trained models on holdout data
+- run_kicker_backtests: Run backtests for all kicker models
+- run_defense_backtests: Run backtests for all defense models
 """
 
 import logging
@@ -17,6 +21,16 @@ import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 
+from lineupiq.data.defense_processing import (
+    get_defense_feature_columns,
+    get_defense_target_columns,
+    process_defense_data,
+)
+from lineupiq.data.kicker_processing import (
+    get_kicker_feature_columns,
+    get_kicker_target_columns,
+    process_kicker_data,
+)
 from lineupiq.features.pipeline import build_features, get_feature_columns
 from lineupiq.models.persistence import list_models, load_model
 
@@ -85,8 +99,8 @@ def run_backtest(
     holdout data, and returns predictions alongside actuals and metadata.
 
     Args:
-        position: Player position (e.g., "QB", "RB", "WR", "TE").
-        target: Target stat (e.g., "passing_yards", "rushing_tds").
+        position: Player position (e.g., "QB", "RB", "WR", "TE", "K", "DEF").
+        target: Target stat (e.g., "passing_yards", "rushing_tds", "fg_att").
         holdout_df: Holdout DataFrame with features and target column.
 
     Returns:
@@ -114,11 +128,24 @@ def run_backtest(
     # Load trained model
     model, model_metadata = load_model(position, target)
 
-    # Get feature columns
-    feature_cols = get_feature_columns()
+    # Get feature columns based on position
+    if position == "K":
+        feature_cols = get_kicker_feature_columns()
+    elif position == "DEF":
+        feature_cols = get_defense_feature_columns()
+    else:
+        feature_cols = get_feature_columns()  # Skill positions
 
-    # Filter holdout data to this position
-    pos_df = holdout_df.filter(pl.col("position") == position)
+    # Filter holdout data based on position type
+    if position == "K":
+        # Kicker data doesn't have position column - use all data
+        pos_df = holdout_df
+    elif position == "DEF":
+        # Defense data doesn't have position column - use all data
+        pos_df = holdout_df
+    else:
+        # Skill positions filter by position column
+        pos_df = holdout_df.filter(pl.col("position") == position)
 
     if len(pos_df) == 0:
         raise ValueError(f"No holdout samples for position {position}")
@@ -202,4 +229,136 @@ def run_all_backtests(holdout_df: pl.DataFrame) -> list[dict[str, Any]]:
             logger.error(f"Error running backtest for {position}_{target}: {e}")
 
     logger.info(f"Successfully ran {len(results)}/{len(models)} backtests")
+    return results
+
+
+def load_kicker_holdout_data(season: int = 2025) -> pl.DataFrame:
+    """Load kicker holdout data for backtesting.
+
+    Processes kicker data through the kicker feature pipeline for the specified
+    holdout season. Includes prior season for rolling feature computation.
+
+    Args:
+        season: Holdout season year (default: 2025).
+
+    Returns:
+        DataFrame with kicker features and targets for the holdout season.
+
+    Raises:
+        ValueError: If no kicker data available for the season.
+
+    Example:
+        >>> kicker_df = load_kicker_holdout_data(2025)
+        >>> "fg_att_roll3" in kicker_df.columns
+        True
+    """
+    logger.info(f"Loading kicker holdout data for season {season}")
+
+    # Need prior season for rolling features
+    df = process_kicker_data([season - 1, season])
+
+    # Filter to holdout season
+    holdout = df.filter(pl.col("season") == season)
+
+    if len(holdout) == 0:
+        raise ValueError(f"No kicker data for season {season}")
+
+    logger.info(f"Loaded {len(holdout)} kicker holdout rows")
+    return holdout
+
+
+def load_defense_holdout_data(season: int = 2025) -> pl.DataFrame:
+    """Load defense holdout data for backtesting.
+
+    Processes team defense data through the defense feature pipeline for the
+    specified holdout season. Includes prior season for rolling feature computation.
+
+    Args:
+        season: Holdout season year (default: 2025).
+
+    Returns:
+        DataFrame with defense features and targets for the holdout season.
+
+    Raises:
+        ValueError: If no defense data available for the season.
+
+    Example:
+        >>> defense_df = load_defense_holdout_data(2025)
+        >>> "points_allowed_roll3" in defense_df.columns
+        True
+    """
+    logger.info(f"Loading defense holdout data for season {season}")
+
+    df = process_defense_data([season - 1, season])
+
+    holdout = df.filter(pl.col("season") == season)
+
+    if len(holdout) == 0:
+        raise ValueError(f"No defense data for season {season}")
+
+    logger.info(f"Loaded {len(holdout)} defense holdout rows")
+    return holdout
+
+
+def run_kicker_backtests(holdout_df: pl.DataFrame) -> list[dict[str, Any]]:
+    """Run backtests for all kicker models.
+
+    Iterates through kicker target stats, runs backtests, and collects results.
+
+    Args:
+        holdout_df: Kicker holdout DataFrame from load_kicker_holdout_data.
+
+    Returns:
+        List of backtest result dicts for kicker models.
+
+    Example:
+        >>> kicker_holdout = load_kicker_holdout_data(2025)
+        >>> results = run_kicker_backtests(kicker_holdout)
+        >>> all(r["position"] == "K" for r in results)
+        True
+    """
+    target_cols = get_kicker_target_columns()
+    logger.info(f"Running kicker backtests for {len(target_cols)} targets")
+
+    results = []
+    for target in target_cols:
+        try:
+            result = run_backtest("K", target, holdout_df)
+            results.append(result)
+        except Exception as e:
+            logger.warning(f"Cannot backtest K_{target}: {e}")
+
+    logger.info(f"Successfully ran {len(results)}/{len(target_cols)} kicker backtests")
+    return results
+
+
+def run_defense_backtests(holdout_df: pl.DataFrame) -> list[dict[str, Any]]:
+    """Run backtests for all defense models.
+
+    Iterates through defense target stats, runs backtests, and collects results.
+
+    Args:
+        holdout_df: Defense holdout DataFrame from load_defense_holdout_data.
+
+    Returns:
+        List of backtest result dicts for defense models.
+
+    Example:
+        >>> defense_holdout = load_defense_holdout_data(2025)
+        >>> results = run_defense_backtests(defense_holdout)
+        >>> all(r["position"] == "DEF" for r in results)
+        True
+    """
+    target_cols = get_defense_target_columns()
+    logger.info(f"Running defense backtests for {len(target_cols)} targets")
+
+    results = []
+    for target in target_cols:
+        try:
+            result = run_backtest("DEF", target, holdout_df)
+            results.append(result)
+        except Exception as e:
+            logger.warning(f"Cannot backtest DEF_{target}: {e}")
+
+    logger.info(f"Successfully ran {len(results)}/{len(target_cols)} defense backtests")
     return results
