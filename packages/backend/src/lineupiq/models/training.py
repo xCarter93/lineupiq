@@ -12,13 +12,16 @@ Key functions:
 """
 
 import logging
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import optuna
+from lightgbm import LGBMRegressor
 from numpy.typing import NDArray
 from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 from xgboost import XGBRegressor
+
+ModelType = Literal["xgboost", "lightgbm"]
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +81,39 @@ def get_xgb_params(trial: optuna.Trial) -> dict[str, Any]:
         "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
         "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 10.0, log=True),
         "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
+    }
+    return params
+
+
+def get_lgb_params(trial: optuna.Trial) -> dict[str, Any]:
+    """Generate LightGBM parameters from Optuna trial.
+
+    Defines the hyperparameter search space for LightGBM regression:
+    - num_leaves: 20-100 (tree complexity, replaces max_depth)
+    - learning_rate: 0.01-0.3 (log scale)
+    - n_estimators: 100-500 (number of trees)
+    - min_child_samples: 5-50 (minimum samples per leaf)
+    - subsample: 0.6-1.0 (row sampling)
+    - colsample_bytree: 0.6-1.0 (column sampling)
+    - reg_alpha: 1e-8 to 10.0 (L1 regularization)
+    - reg_lambda: 1e-8 to 10.0 (L2 regularization)
+
+    Args:
+        trial: Optuna trial object for suggesting parameters.
+
+    Returns:
+        Dictionary of LightGBM hyperparameters.
+    """
+    params = {
+        "num_leaves": trial.suggest_int("num_leaves", 20, 100),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+        "n_estimators": trial.suggest_int("n_estimators", 100, 500),
+        "min_child_samples": trial.suggest_int("min_child_samples", 5, 50),
+        "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
+        "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 10.0, log=True),
+        "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
+        "verbosity": -1,  # Suppress warnings
     }
     return params
 
