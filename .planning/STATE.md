@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 13 of 17 (K/DEF Models + Training Improvements)
-Plan: 8 of 8 in current phase
-Status: Phase complete
-Last activity: 2026-01-15 — Completed 13-08-PLAN.md (Backtest All Models)
+Phase: 14 of 17 (Complete Fantasy Stats)
+Plan: 1 of 3 in current phase
+Status: Plan 14-01 complete
+Last activity: 2026-01-15 — Completed 14-01-PLAN.md (QB Complete Stats)
 
-Progress: █████████░ 94% (Phase 13 complete, ready for Phase 14)
+Progress: █████████░ 95% (Plan 14-01 complete, ready for 14-02)
 
 ## Performance Metrics
 
@@ -76,6 +76,9 @@ Progress: █████████░ 94% (Phase 13 complete, ready for Phase
 | 13-08 | 2024 as holdout season for backtesting | 2025 data may be incomplete |
 | 13-08 | K/DEF lower accuracy expected | High-variance events limit predictability |
 | 13-08 | Convex metrics storage deferred | Optional, documented in BACKTEST_RESULTS.md |
+| 14-01 | Column mapping in prepare_qb_data() | Keeps changes scoped to QB module vs pipeline-wide |
+| 14-01 | 30 Optuna trials for QB models | Balance training time vs optimization |
+| 14-01 | Non-negative clamping for count stats | Prevent negative interceptions/fumbles predictions |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -95,6 +98,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 13-08-PLAN.md (Backtest All Models) - Phase 13 complete
+Stopped at: Completed 14-01-PLAN.md (QB Complete Stats)
 Resume file: None
-Next action: Plan Phase 14 (Complete Fantasy Stats)
+Next action: Execute 14-02-PLAN.md (RB Complete Stats)
