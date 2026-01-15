@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Monorepo structure, package setup, dev environment
 - [x] **Phase 2: Data Pipeline** - nflreadpy integration, data fetching, raw data storage
 - [x] **Phase 3: Data Processing** - Cleaning, transformations, player/team normalization
-- [ ] **Phase 4: Feature Engineering** - Rolling stats, opponent strength, weather features
+- [x] **Phase 4: Feature Engineering** - Rolling stats, opponent strength, weather features
 - [ ] **Phase 5: Model Development** - Training pipeline, model architecture, cross-validation
 - [ ] **Phase 6: Model Evaluation** - Performance metrics, feature importance, overfitting checks
 - [ ] **Phase 7: Prediction API** - Python API endpoints, inference pipeline, caching
@@ -71,7 +71,7 @@ Plans:
 Plans:
 - [x] 04-01: Rolling window stats (3-week lookback)
 - [x] 04-02: Opponent defensive strength metrics
-- [ ] 04-03: Weather and venue features
+- [x] 04-03: Feature pipeline orchestrator
 
 ### Phase 5: Model Development
 **Goal**: Build and train ML models for stat prediction (passing/rushing/receiving)
@@ -152,7 +152,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Foundation | 3/3 | Complete | 2026-01-14 |
 | 2. Data Pipeline | 2/2 | Complete | 2026-01-14 |
 | 3. Data Processing | 3/3 | Complete | 2026-01-15 |
-| 4. Feature Engineering | 2/3 | In progress | - |
+| 4. Feature Engineering | 3/3 | Complete | 2026-01-15 |
 | 5. Model Development | 0/4 | Not started | - |
 | 6. Model Evaluation | 0/3 | Not started | - |
 | 7. Prediction API | 0/3 | Not started | - |
