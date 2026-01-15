@@ -19,9 +19,9 @@ Progress: ███████████████████████�
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23
-- Average duration: 9.0 min
-- Total execution time: 3.4 hours
+- Total plans completed: 24
+- Average duration: 8.9 min
+- Total execution time: 3.5 hours
 
 **By Phase:**
 
@@ -34,11 +34,11 @@ Progress: ███████████████████████�
 | 05-model-development | 4/4 | 79 min | 19.8 min |
 | 06-model-evaluation | 3/3 | 49 min | 16.3 min |
 | 07-prediction-api | 3/3 | 30 min | 10.0 min |
-| 08-convex-backend | 2/3 | 14 min | 7.0 min |
+| 08-convex-backend | 3/3 | 20 min | 6.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 07-02 (8 min), 07-03 (16 min), 08-01 (8 min), 08-02 (6 min)
-- Trend: Phase 8 scoring config CRUD complete
+- Last 5 plans: 07-03 (16 min), 08-01 (8 min), 08-02 (6 min), 08-03 (6 min)
+- Trend: Phase 8 complete, ready for Phase 9 Matchup UI
 
 ## Accumulated Context
 
@@ -67,6 +67,8 @@ Recent decisions affecting current work:
 | 08-01 | Module-level ConvexReactClient | Singleton pattern avoids re-instantiation |
 | 08-02 | Idempotent seedDefaults on mount | Runs every load but only creates if empty |
 | 08-02 | Atomic setDefault mutation | Clear all defaults before setting new one |
+| 08-03 | Sort players by name in-memory | Convex doesn't support order_by on non-indexed fields |
+| 08-03 | Return {data, isLoading} from hooks | Consistent loading state handling across all hooks |
 
 ### Pending Todos
 
@@ -78,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T14:51:00Z
-Stopped at: Completed 08-02-PLAN.md (Scoring config CRUD)
+Last session: 2026-01-15T11:35:23Z
+Stopped at: Completed 08-03-PLAN.md (Prediction storage and player lookup)
 Resume file: None
