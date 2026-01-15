@@ -213,19 +213,21 @@ export function calculateFantasyPoints(
 
 /**
  * Get detailed points breakdown showing contribution from each stat category.
+ * Supports all positions: QB, RB, WR, TE, K, DEF
  */
 export function getPointsBreakdown(
   position: string,
-  prediction: QBPrediction | RBPrediction | ReceiverPrediction,
-  config: ScoringConfig
+  prediction: AnyPrediction,
+  config: ScoringConfig | FullScoringConfig = DEFAULT_SCORING
 ): PointsBreakdown {
   const pos = position.toUpperCase();
   const categories: { label: string; points: number; detail: string }[] = [];
 
   if (pos === "QB") {
     const qb = prediction as QBPrediction;
-    const yardPoints = Math.round((qb.passing_yards / config.passing.yardsPerPoint) * 10) / 10;
-    const tdPoints = Math.round(qb.passing_tds * config.passing.tdPoints * 10) / 10;
+    const c = config as ScoringConfig;
+    const yardPoints = Math.round((qb.passing_yards / c.passing.yardsPerPoint) * 10) / 10;
+    const tdPoints = Math.round(qb.passing_tds * c.passing.tdPoints * 10) / 10;
 
     categories.push({
       label: "Passing Yards",
@@ -235,14 +237,15 @@ export function getPointsBreakdown(
     categories.push({
       label: "Passing TDs",
       points: tdPoints,
-      detail: `${qb.passing_tds.toFixed(1)} TDs x ${config.passing.tdPoints} pts`,
+      detail: `${qb.passing_tds.toFixed(1)} TDs x ${c.passing.tdPoints} pts`,
     });
   } else if (pos === "RB") {
     const rb = prediction as RBPrediction;
-    const rushYardPoints = Math.round((rb.rushing_yards / config.rushing.yardsPerPoint) * 10) / 10;
-    const rushTdPoints = Math.round(rb.rushing_tds * config.rushing.tdPoints * 10) / 10;
-    const recYardPoints = Math.round((rb.receiving_yards / config.receiving.yardsPerPoint) * 10) / 10;
-    const receptionPoints = Math.round(rb.receptions * config.receiving.receptionPoints * 10) / 10;
+    const c = config as ScoringConfig;
+    const rushYardPoints = Math.round((rb.rushing_yards / c.rushing.yardsPerPoint) * 10) / 10;
+    const rushTdPoints = Math.round(rb.rushing_tds * c.rushing.tdPoints * 10) / 10;
+    const recYardPoints = Math.round((rb.receiving_yards / c.receiving.yardsPerPoint) * 10) / 10;
+    const receptionPoints = Math.round(rb.receptions * c.receiving.receptionPoints * 10) / 10;
 
     categories.push({
       label: "Rushing Yards",
@@ -252,25 +255,26 @@ export function getPointsBreakdown(
     categories.push({
       label: "Rushing TDs",
       points: rushTdPoints,
-      detail: `${rb.rushing_tds.toFixed(1)} TDs x ${config.rushing.tdPoints} pts`,
+      detail: `${rb.rushing_tds.toFixed(1)} TDs x ${c.rushing.tdPoints} pts`,
     });
     categories.push({
       label: "Receiving Yards",
       points: recYardPoints,
       detail: `${rb.receiving_yards.toFixed(1)} yards`,
     });
-    if (config.receiving.receptionPoints > 0) {
+    if (c.receiving.receptionPoints > 0) {
       categories.push({
         label: "Receptions",
         points: receptionPoints,
-        detail: `${rb.receptions.toFixed(1)} rec x ${config.receiving.receptionPoints} pts`,
+        detail: `${rb.receptions.toFixed(1)} rec x ${c.receiving.receptionPoints} pts`,
       });
     }
   } else if (pos === "WR" || pos === "TE") {
     const rec = prediction as ReceiverPrediction;
-    const yardPoints = Math.round((rec.receiving_yards / config.receiving.yardsPerPoint) * 10) / 10;
-    const tdPoints = Math.round(rec.receiving_tds * config.receiving.tdPoints * 10) / 10;
-    const receptionPoints = Math.round(rec.receptions * config.receiving.receptionPoints * 10) / 10;
+    const c = config as ScoringConfig;
+    const yardPoints = Math.round((rec.receiving_yards / c.receiving.yardsPerPoint) * 10) / 10;
+    const tdPoints = Math.round(rec.receiving_tds * c.receiving.tdPoints * 10) / 10;
+    const receptionPoints = Math.round(rec.receptions * c.receiving.receptionPoints * 10) / 10;
 
     categories.push({
       label: "Receiving Yards",
@@ -280,13 +284,95 @@ export function getPointsBreakdown(
     categories.push({
       label: "Receiving TDs",
       points: tdPoints,
-      detail: `${rec.receiving_tds.toFixed(1)} TDs x ${config.receiving.tdPoints} pts`,
+      detail: `${rec.receiving_tds.toFixed(1)} TDs x ${c.receiving.tdPoints} pts`,
     });
-    if (config.receiving.receptionPoints > 0) {
+    if (c.receiving.receptionPoints > 0) {
       categories.push({
         label: "Receptions",
         points: receptionPoints,
-        detail: `${rec.receptions.toFixed(1)} rec x ${config.receiving.receptionPoints} pts`,
+        detail: `${rec.receptions.toFixed(1)} rec x ${c.receiving.receptionPoints} pts`,
+      });
+    }
+  } else if (pos === "K") {
+    const k = prediction as KickerPrediction;
+    const kc = (config as FullScoringConfig).kicking;
+    const fgPct = k.fg_pct ?? 0.85;
+
+    if (k.fg_att_0_39 > 0) {
+      const pts = Math.round(k.fg_att_0_39 * fgPct * kc.fgMade0_39 * 10) / 10;
+      categories.push({
+        label: "FG 0-39",
+        points: pts,
+        detail: `${k.fg_att_0_39.toFixed(1)} att x ${kc.fgMade0_39} pts`,
+      });
+    }
+
+    if (k.fg_att_40_49 > 0) {
+      const pts = Math.round(k.fg_att_40_49 * fgPct * kc.fgMade40_49 * 10) / 10;
+      categories.push({
+        label: "FG 40-49",
+        points: pts,
+        detail: `${k.fg_att_40_49.toFixed(1)} att x ${kc.fgMade40_49} pts`,
+      });
+    }
+
+    if (k.fg_att_50_plus > 0) {
+      const pts = Math.round(k.fg_att_50_plus * 0.75 * kc.fgMade50Plus * 10) / 10;
+      categories.push({
+        label: "FG 50+",
+        points: pts,
+        detail: `${k.fg_att_50_plus.toFixed(1)} att x ${kc.fgMade50Plus} pts`,
+      });
+    }
+
+    if (k.pat_att > 0) {
+      const pts = Math.round(k.pat_att * (k.pat_pct ?? 0.94) * kc.xpMade * 10) / 10;
+      categories.push({
+        label: "Extra Points",
+        points: pts,
+        detail: `${k.pat_att.toFixed(1)} att x ${kc.xpMade} pts`,
+      });
+    }
+  } else if (pos === "DEF" || pos === "DST") {
+    const d = prediction as DefensePrediction;
+    const dc = (config as FullScoringConfig).defense;
+
+    const paPoints = getPointsAllowedScore(d.points_allowed, dc);
+    categories.push({
+      label: "Points Allowed",
+      points: paPoints,
+      detail: `${d.points_allowed.toFixed(0)} pts allowed`,
+    });
+
+    if (d.def_sacks > 0) {
+      categories.push({
+        label: "Sacks",
+        points: Math.round(d.def_sacks * dc.sack * 10) / 10,
+        detail: `${d.def_sacks.toFixed(1)} sacks`,
+      });
+    }
+
+    if (d.def_interceptions > 0) {
+      categories.push({
+        label: "Interceptions",
+        points: Math.round(d.def_interceptions * dc.interception * 10) / 10,
+        detail: `${d.def_interceptions.toFixed(1)} INTs`,
+      });
+    }
+
+    if (d.def_fumbles > 0) {
+      categories.push({
+        label: "Fumble Rec",
+        points: Math.round(d.def_fumbles * dc.fumbleRecovery * 10) / 10,
+        detail: `${d.def_fumbles.toFixed(1)} fumbles`,
+      });
+    }
+
+    if (d.total_def_tds > 0) {
+      categories.push({
+        label: "Def/ST TDs",
+        points: Math.round(d.total_def_tds * dc.defensiveTd * 10) / 10,
+        detail: `${d.total_def_tds.toFixed(1)} TDs`,
       });
     }
   }
