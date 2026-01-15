@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Accurate stat-level predictions from well-engineered features and properly trained models.
-**Current focus:** Phase 7 — Prediction API (complete)
+**Current focus:** Phase 8 — Convex Backend (in progress)
 
 ## Current Position
 
-Phase: 7 of 10 (Prediction API)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-15 — Completed 07-03-PLAN.md
+Phase: 8 of 10 (Convex Backend)
+Plan: 1 of 4 in current phase
+Status: Plan 08-01 complete
+Last activity: 2026-01-15 — Completed 08-01-PLAN.md
 
-Progress: █████████████████████████████████████████████████████████████████████ 70%
+Progress: ██████████████████████████████████████████████████████████████████████████ 73%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
+- Total plans completed: 22
 - Average duration: 9.1 min
-- Total execution time: 3.2 hours
+- Total execution time: 3.3 hours
 
 **By Phase:**
 
@@ -34,10 +34,11 @@ Progress: ███████████████████████�
 | 05-model-development | 4/4 | 79 min | 19.8 min |
 | 06-model-evaluation | 3/3 | 49 min | 16.3 min |
 | 07-prediction-api | 3/3 | 30 min | 10.0 min |
+| 08-convex-backend | 1/4 | 8 min | 8.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 06-03 (21 min), 07-01 (6 min), 07-02 (8 min), 07-03 (16 min)
-- Trend: Phase 7 complete, ready for Phase 8
+- Last 5 plans: 07-01 (6 min), 07-02 (8 min), 07-03 (16 min), 08-01 (8 min)
+- Trend: Phase 8 started, Convex initialization complete
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Recent decisions affecting current work:
 | 07-03 | SHA-256 hash for cache keys | Deterministic, collision-resistant keys from position + features |
 | 07-03 | JSONResponse for cached routes | Required to add custom X-Cache header |
 | 07-03 | Initialize cache in lifespan | Consistent with model loading pattern |
+| 08-01 | v.any() for predictions field | Flexible position-specific data structures |
+| 08-01 | Module-level ConvexReactClient | Singleton pattern avoids re-instantiation |
 
 ### Pending Todos
 
@@ -73,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T11:00:22Z
-Stopped at: Completed 07-03-PLAN.md (Phase 7 complete)
+Last session: 2026-01-15T14:38:00Z
+Stopped at: Completed 08-01-PLAN.md (Convex initialization)
 Resume file: None
