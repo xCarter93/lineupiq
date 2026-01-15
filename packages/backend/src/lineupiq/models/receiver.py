@@ -5,10 +5,13 @@ Provides training functions for Wide Receiver and Tight End receiving stat predi
 WR and TE share the same targets (receiving_yards, receiving_tds, receptions) but have
 different stat distributions - TEs typically have lower volume and fewer TDs.
 
+Supports both XGBoost and LightGBM (LightGBM default for 7x faster training).
+
 Key functions:
 - prepare_receiver_data: Filter and prepare data for WR or TE position
 - train_wr_models: Train models for all WR receiving targets
 - train_te_models: Train models for all TE receiving targets
+- train_receiver_models: Train models for both WR and TE positions
 """
 
 import logging
@@ -17,11 +20,10 @@ from typing import Any
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
-from xgboost import XGBRegressor
 
 from lineupiq.features.pipeline import build_features, get_feature_columns
 from lineupiq.models.persistence import save_model
-from lineupiq.models.training import train_model, tune_hyperparameters
+from lineupiq.models.training import ModelType, train_model, tune_hyperparameters
 
 logger = logging.getLogger(__name__)
 
@@ -84,20 +86,23 @@ def prepare_receiver_data(
 
 
 def train_wr_models(
-    seasons: list[int], n_trials: int = 50
-) -> dict[str, tuple[XGBRegressor, dict[str, Any]]]:
-    """Train XGBoost models for all WR receiving targets.
+    seasons: list[int] | None = None,
+    n_trials: int = 50,
+    model_type: ModelType = "lightgbm",
+) -> dict[str, tuple[Any, dict[str, Any]]]:
+    """Train ML models for all WR receiving targets.
 
     Loads feature data, prepares WR-specific training data, and trains a model
     for each receiving target using Optuna hyperparameter tuning.
 
     Args:
-        seasons: List of seasons to train on (e.g., [2019, 2020, 2021, 2022, 2023, 2024]).
+        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
         n_trials: Number of Optuna trials per target (default: 50).
+        model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
 
     Returns:
         Dict mapping target name to (model, metrics) tuple.
-        Metrics include cv_rmse_mean, cv_rmse_std, best_params, n_samples.
+        Metrics include cv_rmse_mean, cv_rmse_std, best_params, n_samples, model_type.
 
     Example:
         >>> results = train_wr_models([2023, 2024], n_trials=10)
@@ -107,7 +112,10 @@ def train_wr_models(
         >>> "cv_rmse_mean" in metrics
         True
     """
-    logger.info(f"Training WR models for seasons {seasons}")
+    if seasons is None:
+        seasons = [2021, 2022, 2023, 2024]
+
+    logger.info(f"Training WR models for seasons {seasons} using {model_type}")
 
     # Load features
     df = build_features(seasons)
@@ -115,21 +123,26 @@ def train_wr_models(
     # Prepare WR data
     X, y_dict = prepare_receiver_data(df, "WR")
 
-    results: dict[str, tuple[XGBRegressor, dict[str, Any]]] = {}
+    results: dict[str, tuple[Any, dict[str, Any]]] = {}
 
     for target in RECEIVER_TARGETS:
         logger.info(f"Training WR {target} model...")
         y = y_dict[target]
 
         # Tune hyperparameters
-        best_params, study = tune_hyperparameters(X, y, n_trials=n_trials)
+        best_params, study = tune_hyperparameters(
+            X, y, n_trials=n_trials, model_type=model_type
+        )
 
         # Train final model with best params
-        model, cv_scores = train_model(X, y, params=best_params)
+        model, cv_scores = train_model(X, y, params=best_params, model_type=model_type)
 
         # Calculate metrics (scores are negative RMSE, so negate)
         cv_rmse = -cv_scores
         metrics = {
+            "position": "WR",
+            "target": target,
+            "model_type": model_type,
             "cv_rmse_mean": float(cv_rmse.mean()),
             "cv_rmse_std": float(cv_rmse.std()),
             "best_params": best_params,
@@ -152,9 +165,11 @@ def train_wr_models(
 
 
 def train_te_models(
-    seasons: list[int], n_trials: int = 50
-) -> dict[str, tuple[XGBRegressor, dict[str, Any]]]:
-    """Train XGBoost models for all TE receiving targets.
+    seasons: list[int] | None = None,
+    n_trials: int = 50,
+    model_type: ModelType = "lightgbm",
+) -> dict[str, tuple[Any, dict[str, Any]]]:
+    """Train ML models for all TE receiving targets.
 
     Loads feature data, prepares TE-specific training data, and trains a model
     for each receiving target using Optuna hyperparameter tuning.
@@ -163,12 +178,13 @@ def train_te_models(
     routes, more blocking assignments), so separate models provide better accuracy.
 
     Args:
-        seasons: List of seasons to train on (e.g., [2019, 2020, 2021, 2022, 2023, 2024]).
+        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
         n_trials: Number of Optuna trials per target (default: 50).
+        model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
 
     Returns:
         Dict mapping target name to (model, metrics) tuple.
-        Metrics include cv_rmse_mean, cv_rmse_std, best_params, n_samples.
+        Metrics include cv_rmse_mean, cv_rmse_std, best_params, n_samples, model_type.
 
     Example:
         >>> results = train_te_models([2023, 2024], n_trials=10)
@@ -178,7 +194,10 @@ def train_te_models(
         >>> "cv_rmse_mean" in metrics
         True
     """
-    logger.info(f"Training TE models for seasons {seasons}")
+    if seasons is None:
+        seasons = [2021, 2022, 2023, 2024]
+
+    logger.info(f"Training TE models for seasons {seasons} using {model_type}")
 
     # Load features
     df = build_features(seasons)
@@ -186,21 +205,26 @@ def train_te_models(
     # Prepare TE data
     X, y_dict = prepare_receiver_data(df, "TE")
 
-    results: dict[str, tuple[XGBRegressor, dict[str, Any]]] = {}
+    results: dict[str, tuple[Any, dict[str, Any]]] = {}
 
     for target in RECEIVER_TARGETS:
         logger.info(f"Training TE {target} model...")
         y = y_dict[target]
 
         # Tune hyperparameters
-        best_params, study = tune_hyperparameters(X, y, n_trials=n_trials)
+        best_params, study = tune_hyperparameters(
+            X, y, n_trials=n_trials, model_type=model_type
+        )
 
         # Train final model with best params
-        model, cv_scores = train_model(X, y, params=best_params)
+        model, cv_scores = train_model(X, y, params=best_params, model_type=model_type)
 
         # Calculate metrics (scores are negative RMSE, so negate)
         cv_rmse = -cv_scores
         metrics = {
+            "position": "TE",
+            "target": target,
+            "model_type": model_type,
             "cv_rmse_mean": float(cv_rmse.mean()),
             "cv_rmse_std": float(cv_rmse.std()),
             "best_params": best_params,
@@ -219,4 +243,50 @@ def train_te_models(
         )
 
     logger.info(f"Completed training {len(results)} TE models")
+    return results
+
+
+def train_receiver_models(
+    seasons: list[int] | None = None,
+    n_trials: int = 50,
+    model_type: ModelType = "lightgbm",
+) -> dict[str, tuple[Any, dict[str, Any]]]:
+    """Train ML models for both WR and TE receiving targets.
+
+    Convenience function that trains all receiver models (WR + TE) in one call.
+
+    Args:
+        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
+        n_trials: Number of Optuna trials per target (default: 50).
+        model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
+
+    Returns:
+        Dict mapping "{position}_{target}" to (model, metrics) tuple.
+        Example keys: "WR_receiving_yards", "TE_receptions".
+
+    Example:
+        >>> results = train_receiver_models([2023, 2024], n_trials=10)
+        >>> "WR_receiving_yards" in results
+        True
+        >>> "TE_receiving_yards" in results
+        True
+    """
+    if seasons is None:
+        seasons = [2021, 2022, 2023, 2024]
+
+    logger.info(f"Training all receiver models (WR + TE) for seasons {seasons}")
+
+    results: dict[str, tuple[Any, dict[str, Any]]] = {}
+
+    # Train WR models
+    wr_results = train_wr_models(seasons, n_trials=n_trials, model_type=model_type)
+    for target, (model, metrics) in wr_results.items():
+        results[f"WR_{target}"] = (model, metrics)
+
+    # Train TE models
+    te_results = train_te_models(seasons, n_trials=n_trials, model_type=model_type)
+    for target, (model, metrics) in te_results.items():
+        results[f"TE_{target}"] = (model, metrics)
+
+    logger.info(f"Completed training {len(results)} receiver models (WR + TE)")
     return results
