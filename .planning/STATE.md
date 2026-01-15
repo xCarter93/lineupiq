@@ -60,6 +60,8 @@ Progress: █████░░░░░ 50% (Phase 13 in progress)
 | 13 | Team-level defense (not individual) | Fantasy uses team DST, not individual defenders |
 | 13 | Kicker predictions: FG by distance + XP | Match ESPN scoring granularity |
 | 13 | Bundle audit improvements with K/DEF | Train everything together for consistency |
+| 13-03 | Team defense uses schedule for points_allowed | nflreadpy team_stats lacks this field |
+| 13-03 | FG buckets match ESPN scoring (0-39, 40-49, 50+) | Aligns with fantasy point tiers |
 | 13-04 | ESPN Standard as default scoring | Industry standard, widely recognized |
 | 13-04 | Expected value for kicker scoring | Accounts for success probability in predictions |
 | 13-04 | 75% success rate for 50+ yard FGs | NFL average lower for long-distance attempts |
