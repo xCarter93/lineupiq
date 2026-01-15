@@ -22,6 +22,10 @@ export interface ScoringConfig {
 export interface QBPrediction {
   passing_yards: number;
   passing_tds: number;
+  interceptions: number;
+  rushing_yards: number;
+  rushing_tds: number;
+  fumbles_lost: number;
 }
 
 export interface RBPrediction {
@@ -30,13 +34,15 @@ export interface RBPrediction {
   carries: number;
   receiving_yards: number;
   receptions: number;
-  // Note: API doesn't include receiving_tds for RBs
+  receiving_tds: number;
+  fumbles_lost: number;
 }
 
 export interface ReceiverPrediction {
   receiving_yards: number;
   receiving_tds: number;
   receptions: number;
+  fumbles_lost: number;
 }
 
 // Kicker prediction type
