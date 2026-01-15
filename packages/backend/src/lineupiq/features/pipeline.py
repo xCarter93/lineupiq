@@ -15,8 +15,14 @@ from pathlib import Path
 import polars as pl
 
 from lineupiq.data import process_player_stats
+from lineupiq.data.fetchers import fetch_schedules
 from lineupiq.features.opponent_features import add_opponent_strength
-from lineupiq.features.rolling_stats import compute_rolling_stats
+from lineupiq.features.rolling_stats import (
+    compute_rolling_stats,
+    compute_volatility_features,
+    get_volatility_columns,
+)
+from lineupiq.features.team_strength import compute_team_strength, get_team_strength_columns
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +37,9 @@ def build_features(seasons: list[int], rolling_window: int = 3) -> pl.DataFrame:
     1. Load processed data via process_player_stats(seasons)
     2. Add rolling stats via compute_rolling_stats(df, rolling_window)
     3. Add opponent strength via add_opponent_strength(df)
-    4. Weather features are already included from process_player_stats
+    4. Add team strength features (offensive points, yards, plays)
+    5. Add volatility features (std, CV for key stats)
+    6. Weather features are already included from process_player_stats
 
     Args:
         seasons: List of seasons to process (e.g., [2023, 2024]).
@@ -42,6 +50,8 @@ def build_features(seasons: list[int], rolling_window: int = 3) -> pl.DataFrame:
         - Player identifiers (player_id, player_name, position, etc.)
         - Rolling stats (passing_yards_roll3, rushing_yards_roll3, etc.)
         - Opponent strength (opp_pass_defense_strength, opp_rush_defense_strength)
+        - Team strength (team_points_roll3, team_yards_roll3, team_plays_roll3)
+        - Volatility metrics (passing_yards_std3, rushing_yards_cv3, etc.)
         - Weather features (temp_normalized, wind_normalized, is_dome)
         - Game context (is_home, opponent, week, season)
 
@@ -71,7 +81,27 @@ def build_features(seasons: list[int], rolling_window: int = 3) -> pl.DataFrame:
     opp_cols = [c for c in df.columns if "opp_" in c]
     logger.info(f"Added {len(opp_cols)} opponent columns")
 
-    # Step 4: Weather features already included from process_player_stats
+    # Step 4: Add team strength features
+    logger.info("Step 4: Computing team strength features...")
+    import nflreadpy as nfl  # noqa: PLC0415
+
+    team_stats_df = nfl.load_team_stats(seasons)
+    schedules_df = fetch_schedules(seasons)
+    team_strength = compute_team_strength(team_stats_df, schedules_df, window=rolling_window)
+
+    # Join team strength to player data
+    df = df.join(team_strength, on=["season", "week", "team"], how="left")
+    team_cols = [c for c in df.columns if c.startswith("team_") and "_roll" in c]
+    logger.info(f"Added {len(team_cols)} team strength columns")
+
+    # Step 5: Add volatility features for key stats
+    logger.info("Step 5: Computing volatility features...")
+    volatility_stats = ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]
+    df = compute_volatility_features(df, volatility_stats, window=rolling_window)
+    vol_cols = [c for c in df.columns if "_std" in c or "_cv" in c]
+    logger.info(f"Added {len(vol_cols)} volatility columns")
+
+    # Step 6: Weather features already included from process_player_stats
     # Verify they exist
     weather_cols = ["temp_normalized", "wind_normalized"]
     for col in weather_cols:
@@ -84,7 +114,10 @@ def build_features(seasons: list[int], rolling_window: int = 3) -> pl.DataFrame:
     logger.info(
         f"Feature build complete: {len(df)} rows, {len(df.columns)} columns"
     )
-    logger.info(f"Feature types: {len(rolling_cols)} rolling, {len(opp_cols)} opponent, {len(weather_cols)} weather")
+    logger.info(
+        f"Feature types: {len(rolling_cols)} rolling, {len(opp_cols)} opponent, "
+        f"{len(team_cols)} team, {len(vol_cols)} volatility, {len(weather_cols)} weather"
+    )
 
     return df
 
@@ -127,6 +160,13 @@ def get_feature_columns() -> list[str]:
         "opp_total_yards_allowed_rank",
     ]
 
+    # Team strength features
+    team_features = get_team_strength_columns()
+
+    # Volatility features
+    volatility_stats = ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]
+    volatility_features = get_volatility_columns(volatility_stats)
+
     # Weather features
     weather_features = [
         "temp_normalized",
@@ -139,7 +179,14 @@ def get_feature_columns() -> list[str]:
         "is_dome",
     ]
 
-    return rolling_features + opponent_features + weather_features + context_features
+    return (
+        rolling_features
+        + opponent_features
+        + team_features
+        + volatility_features
+        + weather_features
+        + context_features
+    )
 
 
 def get_target_columns() -> dict[str, list[str]]:
