@@ -20,7 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Data Pipeline** - nflreadpy integration, data fetching, raw data storage
 - [x] **Phase 3: Data Processing** - Cleaning, transformations, player/team normalization
 - [x] **Phase 4: Feature Engineering** - Rolling stats, opponent strength, weather features
-- [ ] **Phase 5: Model Development** - Training pipeline, model architecture, cross-validation
+- [x] **Phase 5: Model Development** - Training pipeline, model architecture, cross-validation
 - [ ] **Phase 6: Model Evaluation** - Performance metrics, feature importance, overfitting checks
 - [ ] **Phase 7: Prediction API** - Python API endpoints, inference pipeline, caching
 - [ ] **Phase 8: Convex Backend** - Schema, scoring configs, prediction storage
@@ -82,9 +82,9 @@ Plans:
 
 Plans:
 - [x] 05-01: Training pipeline infrastructure
-- [ ] 05-02: QB passing stat models
+- [x] 05-02: QB passing stat models
 - [x] 05-03: RB rushing stat models
-- [ ] 05-04: WR/TE receiving stat models
+- [x] 05-04: WR/TE receiving stat models
 
 ### Phase 6: Model Evaluation
 **Goal**: Validate model accuracy, analyze feature importance, prevent overfitting
@@ -153,7 +153,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Data Pipeline | 2/2 | Complete | 2026-01-14 |
 | 3. Data Processing | 3/3 | Complete | 2026-01-15 |
 | 4. Feature Engineering | 3/3 | Complete | 2026-01-15 |
-| 5. Model Development | 2/4 | In progress | - |
+| 5. Model Development | 4/4 | Complete | 2026-01-15 |
 | 6. Model Evaluation | 0/3 | Not started | - |
 | 7. Prediction API | 0/3 | Not started | - |
 | 8. Convex Backend | 0/3 | Not started | - |
