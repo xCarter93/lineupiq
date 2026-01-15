@@ -3,5 +3,6 @@ API routes for LineupIQ.
 """
 
 from lineupiq.api.routes.predictions import router
+from lineupiq.api.routes.validation import router as validation_router
 
-__all__ = ["router"]
+__all__ = ["router", "validation_router"]
