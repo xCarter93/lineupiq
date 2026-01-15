@@ -127,6 +127,14 @@ __all__ = [
     "compute_shap_values",
     "get_shap_importance",
     "analyze_feature_importance",
+    # Backtesting
+    "load_holdout_data",
+    "run_backtest",
+    "run_all_backtests",
+    # Accuracy
+    "calculate_model_accuracy",
+    "calculate_confidence_rating",
+    "summarize_backtest_results",
     # QB Models
     "QB_TARGETS",
     "prepare_qb_data",
