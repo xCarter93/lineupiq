@@ -103,14 +103,30 @@ class PredictionRequest(BaseModel):
 
 
 class QBPredictionResponse(BaseModel):
-    """Response schema for QB predictions."""
+    """Response schema for QB predictions.
+
+    Includes all fantasy-relevant QB stats for complete scoring calculations.
+    """
 
     passing_yards: float = Field(..., description="Predicted passing yards")
     passing_tds: float = Field(..., description="Predicted passing TDs")
+    interceptions: float = Field(..., description="Predicted interceptions")
+    rushing_yards: float = Field(..., description="Predicted rushing yards")
+    rushing_tds: float = Field(..., description="Predicted rushing TDs")
+    fumbles_lost: float = Field(..., description="Predicted fumbles lost")
 
     model_config = {
         "json_schema_extra": {
-            "examples": [{"passing_yards": 267.3, "passing_tds": 1.9}]
+            "examples": [
+                {
+                    "passing_yards": 267.3,
+                    "passing_tds": 1.9,
+                    "interceptions": 0.8,
+                    "rushing_yards": 25.5,
+                    "rushing_tds": 0.2,
+                    "fumbles_lost": 0.2,
+                }
+            ]
         }
     }
 

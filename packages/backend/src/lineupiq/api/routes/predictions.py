@@ -57,17 +57,17 @@ def prepare_features(request: PredictionRequest) -> np.ndarray:
 
 @router.post("/qb")
 async def predict_qb(request: PredictionRequest, req: Request) -> JSONResponse:
-    """Predict QB passing stats.
+    """Predict all QB fantasy-relevant stats.
 
-    Takes feature values and returns predicted passing yards and TDs.
-    Responses are cached to reduce redundant inference.
+    Takes feature values and returns predicted passing yards, TDs, interceptions,
+    rushing yards, rushing TDs, and fumbles lost. Responses are cached.
 
     Args:
         request: PredictionRequest with all 17 feature fields.
         req: FastAPI Request object for accessing app state.
 
     Returns:
-        JSONResponse with passing_yards, passing_tds, and X-Cache header.
+        JSONResponse with all 6 QB stat predictions and X-Cache header.
     """
     position = "QB"
     features_dict = request.model_dump()
@@ -82,10 +82,22 @@ async def predict_qb(request: PredictionRequest, req: Request) -> JSONResponse:
     features = prepare_features(request)
     models = get_position_models(req.app.state.models, position)
 
+    # Predict all 6 QB targets
     passing_yards = round(float(models["passing_yards"].predict(features)[0]), 1)
     passing_tds = round(float(models["passing_tds"].predict(features)[0]), 1)
+    interceptions = max(0.0, round(float(models["interceptions"].predict(features)[0]), 1))
+    rushing_yards = round(float(models["rushing_yards"].predict(features)[0]), 1)
+    rushing_tds = max(0.0, round(float(models["rushing_tds"].predict(features)[0]), 1))
+    fumbles_lost = max(0.0, round(float(models["fumbles_lost"].predict(features)[0]), 1))
 
-    response_data = {"passing_yards": passing_yards, "passing_tds": passing_tds}
+    response_data = {
+        "passing_yards": passing_yards,
+        "passing_tds": passing_tds,
+        "interceptions": interceptions,
+        "rushing_yards": rushing_yards,
+        "rushing_tds": rushing_tds,
+        "fumbles_lost": fumbles_lost,
+    }
 
     # Store in cache
     cache.set(position, features_dict, response_data)
