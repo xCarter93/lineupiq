@@ -24,7 +24,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Model Evaluation** - Performance metrics, feature importance, overfitting checks
 - [x] **Phase 7: Prediction API** - Python API endpoints, inference pipeline, caching
 - [x] **Phase 8: Convex Backend** - Schema, scoring configs, prediction storage
-- [ ] **Phase 9: Matchup UI** - Player selection, opponent selection, stat display
+- [x] **Phase 9: Matchup UI** - Player selection, opponent selection, stat display
 - [ ] **Phase 10: Integration & Polish** - End-to-end flow, error handling, UX refinement
 
 ## Phase Details
@@ -128,8 +128,8 @@ Plans:
 
 Plans:
 - [x] 09-01: Player selection component
-- [ ] 09-02: Opponent/matchup selection
-- [ ] 09-03: Stat projection display
+- [x] 09-02: Opponent/matchup selection
+- [x] 09-03: Stat projection display
 
 ### Phase 10: Integration & Polish
 **Goal**: End-to-end flow working, error handling, UX polish
@@ -157,5 +157,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Model Evaluation | 3/3 | Complete | 2026-01-15 |
 | 7. Prediction API | 3/3 | Complete | 2026-01-15 |
 | 8. Convex Backend | 3/3 | Complete | 2026-01-15 |
-| 9. Matchup UI | 1/3 | In progress | - |
+| 9. Matchup UI | 3/3 | Complete | 2026-01-15 |
 | 10. Integration & Polish | 0/3 | Not started | - |
