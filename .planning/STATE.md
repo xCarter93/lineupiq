@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-01-14)
 ## Current Position
 
 Phase: 9 of 10 (Matchup UI)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-15 — Completed 09-01-PLAN.md
+Last activity: 2026-01-15 — Completed 09-02-PLAN.md
 
-Progress: ████████████████████████████████████████████████████████████████████████████████░░░░░░░░░░░░ 83%
+Progress: ████████████████████████████████████████████████████████████████████████████████████░░░░░░░░░░ 87%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25
-- Average duration: 8.8 min
-- Total execution time: 3.6 hours
+- Total plans completed: 26
+- Average duration: 8.5 min
+- Total execution time: 3.7 hours
 
 **By Phase:**
 
@@ -35,11 +35,11 @@ Progress: ███████████████████████�
 | 06-model-evaluation | 3/3 | 49 min | 16.3 min |
 | 07-prediction-api | 3/3 | 30 min | 10.0 min |
 | 08-convex-backend | 3/3 | 20 min | 6.7 min |
-| 09-matchup-ui | 1/3 | 8 min | 8.0 min |
+| 09-matchup-ui | 2/3 | 13 min | 6.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 08-01 (8 min), 08-02 (6 min), 08-03 (6 min), 09-01 (8 min)
-- Trend: Phase 9 in progress, player selection UI complete
+- Last 5 plans: 08-02 (6 min), 08-03 (6 min), 09-01 (8 min), 09-02 (5 min)
+- Trend: Phase 9 progressing well, matchup form complete
 
 ## Accumulated Context
 
@@ -74,6 +74,9 @@ Recent decisions affecting current work:
 | 09-01 | Keep cards pure white | Contrast against warm background |
 | 09-01 | Middle dot for player display | Elegant "Name . Team" format |
 | 09-01 | Clear player on position change | Better UX when filtering changes |
+| 09-02 | Pill buttons for home/away toggle | Consistent with PositionFilter design pattern |
+| 09-02 | NFL_TEAMS as exported constant | Reusable team data across components |
+| 09-02 | createDefaultFeatures helper | Position-typical defaults for prediction API |
 
 ### Pending Todos
 
@@ -85,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T17:08:00Z
-Stopped at: Completed 09-01-PLAN.md (Player selection component)
+Last session: 2026-01-15T17:25:00Z
+Stopped at: Completed 09-02-PLAN.md (Opponent selection and prediction API)
 Resume file: None
