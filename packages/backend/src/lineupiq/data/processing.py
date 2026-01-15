@@ -57,7 +57,12 @@ def add_game_context(player_df: pl.DataFrame, schedule_df: pl.DataFrame) -> pl.D
     logger.info(f"Adding game context to {initial_count} player rows")
 
     # Verify required columns exist
-    required_player_cols = ["season", "week", "recent_team"]
+    # Note: Player data may have "team" or "recent_team" depending on source
+    team_col = "recent_team" if "recent_team" in player_df.columns else "team"
+    if team_col not in player_df.columns:
+        raise ValueError("Player DataFrame missing team column (expected 'recent_team' or 'team')")
+
+    required_player_cols = ["season", "week"]
     required_schedule_cols = ["season", "week", "home_team", "away_team", "game_id"]
 
     for col in required_player_cols:
@@ -100,15 +105,15 @@ def add_game_context(player_df: pl.DataFrame, schedule_df: pl.DataFrame) -> pl.D
     # Join on season, week, and team
     result = player_df.join(
         all_games,
-        left_on=["season", "week", "recent_team"],
+        left_on=["season", "week", team_col],
         right_on=["season", "week", "_join_team"],
         how="left",
     )
 
     # Determine is_home and opponent based on team
     result = result.with_columns([
-        (pl.col("recent_team") == pl.col("home_team")).alias("is_home"),
-        pl.when(pl.col("recent_team") == pl.col("home_team"))
+        (pl.col(team_col) == pl.col("home_team")).alias("is_home"),
+        pl.when(pl.col(team_col) == pl.col("home_team"))
         .then(pl.col("away_team"))
         .otherwise(pl.col("home_team"))
         .alias("opponent"),

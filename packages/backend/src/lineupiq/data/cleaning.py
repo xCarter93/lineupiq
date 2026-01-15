@@ -29,12 +29,14 @@ NUMERIC_STAT_COLUMNS = [
 ]
 
 # ML-relevant columns to select
+# Note: Some sources use "team", others use "recent_team" - include both
 ML_IDENTIFIER_COLUMNS = [
     "player_id",
     "player_name",
     "player_display_name",
     "position",
     "recent_team",
+    "team",  # Alternative to recent_team in some data sources
     "season",
     "week",
 ]

@@ -1,10 +1,11 @@
 """
-LineupIQ Data Module - NFL data fetching, storage, cleaning, and normalization.
+LineupIQ Data Module - NFL data fetching, storage, cleaning, normalization, and processing.
 
 This module provides typed functions for fetching NFL data from nflreadpy
 with consistent interfaces and Polars DataFrame returns, plus cache-aware
-storage with Parquet persistence, data cleaning for ML consumption, and
-normalization utilities for consistent identifiers.
+storage with Parquet persistence, data cleaning for ML consumption,
+normalization utilities for consistent identifiers, and a full processing
+pipeline for ML-ready data.
 
 Public API:
     Fetchers:
@@ -34,6 +35,12 @@ Public API:
         standardize_player_id: Standardize player IDs with player_key
         normalize_position: Normalize position values (FB -> RB)
         normalize_player_data: Full player data normalization pipeline
+
+    Processing:
+        process_player_stats: Full data processing pipeline for ML-ready stats
+        save_processed_data: Save processed data to Parquet file
+        add_game_context: Join player stats with schedule for home/away/opponent
+        add_weather_context: Normalize weather features for ML
 """
 
 from lineupiq.data.cleaning import (
@@ -58,6 +65,12 @@ from lineupiq.data.normalization import (
     normalize_team,
     normalize_team_columns,
     standardize_player_id,
+)
+from lineupiq.data.processing import (
+    add_game_context,
+    add_weather_context,
+    process_player_stats,
+    save_processed_data,
 )
 from lineupiq.data.storage import (
     DATA_DIR,
@@ -95,4 +108,9 @@ __all__ = [
     "standardize_player_id",
     "normalize_position",
     "normalize_player_data",
+    # Processing
+    "process_player_stats",
+    "save_processed_data",
+    "add_game_context",
+    "add_weather_context",
 ]
