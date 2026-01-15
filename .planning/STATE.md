@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 13 of 17 (K/DEF Models + Training Improvements)
-Plan: 6 of 8 in current phase
+Plan: 7 of 8 in current phase
 Status: In progress
-Last activity: 2026-01-15 — Completed 13-06-PLAN.md (Defense Models + API)
+Last activity: 2026-01-15 — Completed 13-07-PLAN.md (Retrain Skill Position Models)
 
-Progress: █████████░ 75% (Phase 13 in progress)
+Progress: █████████░ 88% (Phase 13 in progress)
 
 ## Performance Metrics
 
@@ -71,6 +71,8 @@ Progress: █████████░ 75% (Phase 13 in progress)
 | 13-05 | 30 Optuna trials per kicker target | Balance training time vs optimization |
 | 13-06 | Defense uses def_ prefix columns | nflreadpy team_stats column naming convention |
 | 13-06 | 5 defense target models | Covers main fantasy DST scoring categories |
+| 13-07 | LightGBM default for all skill positions | Consistent with 13-01, enables faster experimentation |
+| 13-07 | train_receiver_models() convenience function | Easier to train WR + TE together |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -90,6 +92,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 13-06-PLAN.md (Defense Models + API)
+Stopped at: Completed 13-07-PLAN.md (Retrain Skill Position Models)
 Resume file: None
-Next action: Continue Wave 2 plan (13-07) or Wave 3 (13-08)
+Next action: Execute Wave 3 plan (13-08 Backtest)
