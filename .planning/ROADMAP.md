@@ -116,8 +116,8 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 08-01: Convex schema and setup
-- [ ] 08-02: Scoring configuration CRUD
+- [x] 08-01: Convex schema and setup
+- [x] 08-02: Scoring configuration CRUD
 - [ ] 08-03: Prediction storage and retrieval
 
 ### Phase 9: Matchup UI
@@ -156,6 +156,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Model Development | 4/4 | Complete | 2026-01-15 |
 | 6. Model Evaluation | 3/3 | Complete | 2026-01-15 |
 | 7. Prediction API | 3/3 | Complete | 2026-01-15 |
-| 8. Convex Backend | 0/3 | Not started | - |
+| 8. Convex Backend | 2/3 | In progress | - |
 | 9. Matchup UI | 0/3 | Not started | - |
 | 10. Integration & Polish | 0/3 | Not started | - |

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Accurate stat-level predictions from well-engineered features and properly trained models.
-**Current focus:** Phase 8 — Convex Backend (in progress)
+**Current focus:** Phase 8 — Convex Backend (complete)
 
 ## Current Position
 
 Phase: 8 of 10 (Convex Backend)
-Plan: 1 of 4 in current phase
-Status: Plan 08-01 complete
-Last activity: 2026-01-15 — Completed 08-01-PLAN.md
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-01-15 — Completed 08-03-PLAN.md
 
-Progress: ██████████████████████████████████████████████████████████████████████████ 73%
+Progress: ████████████████████████████████████████████████████████████████████████████ 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22
-- Average duration: 9.1 min
-- Total execution time: 3.3 hours
+- Total plans completed: 23
+- Average duration: 9.0 min
+- Total execution time: 3.4 hours
 
 **By Phase:**
 
@@ -34,11 +34,11 @@ Progress: ███████████████████████�
 | 05-model-development | 4/4 | 79 min | 19.8 min |
 | 06-model-evaluation | 3/3 | 49 min | 16.3 min |
 | 07-prediction-api | 3/3 | 30 min | 10.0 min |
-| 08-convex-backend | 1/4 | 8 min | 8.0 min |
+| 08-convex-backend | 2/3 | 14 min | 7.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 07-01 (6 min), 07-02 (8 min), 07-03 (16 min), 08-01 (8 min)
-- Trend: Phase 8 started, Convex initialization complete
+- Last 5 plans: 07-02 (8 min), 07-03 (16 min), 08-01 (8 min), 08-02 (6 min)
+- Trend: Phase 8 scoring config CRUD complete
 
 ## Accumulated Context
 
@@ -65,6 +65,8 @@ Recent decisions affecting current work:
 | 07-03 | Initialize cache in lifespan | Consistent with model loading pattern |
 | 08-01 | v.any() for predictions field | Flexible position-specific data structures |
 | 08-01 | Module-level ConvexReactClient | Singleton pattern avoids re-instantiation |
+| 08-02 | Idempotent seedDefaults on mount | Runs every load but only creates if empty |
+| 08-02 | Atomic setDefault mutation | Clear all defaults before setting new one |
 
 ### Pending Todos
 
@@ -76,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T14:38:00Z
-Stopped at: Completed 08-01-PLAN.md (Convex initialization)
+Last session: 2026-01-15T14:51:00Z
+Stopped at: Completed 08-02-PLAN.md (Scoring config CRUD)
 Resume file: None
