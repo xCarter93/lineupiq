@@ -104,7 +104,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 07-01: FastAPI setup and model loading
+- [x] 07-01: FastAPI setup and model loading
 - [ ] 07-02: Prediction endpoints by position
 - [ ] 07-03: Response caching layer
 
@@ -155,7 +155,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Feature Engineering | 3/3 | Complete | 2026-01-15 |
 | 5. Model Development | 4/4 | Complete | 2026-01-15 |
 | 6. Model Evaluation | 3/3 | Complete | 2026-01-15 |
-| 7. Prediction API | 0/3 | Not started | - |
+| 7. Prediction API | 1/3 | In progress | - |
 | 8. Convex Backend | 0/3 | Not started | - |
 | 9. Matchup UI | 0/3 | Not started | - |
 | 10. Integration & Polish | 0/3 | Not started | - |
