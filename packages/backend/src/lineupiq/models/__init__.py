@@ -12,12 +12,14 @@ Submodules:
 - persistence: Model save/load utilities
 - qb: QB-specific model training
 - rb: RB-specific model training
+- receiver: WR and TE model training
 
 Example:
     >>> from lineupiq.models import train_model, tune_hyperparameters
     >>> from lineupiq.models import save_model, load_model, list_models
     >>> from lineupiq.models import train_qb_models, QB_TARGETS
     >>> from lineupiq.models import train_rb_models, RB_TARGETS
+    >>> from lineupiq.models import train_wr_models, train_te_models, RECEIVER_TARGETS
 """
 
 from lineupiq.models.persistence import (
@@ -34,6 +36,12 @@ from lineupiq.models.rb import (
     RB_TARGETS,
     prepare_rb_data,
     train_rb_models,
+)
+from lineupiq.models.receiver import (
+    RECEIVER_TARGETS,
+    prepare_receiver_data,
+    train_te_models,
+    train_wr_models,
 )
 from lineupiq.models.training import (
     create_study,
@@ -60,4 +68,9 @@ __all__ = [
     "RB_TARGETS",
     "prepare_rb_data",
     "train_rb_models",
+    # Receiver Models (WR/TE)
+    "RECEIVER_TARGETS",
+    "prepare_receiver_data",
+    "train_wr_models",
+    "train_te_models",
 ]
