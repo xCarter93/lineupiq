@@ -6,7 +6,8 @@ Provides position-specific model training for RB stat predictions:
 - receiving_yards, receptions (pass-catching stats)
 
 Uses the training infrastructure from training.py with Optuna hyperparameter
-tuning and TimeSeriesSplit validation.
+tuning and TimeSeriesSplit validation. Supports both XGBoost and LightGBM
+(LightGBM default for 7x faster training).
 
 Key functions:
 - prepare_rb_data: Filter and prepare data for RB model training
@@ -23,7 +24,7 @@ from numpy.typing import NDArray
 
 from lineupiq.features.pipeline import build_features, get_feature_columns
 from lineupiq.models.persistence import save_model
-from lineupiq.models.training import train_model, tune_hyperparameters
+from lineupiq.models.training import ModelType, train_model, tune_hyperparameters
 
 logger = logging.getLogger(__name__)
 
@@ -82,11 +83,12 @@ def prepare_rb_data(
 
 
 def train_rb_models(
-    seasons: list[int],
+    seasons: list[int] | None = None,
     n_trials: int = 50,
     rolling_window: int = 3,
+    model_type: ModelType = "lightgbm",
 ) -> dict[str, tuple[Any, dict[str, Any]]]:
-    """Train XGBoost models for all RB targets.
+    """Train ML models for all RB targets.
 
     Runs full hyperparameter tuning for each RB target stat:
     - rushing_yards: Primary rushing stat
@@ -96,13 +98,14 @@ def train_rb_models(
     - receptions: Number of receptions
 
     Args:
-        seasons: List of seasons to train on (e.g., [2019, 2020, 2021, 2022, 2023, 2024]).
+        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
         n_trials: Number of Optuna trials per target (default: 50).
         rolling_window: Rolling window for feature computation (default: 3).
+        model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
 
     Returns:
         Dict mapping target name to (model, metrics) tuple.
-        Metrics include: cv_rmse_mean, cv_rmse_std, best_params, n_samples.
+        Metrics include: cv_rmse_mean, cv_rmse_std, best_params, n_samples, model_type.
 
     Example:
         >>> results = train_rb_models([2023, 2024], n_trials=10)
@@ -112,7 +115,10 @@ def train_rb_models(
         >>> "cv_rmse_mean" in metrics
         True
     """
-    logger.info(f"Training RB models for seasons {seasons} with {n_trials} trials per target")
+    if seasons is None:
+        seasons = [2021, 2022, 2023, 2024]
+
+    logger.info(f"Training RB models for seasons {seasons} with {n_trials} trials using {model_type}")
 
     # Load and prepare data
     logger.info("Loading feature data...")
@@ -128,11 +134,15 @@ def train_rb_models(
 
         # Run hyperparameter tuning
         logger.info(f"  Running {n_trials} Optuna trials...")
-        best_params, study = tune_hyperparameters(X, y, n_trials=n_trials, n_splits=5)
+        best_params, study = tune_hyperparameters(
+            X, y, n_trials=n_trials, n_splits=5, model_type=model_type
+        )
 
         # Train final model with best params
         logger.info(f"  Training final model with best params...")
-        model, cv_scores = train_model(X, y, params=best_params, n_splits=5)
+        model, cv_scores = train_model(
+            X, y, params=best_params, n_splits=5, model_type=model_type
+        )
 
         # Compute metrics (cv_scores are negative RMSE)
         cv_rmse_mean = float(-cv_scores.mean())
@@ -140,8 +150,12 @@ def train_rb_models(
 
         # Prepare metadata
         metadata = {
+            "position": "RB",
+            "target": target,
+            "model_type": model_type,
             "trained_at": datetime.now(timezone.utc).isoformat(),
             "n_samples": len(y),
+            "n_features": X.shape[1],
             "seasons": seasons,
             "best_params": best_params,
             "cv_rmse_mean": cv_rmse_mean,
