@@ -159,6 +159,95 @@ def fetch_snap_counts(seasons: SeasonList = None) -> pl.DataFrame:
         raise RuntimeError(f"Failed to fetch snap counts: {e}") from e
 
 
+def fetch_kicker_stats(seasons: SeasonList = None) -> pl.DataFrame:
+    """Fetch kicker statistics from nflreadpy.
+
+    Args:
+        seasons: Year(s) to fetch.
+            - None: Current season
+            - True: All available history (1999+)
+            - int: Specific season (e.g., 2024)
+            - list[int]: Multiple seasons (e.g., [2022, 2023, 2024])
+
+    Returns:
+        Polars DataFrame filtered to K position with kicking stats:
+        - Identifiers: player_id, player_name, team, week, season
+        - FG stats: fg_made, fg_att, fg_made_0_19 through fg_made_60_
+        - PAT stats: pat_made, pat_att, pat_missed
+
+    Raises:
+        ImportError: If nflreadpy is not installed.
+        RuntimeError: If data fetch fails.
+
+    Example:
+        >>> df = fetch_kicker_stats([2024])
+        >>> df.shape[0]  # Number of kicker game records
+        569
+    """
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    logger.info(f"Fetching kicker stats: seasons={seasons}")
+
+    try:
+        df = nfl.load_player_stats(seasons=seasons, summary_level="week")
+
+        # Filter to kickers only
+        kickers = df.filter(pl.col("position") == "K")
+
+        logger.info(f"Fetched {kickers.shape[0]} kicker game records")
+
+        return kickers
+    except Exception as e:
+        logger.error(f"Failed to fetch kicker stats: {e}")
+        raise RuntimeError(f"Failed to fetch kicker stats: {e}") from e
+
+
+def fetch_team_defense_stats(seasons: SeasonList = None) -> pl.DataFrame:
+    """Fetch team defensive statistics from nflreadpy.
+
+    Args:
+        seasons: Year(s) to fetch.
+            - None: Current season
+            - True: All available history
+            - int: Specific season (e.g., 2024)
+            - list[int]: Multiple seasons (e.g., [2022, 2023, 2024])
+
+    Returns:
+        Polars DataFrame with team-level defensive stats:
+        - Identifiers: team, week, season
+        - Defensive: sacks, interceptions, fumbles_forced, def_tds
+        - Special teams: special_teams_tds
+
+    Raises:
+        ImportError: If nflreadpy is not installed.
+        RuntimeError: If data fetch fails.
+
+    Example:
+        >>> df = fetch_team_defense_stats([2024])
+        >>> df.shape[0]  # Number of team-week records
+        544
+    """
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    logger.info(f"Fetching team defense stats: seasons={seasons}")
+
+    try:
+        df = nfl.load_team_stats(seasons=seasons)
+        logger.info(f"Fetched {df.shape[0]} team-week records")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to fetch team defense stats: {e}")
+        raise RuntimeError(f"Failed to fetch team defense stats: {e}") from e
+
+
 def filter_skill_positions(df: pl.DataFrame) -> pl.DataFrame:
     """Filter DataFrame to skill positions only (QB, RB, WR, TE).
 
