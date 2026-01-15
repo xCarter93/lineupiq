@@ -63,7 +63,7 @@ Plans:
 **Research**: No (data exploration complete)
 
 Plans:
-- [ ] 13-01: LightGBM Migration (wave 1)
+- [x] 13-01: LightGBM Migration (wave 1) — completed 2026-01-15
 - [ ] 13-02: Team Strength & Volatility Features (wave 1)
 - [ ] 13-03: K/DEF Data Pipeline (wave 1)
 - [ ] 13-04: Complete Fantasy Scoring Config (wave 1)
@@ -116,7 +116,7 @@ Plans:
 | 1-10 | v1.0 MVP | 30/30 | ✅ Complete | 2026-01-15 |
 | 11. ML Pipeline Audit | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
 | 12. ML Pipeline Improvements | v1.1 | 5/5 | ✅ Complete | 2026-01-15 |
-| 13. K/DEF + Training | v1.1 | 0/8 | 📋 Planned | - |
+| 13. K/DEF + Training | v1.1 | 1/8 | 🚧 In Progress | - |
 | 14. Complete Fantasy Stats | v1.1 | 0/? | Not started | - |
 | 15. Full Roster + Historical | v1.1 | 0/? | Not started | - |
 | 16. UI Data Visualization | v1.1 | 0/? | Not started | - |
