@@ -127,7 +127,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 09-01: Player selection component
+- [x] 09-01: Player selection component
 - [ ] 09-02: Opponent/matchup selection
 - [ ] 09-03: Stat projection display
 
@@ -157,5 +157,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 6. Model Evaluation | 3/3 | Complete | 2026-01-15 |
 | 7. Prediction API | 3/3 | Complete | 2026-01-15 |
 | 8. Convex Backend | 3/3 | Complete | 2026-01-15 |
-| 9. Matchup UI | 0/3 | Not started | - |
+| 9. Matchup UI | 1/3 | In progress | - |
 | 10. Integration & Polish | 0/3 | Not started | - |

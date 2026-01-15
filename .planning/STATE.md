@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Accurate stat-level predictions from well-engineered features and properly trained models.
-**Current focus:** Phase 8 — Convex Backend (complete)
+**Current focus:** Phase 9 — Matchup UI (in progress)
 
 ## Current Position
 
-Phase: 8 of 10 (Convex Backend)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-15 — Completed 08-03-PLAN.md
+Phase: 9 of 10 (Matchup UI)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-15 — Completed 09-01-PLAN.md
 
-Progress: ████████████████████████████████████████████████████████████████████████████ 80%
+Progress: ████████████████████████████████████████████████████████████████████████████████░░░░░░░░░░░░ 83%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24
-- Average duration: 8.9 min
-- Total execution time: 3.5 hours
+- Total plans completed: 25
+- Average duration: 8.8 min
+- Total execution time: 3.6 hours
 
 **By Phase:**
 
@@ -35,10 +35,11 @@ Progress: ███████████████████████�
 | 06-model-evaluation | 3/3 | 49 min | 16.3 min |
 | 07-prediction-api | 3/3 | 30 min | 10.0 min |
 | 08-convex-backend | 3/3 | 20 min | 6.7 min |
+| 09-matchup-ui | 1/3 | 8 min | 8.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 07-03 (16 min), 08-01 (8 min), 08-02 (6 min), 08-03 (6 min)
-- Trend: Phase 8 complete, ready for Phase 9 Matchup UI
+- Last 5 plans: 08-01 (8 min), 08-02 (6 min), 08-03 (6 min), 09-01 (8 min)
+- Trend: Phase 9 in progress, player selection UI complete
 
 ## Accumulated Context
 
@@ -69,6 +70,10 @@ Recent decisions affecting current work:
 | 08-02 | Atomic setDefault mutation | Clear all defaults before setting new one |
 | 08-03 | Sort players by name in-memory | Convex doesn't support order_by on non-indexed fields |
 | 08-03 | Return {data, isLoading} from hooks | Consistent loading state handling across all hooks |
+| 09-01 | Warm cream background (oklch 0.965 0.015 85) | Greptile-inspired design aesthetic |
+| 09-01 | Keep cards pure white | Contrast against warm background |
+| 09-01 | Middle dot for player display | Elegant "Name . Team" format |
+| 09-01 | Clear player on position change | Better UX when filtering changes |
 
 ### Pending Todos
 
@@ -80,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T11:35:23Z
-Stopped at: Completed 08-03-PLAN.md (Prediction storage and player lookup)
+Last session: 2026-01-15T17:08:00Z
+Stopped at: Completed 09-01-PLAN.md (Player selection component)
 Resume file: None
