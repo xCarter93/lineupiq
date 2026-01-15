@@ -79,7 +79,10 @@ Plans:
 **Research**: Unlikely (extending existing patterns)
 
 Plans:
-- [ ] 14-01: TBD
+- [x] 14-01: QB Complete Stats (wave 1) — completed 2026-01-15
+- [x] 14-02: RB Complete Stats (wave 1) — completed 2026-01-15
+- [x] 14-03: WR/TE Complete Stats (wave 1) — completed 2026-01-15
+- [x] 14-04: Frontend Integration (wave 2) — completed 2026-01-15
 
 #### Phase 15: Full Roster + Historical Data
 
@@ -117,7 +120,7 @@ Plans:
 | 11. ML Pipeline Audit | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
 | 12. ML Pipeline Improvements | v1.1 | 5/5 | ✅ Complete | 2026-01-15 |
 | 13. K/DEF + Training | v1.1 | 8/8 | ✅ Complete | 2026-01-15 |
-| 14. Complete Fantasy Stats | v1.1 | 0/? | Not started | - |
+| 14. Complete Fantasy Stats | v1.1 | 4/4 | ✅ Complete | 2026-01-15 |
 | 15. Full Roster + Historical | v1.1 | 0/? | Not started | - |
 | 16. UI Data Visualization | v1.1 | 0/? | Not started | - |
 | 17. Model Explainability UI | v1.1 | 0/? | Not started | - |
