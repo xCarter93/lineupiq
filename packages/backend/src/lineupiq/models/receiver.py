@@ -2,8 +2,8 @@
 Receiver (WR/TE) model training module.
 
 Provides training functions for Wide Receiver and Tight End receiving stat predictions.
-WR and TE share the same targets (receiving_yards, receiving_tds, receptions) but have
-different stat distributions - TEs typically have lower volume and fewer TDs.
+WR and TE share the same targets (receiving_yards, receiving_tds, receptions, fumbles_lost)
+but have different stat distributions - TEs typically have lower volume and fewer TDs.
 
 Supports both XGBoost and LightGBM (LightGBM default for 7x faster training).
 
@@ -28,7 +28,7 @@ from lineupiq.models.training import ModelType, train_model, tune_hyperparameter
 logger = logging.getLogger(__name__)
 
 # Receiving stats to predict for both WR and TE
-RECEIVER_TARGETS = ["receiving_yards", "receiving_tds", "receptions"]
+RECEIVER_TARGETS = ["receiving_yards", "receiving_tds", "receptions", "fumbles_lost"]
 
 
 def prepare_receiver_data(
@@ -45,6 +45,7 @@ def prepare_receiver_data(
 
     Returns:
         Tuple of (X features array, dict of target arrays by target name).
+        Targets: receiving_yards, receiving_tds, receptions, fumbles_lost.
 
     Raises:
         ValueError: If position is not WR or TE.
@@ -56,6 +57,8 @@ def prepare_receiver_data(
         True
         >>> "receiving_yards" in y_dict
         True
+        >>> "fumbles_lost" in y_dict
+        True
     """
     if position not in ("WR", "TE"):
         raise ValueError(f"Position must be 'WR' or 'TE', got '{position}'")
@@ -63,6 +66,11 @@ def prepare_receiver_data(
     # Filter to position
     df_pos = df.filter(pl.col("position") == position)
     logger.info(f"Filtered to {len(df_pos)} {position} rows")
+
+    # Map receiving_fumbles_lost to fumbles_lost for model target
+    df_pos = df_pos.with_columns(
+        pl.col("receiving_fumbles_lost").fill_null(0).alias("fumbles_lost")
+    )
 
     # Get feature and target columns
     feature_cols = get_feature_columns()
