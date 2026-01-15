@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 12 of 17 (ML Pipeline Improvements)
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: In progress
-Last activity: 2026-01-15 — Completed 12-03-PLAN.md
+Last activity: 2026-01-15 — Completed 12-02-PLAN.md
 
-Progress: ██░░░░░░░░ 17%
+Progress: ██░░░░░░░░ 19%
 
 ## Performance Metrics
 
@@ -50,6 +50,8 @@ Progress: ██░░░░░░░░ 17%
 | 11 | LightGBM before ensembles | 7x speedup enables experimentation first |
 | 11 | Defer KNN imputation | A/B test after baseline improvements |
 | 12 | Separate modelMetrics/overallMetrics tables | Efficient queries for different access patterns |
+| 12 | Split conformal over MAPIE wrapper | Works with existing trained models without retraining |
+| 12 | 90% confidence intervals (alpha=0.1) | Informative bounds without excessive uncertainty |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -69,5 +71,5 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 12-03-PLAN.md (Phase 12 in progress)
+Stopped at: Completed 12-02-PLAN.md (Phase 12 in progress)
 Resume file: None
