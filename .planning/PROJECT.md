@@ -12,20 +12,19 @@ Accurate stat-level predictions from well-engineered features and properly train
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Monorepo structure with Python ML backend and Next.js/TypeScript frontend — v1.0
+- ✓ Data pipeline using nflreadpy to fetch and process historical NFL data (1999-2025) — v1.0
+- ✓ Feature engineering for ML models (opponent strength, home/away, rolling stats) — v1.0
+- ✓ ML models to predict individual stats for skill positions (QB, RB, WR, TE) — v1.0
+- ✓ Stat predictions: passing yards/TDs/INTs, rushing yards/TDs, receiving yards/TDs/receptions — v1.0
+- ✓ Matchup simulation UI: select player + opponent → view projected stats — v1.0
+- ✓ Configurable fantasy scoring (standard scoring default) — v1.0
+- ✓ Convex backend for app state, scoring configs, and cached predictions — v1.0
+- ✓ Training pipeline that can retrain models as new season data becomes available — v1.0
 
 ### Active
 
-- [ ] Monorepo structure with Python ML backend and Next.js/TypeScript frontend
-- [ ] Data pipeline using nflreadpy to fetch and process historical NFL data (1999-2025)
-- [ ] Feature engineering for ML models (opponent strength, weather, home/away, rolling stats)
-- [ ] ML models to predict individual stats for skill positions (QB, RB, WR, TE)
-- [ ] Stat predictions: passing yards/TDs/INTs, rushing yards/TDs, receiving yards/TDs/receptions
-- [ ] Matchup simulation UI: select player + opponent → view projected stats
-- [ ] Configurable fantasy scoring (standard scoring default)
-- [ ] Weather factor integration for predictions
-- [ ] Convex backend for app state, scoring configs, and cached predictions
-- [ ] Training pipeline that can retrain models as new season data becomes available
+(None — v1.0 MVP complete)
 
 ### Out of Scope
 
@@ -36,6 +35,7 @@ Accurate stat-level predictions from well-engineered features and properly train
 - Monte Carlo/distribution-based predictions — single point estimates for MVP
 - Play-by-play game simulation — just stat predictions per matchup
 - Mobile-first design — desktop-first for v1
+- Weather factor integration — deferred (weak correlation per ML research)
 
 ## Context
 
@@ -98,12 +98,31 @@ Accurate stat-level predictions from well-engineered features and properly train
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Predict individual stats, not fantasy points | More accurate, allows custom scoring | — Pending |
-| Skill positions first (QB/RB/WR/TE) | More data, higher fantasy impact | — Pending |
-| Monorepo with Python + Next.js | Clean separation of ML and UI concerns | — Pending |
-| nflreadpy over nfl_data_py | nfl_data_py deprecated, nflreadpy actively maintained | — Pending |
-| Standard scoring only for MVP | Reduces complexity, can add formats later | — Pending |
-| Start with minimal features | Avoid previous overfitting issues | — Pending |
+| Predict individual stats, not fantasy points | More accurate, allows custom scoring | ✓ Good |
+| Skill positions first (QB/RB/WR/TE) | More data, higher fantasy impact | ✓ Good |
+| Monorepo with Python + Next.js | Clean separation of ML and UI concerns | ✓ Good |
+| nflreadpy over nfl_data_py | nfl_data_py deprecated, nflreadpy actively maintained | ✓ Good |
+| Standard scoring only for MVP | Reduces complexity, can add formats later | ✓ Good |
+| Start with minimal features | Avoid previous overfitting issues | ✓ Good |
+| XGBoost with Optuna tuning | Ensemble methods outperform, auto hyperparameter search | ✓ Good |
+| 6 seasons training data (2019-2024) | ~3,770 QB samples, robust for all positions | ✓ Good |
+| SHA-256 hash for cache keys | Deterministic, collision-resistant | ✓ Good |
+| Greptile design aesthetic | Warm cream background, white cards, clean UI | ✓ Good |
+| CORS middleware for localhost | Frontend:3000 to API:8000 communication | ✓ Good |
+
+## Current State
+
+**Version:** v1.0 MVP (shipped 2026-01-15)
+
+**Tech Stack:**
+- Frontend: Next.js 16, TypeScript, Shadcn UI, Tailwind CSS 4, Convex
+- Backend: Python 3.12, FastAPI, XGBoost, Optuna, nflreadpy
+- Infrastructure: pnpm workspaces, uv package manager
+
+**Codebase:**
+- ~4,700 lines Python (ML pipeline, API)
+- ~4,000 lines TypeScript (UI, hooks, utilities)
+- 190 files total
 
 ---
-*Last updated: 2026-01-14 after initialization*
+*Last updated: 2026-01-15 after v1.0 milestone*
