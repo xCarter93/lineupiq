@@ -83,7 +83,7 @@ Plans:
 Plans:
 - [x] 05-01: Training pipeline infrastructure
 - [ ] 05-02: QB passing stat models
-- [ ] 05-03: RB rushing stat models
+- [x] 05-03: RB rushing stat models
 - [ ] 05-04: WR/TE receiving stat models
 
 ### Phase 6: Model Evaluation
@@ -153,7 +153,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 2. Data Pipeline | 2/2 | Complete | 2026-01-14 |
 | 3. Data Processing | 3/3 | Complete | 2026-01-15 |
 | 4. Feature Engineering | 3/3 | Complete | 2026-01-15 |
-| 5. Model Development | 1/4 | In progress | - |
+| 5. Model Development | 2/4 | In progress | - |
 | 6. Model Evaluation | 0/3 | Not started | - |
 | 7. Prediction API | 0/3 | Not started | - |
 | 8. Convex Backend | 0/3 | Not started | - |
