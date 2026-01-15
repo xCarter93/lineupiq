@@ -11,11 +11,13 @@ Submodules:
 - training: Model training and hyperparameter tuning
 - persistence: Model save/load utilities
 - qb: QB-specific model training
+- rb: RB-specific model training
 
 Example:
     >>> from lineupiq.models import train_model, tune_hyperparameters
     >>> from lineupiq.models import save_model, load_model, list_models
     >>> from lineupiq.models import train_qb_models, QB_TARGETS
+    >>> from lineupiq.models import train_rb_models, RB_TARGETS
 """
 
 from lineupiq.models.persistence import (
@@ -27,6 +29,11 @@ from lineupiq.models.qb import (
     QB_TARGETS,
     prepare_qb_data,
     train_qb_models,
+)
+from lineupiq.models.rb import (
+    RB_TARGETS,
+    prepare_rb_data,
+    train_rb_models,
 )
 from lineupiq.models.training import (
     create_study,
@@ -49,4 +56,8 @@ __all__ = [
     "QB_TARGETS",
     "prepare_qb_data",
     "train_qb_models",
+    # RB Models
+    "RB_TARGETS",
+    "prepare_rb_data",
+    "train_rb_models",
 ]
