@@ -132,13 +132,21 @@ class QBPredictionResponse(BaseModel):
 
 
 class RBPredictionResponse(BaseModel):
-    """Response schema for RB predictions."""
+    """Response schema for RB predictions.
+
+    Includes all 7 fantasy-relevant stats:
+    - Rushing: rushing_yards, rushing_tds, carries
+    - Receiving: receiving_yards, receptions, receiving_tds
+    - Turnovers: fumbles_lost (combined rushing + receiving)
+    """
 
     rushing_yards: float = Field(..., description="Predicted rushing yards")
     rushing_tds: float = Field(..., description="Predicted rushing TDs")
     carries: float = Field(..., description="Predicted carries")
     receiving_yards: float = Field(..., description="Predicted receiving yards")
     receptions: float = Field(..., description="Predicted receptions")
+    receiving_tds: float = Field(..., description="Predicted receiving TDs")
+    fumbles_lost: float = Field(..., description="Predicted fumbles lost")
 
     model_config = {
         "json_schema_extra": {
@@ -149,6 +157,8 @@ class RBPredictionResponse(BaseModel):
                     "carries": 16.2,
                     "receiving_yards": 22.1,
                     "receptions": 2.8,
+                    "receiving_tds": 0.1,
+                    "fumbles_lost": 0.05,
                 }
             ]
         }

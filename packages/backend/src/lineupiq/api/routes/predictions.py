@@ -107,17 +107,21 @@ async def predict_qb(request: PredictionRequest, req: Request) -> JSONResponse:
 
 @router.post("/rb")
 async def predict_rb(request: PredictionRequest, req: Request) -> JSONResponse:
-    """Predict RB rushing and receiving stats.
+    """Predict all RB fantasy-relevant stats.
 
-    Takes feature values and returns predicted rushing yards, TDs, carries,
-    receiving yards, and receptions. Responses are cached.
+    Takes feature values and returns all 7 RB predictions:
+    - Rushing: rushing_yards, rushing_tds, carries
+    - Receiving: receiving_yards, receptions, receiving_tds
+    - Turnovers: fumbles_lost
+
+    Responses are cached to reduce redundant model inference.
 
     Args:
         request: PredictionRequest with all 17 feature fields.
         req: FastAPI Request object for accessing app state.
 
     Returns:
-        JSONResponse with all 5 stat predictions and X-Cache header.
+        JSONResponse with all 7 stat predictions and X-Cache header.
     """
     position = "RB"
     features_dict = request.model_dump()
@@ -132,11 +136,14 @@ async def predict_rb(request: PredictionRequest, req: Request) -> JSONResponse:
     features = prepare_features(request)
     models = get_position_models(req.app.state.models, position)
 
+    # Predict all 7 RB targets
     rushing_yards = round(float(models["rushing_yards"].predict(features)[0]), 1)
-    rushing_tds = round(float(models["rushing_tds"].predict(features)[0]), 1)
+    rushing_tds = max(0.0, round(float(models["rushing_tds"].predict(features)[0]), 1))
     carries = round(float(models["carries"].predict(features)[0]), 1)
     receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
     receptions = round(float(models["receptions"].predict(features)[0]), 1)
+    receiving_tds = max(0.0, round(float(models["receiving_tds"].predict(features)[0]), 1))
+    fumbles_lost = max(0.0, round(float(models["fumbles_lost"].predict(features)[0]), 1))
 
     response_data = {
         "rushing_yards": rushing_yards,
@@ -144,6 +151,8 @@ async def predict_rb(request: PredictionRequest, req: Request) -> JSONResponse:
         "carries": carries,
         "receiving_yards": receiving_yards,
         "receptions": receptions,
+        "receiving_tds": receiving_tds,
+        "fumbles_lost": fumbles_lost,
     }
 
     # Store in cache
