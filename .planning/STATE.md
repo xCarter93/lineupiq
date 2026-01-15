@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-01-14)
 
 **Core value:** Accurate stat-level predictions from well-engineered features and properly trained models.
-**Current focus:** Phase 9 — Matchup UI (in progress)
+**Current focus:** Phase 9 — Matchup UI (complete)
 
 ## Current Position
 
-Phase: 9 of 10 (Matchup UI)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-15 — Completed 09-02-PLAN.md
+Phase: 9 of 10 (Matchup UI) - COMPLETE
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-01-15 — Completed 09-03-PLAN.md (Stat projection display)
 
-Progress: ████████████████████████████████████████████████████████████████████████████████████░░░░░░░░░░ 87%
+Progress: ████████████████████████████████████████████████████████████████████████████████████████████░░░ 93%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26
+- Total plans completed: 27
 - Average duration: 8.5 min
 - Total execution time: 3.7 hours
 
@@ -35,11 +35,11 @@ Progress: ███████████████████████�
 | 06-model-evaluation | 3/3 | 49 min | 16.3 min |
 | 07-prediction-api | 3/3 | 30 min | 10.0 min |
 | 08-convex-backend | 3/3 | 20 min | 6.7 min |
-| 09-matchup-ui | 2/3 | 13 min | 6.5 min |
+| 09-matchup-ui | 3/3 | 25 min | 8.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 08-02 (6 min), 08-03 (6 min), 09-01 (8 min), 09-02 (5 min)
-- Trend: Phase 9 progressing well, matchup form complete
+- Last 5 plans: 08-03 (6 min), 09-01 (8 min), 09-02 (5 min), 09-03 (12 min)
+- Trend: Phase 9 complete, matchup UI fully functional
 
 ## Accumulated Context
 
@@ -77,6 +77,9 @@ Recent decisions affecting current work:
 | 09-02 | Pill buttons for home/away toggle | Consistent with PositionFilter design pattern |
 | 09-02 | NFL_TEAMS as exported constant | Reusable team data across components |
 | 09-02 | createDefaultFeatures helper | Position-typical defaults for prediction API |
+| 09-03 | Position-specific stat grids | Show only relevant stats per position type |
+| 09-03 | Fantasy points as hero element | Emerald/primary color for visual prominence |
+| 09-03 | CORS middleware for localhost | Allow frontend:3000 to call API:8000 |
 
 ### Pending Todos
 
@@ -88,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-15T17:25:00Z
-Stopped at: Completed 09-02-PLAN.md (Opponent selection and prediction API)
+Last session: 2026-01-15T18:12:00Z
+Stopped at: Completed 09-03-PLAN.md (Stat projection display) - Phase 9 complete
 Resume file: None
