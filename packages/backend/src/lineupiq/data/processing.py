@@ -185,3 +185,119 @@ def add_weather_context(df: pl.DataFrame) -> pl.DataFrame:
 
     logger.info("Weather normalization complete")
     return df
+
+
+# =============================================================================
+# Main processing pipeline
+# =============================================================================
+
+# Data directory for processed output
+PROCESSED_DIR = Path(__file__).parent.parent.parent.parent / "data" / "processed"
+
+
+def process_player_stats(
+    seasons: list[int],
+    force_refresh: bool = False,
+) -> pl.DataFrame:
+    """Main data processing pipeline for ML-ready player stats.
+
+    This is THE main entry point for getting ML-ready data. It:
+    1. Loads raw player stats and schedules (cached)
+    2. Cleans both datasets
+    3. Normalizes (team abbreviations, player IDs, positions)
+    4. Adds game context (home/away, opponent)
+    5. Adds weather normalization
+
+    Args:
+        seasons: List of seasons to process (e.g., [2023, 2024]).
+        force_refresh: If True, force re-fetch from nflreadpy.
+
+    Returns:
+        Fully processed DataFrame ready for feature engineering, with columns:
+        - Player identifiers: player_id, player_name, position, recent_team, etc.
+        - Stats: passing_yards, rushing_yards, receiving_yards, etc.
+        - Game context: is_home, opponent, game_id
+        - Weather: temp_normalized, wind_normalized
+
+    Example:
+        >>> df = process_player_stats([2024])
+        >>> "is_home" in df.columns
+        True
+        >>> "opponent" in df.columns
+        True
+    """
+    from lineupiq.data.cleaning import clean_player_stats, clean_schedules
+    from lineupiq.data.normalization import normalize_player_data, normalize_team_columns
+    from lineupiq.data.storage import load_player_stats_cached, load_schedules_cached
+
+    logger.info(f"Starting data processing pipeline for seasons {seasons}")
+
+    # Step 1: Load raw data (with caching)
+    logger.info("Step 1: Loading raw data...")
+    player_stats = load_player_stats_cached(seasons, force_refresh=force_refresh)
+    schedules = load_schedules_cached(seasons, force_refresh=force_refresh)
+
+    initial_rows = len(player_stats)
+    logger.info(f"Loaded {initial_rows} player rows, {len(schedules)} schedule rows")
+
+    # Step 2: Clean data
+    logger.info("Step 2: Cleaning data...")
+    player_stats = clean_player_stats(player_stats)
+    schedules = clean_schedules(schedules)
+
+    after_clean_rows = len(player_stats)
+    logger.info(f"After cleaning: {after_clean_rows} player rows")
+
+    # Step 3: Normalize
+    logger.info("Step 3: Normalizing data...")
+    player_stats = normalize_player_data(player_stats)
+    schedules = normalize_team_columns(schedules)
+
+    # Step 4: Add game context
+    logger.info("Step 4: Adding game context...")
+    player_stats = add_game_context(player_stats, schedules)
+
+    # Step 5: Add weather normalization
+    logger.info("Step 5: Normalizing weather data...")
+    player_stats = add_weather_context(player_stats)
+
+    # Step 6: Sort for consistent ordering
+    player_stats = player_stats.sort(["season", "week", "player_id"])
+
+    final_rows = len(player_stats)
+    final_cols = len(player_stats.columns)
+
+    logger.info(
+        f"Pipeline complete: {initial_rows} -> {final_rows} rows, {final_cols} columns"
+    )
+    logger.info(f"Output columns: {player_stats.columns[:15]}...")
+
+    return player_stats
+
+
+def save_processed_data(
+    df: pl.DataFrame,
+    name: str = "processed_stats",
+) -> Path:
+    """Save processed data to Parquet file.
+
+    Args:
+        df: Processed DataFrame to save.
+        name: File name (without extension).
+
+    Returns:
+        Path to the saved file.
+
+    Example:
+        >>> df = process_player_stats([2024])
+        >>> path = save_processed_data(df, "player_stats_2024")
+        >>> path.exists()
+        True
+    """
+    PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    output_path = PROCESSED_DIR / f"{name}.parquet"
+
+    df.write_parquet(output_path)
+    logger.info(f"Saved {len(df)} rows to {output_path}")
+
+    return output_path
