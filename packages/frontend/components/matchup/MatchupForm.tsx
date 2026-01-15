@@ -76,7 +76,8 @@ export function MatchupForm({ onSubmit, isLoading = false }: MatchupFormProps) {
       : (selectedPosition.toUpperCase() as "QB" | "RB" | "WR" | "TE");
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} aria-busy={isLoading}>
+      <fieldset disabled={isLoading} className="contents">
       <div className="bg-white rounded-xl shadow-sm p-8">
         {/* Section 1: Player Selection */}
         <div className="space-y-6">
@@ -249,6 +250,7 @@ export function MatchupForm({ onSubmit, isLoading = false }: MatchupFormProps) {
           </Button>
         </div>
       </div>
+      </fieldset>
     </form>
   );
 }
