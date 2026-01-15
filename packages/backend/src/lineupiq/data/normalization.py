@@ -137,3 +137,156 @@ def normalize_team_columns(df: pl.DataFrame) -> pl.DataFrame:
 
     logger.info(f"Normalized {len(existing_team_columns)} team columns")
     return df
+
+
+# =============================================================================
+# Player ID and position normalization
+# =============================================================================
+
+# Position mapping for normalization
+POSITION_MAPPING: dict[str, str] = {
+    # Lowercase to uppercase
+    "qb": "QB",
+    "rb": "RB",
+    "wr": "WR",
+    "te": "TE",
+    # Mixed case to uppercase
+    "Qb": "QB",
+    "Rb": "RB",
+    "Wr": "WR",
+    "Te": "TE",
+    # Fullback to RB (grouped for fantasy purposes)
+    "FB": "RB",
+    "fb": "RB",
+    "Fb": "RB",
+}
+
+
+def standardize_player_id(df: pl.DataFrame) -> pl.DataFrame:
+    """Standardize player_id column for consistent joins.
+
+    Processing:
+    - Ensures player_id is string type
+    - Strips leading/trailing whitespace
+    - Creates player_key column (lowercase player_id for case-insensitive matching)
+
+    Args:
+        df: DataFrame with player_id column.
+
+    Returns:
+        DataFrame with standardized player_id and new player_key column.
+
+    Example:
+        >>> df = pl.DataFrame({"player_id": [" ABC123 ", "DEF456"]})
+        >>> result = standardize_player_id(df)
+        >>> result["player_id"].to_list()
+        ['ABC123', 'DEF456']
+        >>> result["player_key"].to_list()
+        ['abc123', 'def456']
+    """
+    if "player_id" not in df.columns:
+        logger.debug("No player_id column found")
+        return df
+
+    initial_count = len(df)
+
+    # Cast to string and strip whitespace
+    df = df.with_columns(
+        pl.col("player_id").cast(pl.Utf8).str.strip_chars().alias("player_id")
+    )
+
+    # Count fixes (where original != cleaned, approximating with whitespace check)
+    # Note: Exact fix count requires comparing before/after which is expensive
+
+    # Create player_key for case-insensitive matching
+    df = df.with_columns(
+        pl.col("player_id").str.to_lowercase().alias("player_key")
+    )
+
+    logger.info(f"Standardized player_id for {initial_count} rows, added player_key")
+    return df
+
+
+def normalize_position(df: pl.DataFrame) -> pl.DataFrame:
+    """Normalize position values to uppercase with FB->RB grouping.
+
+    Processing:
+    - Converts position to uppercase (qb -> QB, Rb -> RB)
+    - Groups fullbacks with running backs (FB -> RB)
+
+    Args:
+        df: DataFrame with position column.
+
+    Returns:
+        DataFrame with normalized position values.
+
+    Example:
+        >>> df = pl.DataFrame({"position": ["qb", "FB", "WR"]})
+        >>> result = normalize_position(df)
+        >>> result["position"].to_list()
+        ['QB', 'RB', 'WR']
+    """
+    if "position" not in df.columns:
+        logger.debug("No position column found")
+        return df
+
+    initial_positions = df["position"].unique().to_list()
+
+    # First convert to uppercase, then apply position mapping for special cases
+    df = df.with_columns(
+        pl.col("position").str.to_uppercase().alias("position")
+    )
+
+    # Handle FB -> RB conversion
+    df = df.with_columns(
+        pl.when(pl.col("position") == "FB")
+        .then(pl.lit("RB"))
+        .otherwise(pl.col("position"))
+        .alias("position")
+    )
+
+    final_positions = df["position"].unique().to_list()
+    logger.info(
+        f"Normalized positions: {len(initial_positions)} unique -> "
+        f"{len(final_positions)} unique"
+    )
+
+    return df
+
+
+def normalize_player_data(df: pl.DataFrame) -> pl.DataFrame:
+    """Orchestrator: apply all player data normalizations.
+
+    Pipeline:
+    1. normalize_team_columns - Standardize team abbreviations
+    2. standardize_player_id - Clean player IDs and create player_key
+    3. normalize_position - Uppercase positions, FB -> RB
+
+    Args:
+        df: DataFrame with player data.
+
+    Returns:
+        Fully normalized player DataFrame ready for joins.
+
+    Example:
+        >>> df = pl.DataFrame({
+        ...     "player_id": [" ABC123 "],
+        ...     "position": ["fb"],
+        ...     "recent_team": ["OAK"]
+        ... })
+        >>> result = normalize_player_data(df)
+        >>> result["player_id"][0]
+        'ABC123'
+        >>> result["position"][0]
+        'RB'
+        >>> result["recent_team"][0]
+        'LV'
+    """
+    logger.info(f"Starting player data normalization ({len(df)} rows)")
+
+    df = normalize_team_columns(df)
+    df = standardize_player_id(df)
+    df = normalize_position(df)
+
+    logger.info(f"Player data normalization complete: {df.shape}")
+    return df
