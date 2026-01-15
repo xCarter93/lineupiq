@@ -16,7 +16,7 @@ def compute_rolling_stats(df: pl.DataFrame, window: int = 3) -> pl.DataFrame:
     """Compute rolling window statistics for player performance.
 
     Calculates rolling averages for passing, rushing, and receiving stats
-    over a configurable number of games. Uses min_periods=1 to handle players
+    over a configurable number of games. Uses min_samples=1 to handle players
     with fewer than `window` games (early season or new players).
 
     Args:
@@ -80,7 +80,7 @@ def compute_rolling_stats(df: pl.DataFrame, window: int = 3) -> pl.DataFrame:
         if stat_col in df.columns:
             rolling_exprs.append(
                 pl.col(stat_col)
-                .rolling_mean(window_size=window, min_periods=1)
+                .rolling_mean(window_size=window, min_samples=1)
                 .over("player_id")
                 .alias(roll_col)
             )
