@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 14 of 17 (Complete Fantasy Stats)
-Plan: 2 of 3 in current phase
-Status: Plan 14-02 complete
-Last activity: 2026-01-15 — Completed 14-02-PLAN.md (RB Complete Stats)
+Plan: 3 of 4 in current phase
+Status: Plan 14-03 complete
+Last activity: 2026-01-15 — Completed 14-03-PLAN.md (WR/TE Complete Stats)
 
-Progress: █████████░ 96% (Plan 14-02 complete, ready for 14-03)
+Progress: █████████░ 97% (Plan 14-03 complete, ready for 14-04)
 
 ## Performance Metrics
 
@@ -82,6 +82,8 @@ Progress: █████████░ 96% (Plan 14-02 complete, ready for 14-
 | 14-02 | Combined fumbles_lost in prepare_rb_data() | Sum of rushing + receiving fumbles for fantasy scoring |
 | 14-02 | Add fumble columns to ML_COLUMNS | Ensures data flows through cleaning pipeline |
 | 14-02 | Non-negative guards for RB count stats | Consistent with 14-01 approach for TDs/fumbles |
+| 14-03 | Map receiving_fumbles_lost to fumbles_lost | Consistent API naming across positions |
+| 14-03 | Round fumbles_lost to 2 decimals | Rare events (~0.01-0.02/game) need precision |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -101,6 +103,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Completed 14-02-PLAN.md (RB Complete Stats)
+Stopped at: Completed 14-03-PLAN.md (WR/TE Complete Stats)
 Resume file: None
-Next action: Execute 14-03-PLAN.md (WR/TE Complete Stats)
+Next action: Execute 14-04-PLAN.md (if exists) or plan next phase
