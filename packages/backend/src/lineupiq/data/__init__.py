@@ -12,6 +12,8 @@ Public API:
         fetch_player_stats: Weekly/seasonal player statistics
         fetch_schedules: Game schedules with weather/venue data
         fetch_snap_counts: Snap participation data
+        fetch_kicker_stats: Kicker statistics (K position only)
+        fetch_team_defense_stats: Team-level defensive statistics
         filter_skill_positions: Filter to QB/RB/WR/TE only
         SKILL_POSITIONS: Frozenset of skill position codes
 
@@ -41,6 +43,16 @@ Public API:
         save_processed_data: Save processed data to Parquet file
         add_game_context: Join player stats with schedule for home/away/opponent
         add_weather_context: Normalize weather features for ML
+
+    Kicker Processing:
+        process_kicker_data: Kicker data processing pipeline for ML
+        get_kicker_feature_columns: Feature column names for kicker models
+        get_kicker_target_columns: Target column names for kicker models
+
+    Defense Processing:
+        process_defense_data: Team defense data processing pipeline for ML
+        get_defense_feature_columns: Feature column names for defense models
+        get_defense_target_columns: Target column names for defense models
 """
 
 from lineupiq.data.cleaning import (
@@ -50,12 +62,24 @@ from lineupiq.data.cleaning import (
     select_ml_columns,
     validate_player_stats,
 )
+from lineupiq.data.defense_processing import (
+    get_defense_feature_columns,
+    get_defense_target_columns,
+    process_defense_data,
+)
 from lineupiq.data.fetchers import (
     SKILL_POSITIONS,
+    fetch_kicker_stats,
     fetch_player_stats,
     fetch_schedules,
     fetch_snap_counts,
+    fetch_team_defense_stats,
     filter_skill_positions,
+)
+from lineupiq.data.kicker_processing import (
+    get_kicker_feature_columns,
+    get_kicker_target_columns,
+    process_kicker_data,
 )
 from lineupiq.data.normalization import (
     CURRENT_TEAMS,
@@ -83,9 +107,11 @@ from lineupiq.data.storage import (
 __all__ = [
     # Fetchers
     "SKILL_POSITIONS",
+    "fetch_kicker_stats",
     "fetch_player_stats",
     "fetch_schedules",
     "fetch_snap_counts",
+    "fetch_team_defense_stats",
     "filter_skill_positions",
     # Storage
     "DATA_DIR",
@@ -113,4 +139,12 @@ __all__ = [
     "save_processed_data",
     "add_game_context",
     "add_weather_context",
+    # Kicker processing
+    "process_kicker_data",
+    "get_kicker_feature_columns",
+    "get_kicker_target_columns",
+    # Defense processing
+    "process_defense_data",
+    "get_defense_feature_columns",
+    "get_defense_target_columns",
 ]
