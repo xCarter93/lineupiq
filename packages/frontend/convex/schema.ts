@@ -43,4 +43,30 @@ export default defineSchema({
   })
     .index("by_position", ["position"])
     .index("by_team", ["team"]),
+
+  // Model validation metrics (from backtesting)
+  modelMetrics: defineTable({
+    position: v.string(), // "QB", "RB", "WR", "TE"
+    target: v.string(), // "passing_yards", "rushing_tds", etc.
+    season: v.number(), // Season validated against (e.g., 2025)
+    accuracyPct: v.number(), // 0-100 accuracy percentage
+    confidence: v.string(), // "High", "Medium", "Low"
+    mae: v.number(), // Mean Absolute Error
+    rmse: v.number(), // Root Mean Squared Error
+    r2: v.number(), // R-squared
+    sampleCount: v.number(), // Number of predictions validated
+    updatedAt: v.number(), // Timestamp of last update
+  })
+    .index("by_position", ["position"])
+    .index("by_position_target", ["position", "target"])
+    .index("by_season", ["season"]),
+
+  // Overall model confidence summary
+  overallMetrics: defineTable({
+    season: v.number(), // Season validated against
+    overallAccuracyPct: v.number(),
+    overallConfidence: v.string(),
+    modelCount: v.number(), // Number of models included
+    updatedAt: v.number(),
+  }).index("by_season", ["season"]),
 });
