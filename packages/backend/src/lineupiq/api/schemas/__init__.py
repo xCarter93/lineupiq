@@ -3,6 +3,9 @@ Pydantic schemas for the LineupIQ API.
 """
 
 from lineupiq.api.schemas.prediction import (
+    DefensePrediction,
+    DefensePredictionRequest,
+    DefensePredictionResponse,
     KickerPrediction,
     KickerPredictionRequest,
     KickerPredictionResponse,
@@ -26,6 +29,9 @@ __all__ = [
     "KickerPrediction",
     "KickerPredictionRequest",
     "KickerPredictionResponse",
+    "DefensePrediction",
+    "DefensePredictionRequest",
+    "DefensePredictionResponse",
     "ModelMetrics",
     "OverallMetrics",
     "PredictionInterval",

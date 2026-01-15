@@ -228,3 +228,92 @@ class KickerPredictionResponse(BaseModel):
             ]
         }
     }
+
+
+class DefensePredictionRequest(BaseModel):
+    """Request schema for team defense predictions.
+
+    Contains rolling stat features for defense model inference.
+    """
+
+    points_allowed_roll3: float = Field(
+        ..., description="3-week rolling average of points allowed"
+    )
+    def_sacks_roll3: float = Field(
+        ..., description="3-week rolling average of sacks"
+    )
+    def_ints_roll3: float = Field(
+        ..., description="3-week rolling average of interceptions"
+    )
+    def_fumbles_roll3: float = Field(
+        ..., description="3-week rolling average of fumble recoveries"
+    )
+    def_tds_roll3: float = Field(
+        ..., description="3-week rolling average of defensive/ST touchdowns"
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "points_allowed_roll3": 21.3,
+                    "def_sacks_roll3": 2.5,
+                    "def_ints_roll3": 1.2,
+                    "def_fumbles_roll3": 0.8,
+                    "def_tds_roll3": 0.3,
+                }
+            ]
+        }
+    }
+
+
+class DefensePrediction(BaseModel):
+    """Team defense stat predictions."""
+
+    points_allowed: float = Field(..., description="Predicted points allowed")
+    sacks: float = Field(..., description="Predicted sacks")
+    interceptions: float = Field(..., description="Predicted interceptions")
+    fumbles_forced: float = Field(..., description="Predicted fumble recoveries")
+    total_def_tds: float = Field(..., description="Predicted defensive/ST touchdowns")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "points_allowed": 21.5,
+                    "sacks": 2.3,
+                    "interceptions": 1.1,
+                    "fumbles_forced": 0.7,
+                    "total_def_tds": 0.2,
+                }
+            ]
+        }
+    }
+
+
+class DefensePredictionResponse(BaseModel):
+    """API response for team defense prediction."""
+
+    team: str = Field(..., description="NFL team abbreviation")
+    opponent: str = Field(..., description="Opponent team abbreviation")
+    week: int = Field(..., description="NFL week number")
+    predictions: DefensePrediction = Field(..., description="Defense stat predictions")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "team": "PHI",
+                    "opponent": "DAL",
+                    "week": 10,
+                    "predictions": {
+                        "points_allowed": 21.5,
+                        "sacks": 2.3,
+                        "interceptions": 1.1,
+                        "fumbles_forced": 0.7,
+                        "total_def_tds": 0.2,
+                    },
+                }
+            ]
+        }
+    }
