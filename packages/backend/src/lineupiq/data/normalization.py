@@ -129,9 +129,9 @@ def normalize_team_columns(df: pl.DataFrame) -> pl.DataFrame:
         return df
 
     for col in existing_team_columns:
-        # Apply mapping using replace, defaulting to original value
+        # Apply mapping using replace_strict with default to handle unmapped values
         df = df.with_columns(
-            pl.col(col).replace(TEAM_MAPPING, default=pl.col(col)).alias(col)
+            pl.col(col).replace_strict(TEAM_MAPPING, default=pl.col(col)).alias(col)
         )
         logger.debug(f"Normalized team column: {col}")
 
