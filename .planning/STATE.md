@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 13 of 17 (K/DEF Models + Training Improvements)
-Plan: 0 of 8 in current phase
-Status: Planned, ready to execute
-Last activity: 2026-01-15 — Created 8 plans for Phase 13
+Plan: 4 of 8 in current phase
+Status: In progress
+Last activity: 2026-01-15 — Completed 13-04-PLAN.md (Complete Fantasy Scoring Config)
 
-Progress: ░░░░░░░░░░ 0% (Phase 13 planned)
+Progress: █████░░░░░ 50% (Phase 13 in progress)
 
 ## Performance Metrics
 
@@ -60,6 +60,9 @@ Progress: ░░░░░░░░░░ 0% (Phase 13 planned)
 | 13 | Team-level defense (not individual) | Fantasy uses team DST, not individual defenders |
 | 13 | Kicker predictions: FG by distance + XP | Match ESPN scoring granularity |
 | 13 | Bundle audit improvements with K/DEF | Train everything together for consistency |
+| 13-04 | ESPN Standard as default scoring | Industry standard, widely recognized |
+| 13-04 | Expected value for kicker scoring | Accounts for success probability in predictions |
+| 13-04 | 75% success rate for 50+ yard FGs | NFL average lower for long-distance attempts |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -79,6 +82,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Phase 13 planning complete (8 plans created)
+Stopped at: Completed 13-04-PLAN.md (Complete Fantasy Scoring Config)
 Resume file: None
-Next action: `/gsd:execute-phase 13`
+Next action: Continue with remaining Wave 2 plans (13-05, 13-06, 13-07)
