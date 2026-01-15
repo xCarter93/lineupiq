@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 11 of 17 (ML Pipeline Audit & Research)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-15 — Milestone v1.1 created
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-01-15 — Completed 11-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █░░░░░░░░░ 14%
 
 ## Performance Metrics
 
@@ -42,8 +42,15 @@ Progress: ░░░░░░░░░░ 0%
 
 ### Decisions
 
-Decisions from v1.0 MVP preserved for reference.
-See: .planning/milestones/v1.0-ROADMAP.md for full v1.0 decision log.
+**v1.1 Decisions:**
+
+| Phase | Decision | Rationale |
+|-------|----------|-----------|
+| 11 | Prediction intervals highest priority | MAPIE CQR provides guarantees with ~100 LOC |
+| 11 | LightGBM before ensembles | 7x speedup enables experimentation first |
+| 11 | Defer KNN imputation | A/B test after baseline improvements |
+
+**v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
 ### Roadmap Evolution
 
@@ -61,5 +68,5 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-15
-Stopped at: Milestone v1.1 initialization
+Stopped at: Completed 11-01-PLAN.md (Phase 11 complete)
 Resume file: None
