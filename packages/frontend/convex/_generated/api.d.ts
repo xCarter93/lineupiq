@@ -8,9 +8,11 @@
  * @module
  */
 
+import type * as modelMetrics from "../modelMetrics.js";
 import type * as players from "../players.js";
 import type * as predictions from "../predictions.js";
 import type * as scoringConfigs from "../scoringConfigs.js";
+import type * as seedPlayers from "../seedPlayers.js";
 
 import type {
   ApiFromModules,
@@ -19,9 +21,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  modelMetrics: typeof modelMetrics;
   players: typeof players;
   predictions: typeof predictions;
   scoringConfigs: typeof scoringConfigs;
+  seedPlayers: typeof seedPlayers;
 }>;
 
 /**
