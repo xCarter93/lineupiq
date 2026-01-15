@@ -50,11 +50,11 @@ Plans:
 **Research**: Unlikely (implementing findings from research phase)
 
 Plans:
-- [x] 12-01: Backtesting infrastructure (completed 2026-01-15)
-- [x] 12-02: Prediction intervals with MAPIE (completed 2026-01-15)
-- [x] 12-03: Convex schema for model metrics (completed 2026-01-15)
-- [ ] 12-04: TBD
-- [ ] 12-05: TBD
+- [x] 12-01: Backtesting infrastructure — completed 2026-01-15
+- [x] 12-02: Prediction intervals with MAPIE — completed 2026-01-15
+- [x] 12-03: Convex schema for model metrics — completed 2026-01-15
+- [x] 12-04: Validation API endpoints — completed 2026-01-15
+- [x] 12-05: Model Confidence UI — completed 2026-01-15
 
 #### Phase 13: K/DEF Models
 
@@ -109,7 +109,7 @@ Plans:
 |-------|-----------|-------|--------|-----------|
 | 1-10 | v1.0 MVP | 30/30 | ✅ Complete | 2026-01-15 |
 | 11. ML Pipeline Audit | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
-| 12. ML Pipeline Improvements | v1.1 | 3/5 | In progress | - |
+| 12. ML Pipeline Improvements | v1.1 | 5/5 | ✅ Complete | 2026-01-15 |
 | 13. K/DEF Models | v1.1 | 0/? | Not started | - |
 | 14. Complete Fantasy Stats | v1.1 | 0/? | Not started | - |
 | 15. Full Roster + Historical | v1.1 | 0/? | Not started | - |
