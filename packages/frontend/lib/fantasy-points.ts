@@ -1,9 +1,13 @@
 /**
  * Fantasy points calculator for predicted stats.
  * Calculates points using configurable scoring rules.
+ * Supports all positions: QB, RB, WR, TE, K, DEF.
  */
 
-// Scoring config structure (matches Convex schema)
+import { FullScoringConfig, getPointsAllowedScore } from "./scoring-config";
+
+// Legacy scoring config structure (matches Convex schema)
+// Kept for backward compatibility with existing code
 export interface ScoringConfig {
   passing: { yardsPerPoint: number; tdPoints: number; intPoints: number };
   rushing: { yardsPerPoint: number; tdPoints: number };
@@ -29,6 +33,17 @@ export interface ReceiverPrediction {
   receiving_yards: number;
   receiving_tds: number;
   receptions: number;
+}
+
+// Kicker prediction type
+export interface KickerPrediction {
+  fg_att_0_39: number;
+  fg_att_40_49: number;
+  fg_att_50_plus: number;
+  pat_att: number;
+  // Optional: success rates for more accurate scoring
+  fg_pct?: number;
+  pat_pct?: number;
 }
 
 // Points breakdown for detailed display
@@ -81,6 +96,35 @@ export function calculateReceiverPoints(
   const receptionPoints = prediction.receptions * config.receiving.receptionPoints;
 
   const total = yardPoints + tdPoints + receptionPoints;
+  return Math.round(total * 10) / 10;
+}
+
+/**
+ * Calculate fantasy points for a kicker prediction.
+ * Uses expected value based on attempts and historical success rates.
+ */
+export function calculateKickerPoints(
+  prediction: KickerPrediction,
+  config: FullScoringConfig
+): number {
+  const k = config.kicking;
+
+  // Use provided success rates or defaults (NFL averages)
+  const fgPct = prediction.fg_pct ?? 0.85;
+  const patPct = prediction.pat_pct ?? 0.94;
+
+  // Expected FG points by distance
+  const fg0_39 =
+    prediction.fg_att_0_39 * (fgPct * k.fgMade0_39 + (1 - fgPct) * k.fgMissed0_39);
+  const fg40_49 =
+    prediction.fg_att_40_49 * (fgPct * k.fgMade40_49 + (1 - fgPct) * k.fgMissed40_49);
+  const fg50Plus =
+    prediction.fg_att_50_plus * (0.75 * k.fgMade50Plus + 0.25 * k.fgMissed50Plus); // Lower rate for long FGs
+
+  // Expected PAT points
+  const pat = prediction.pat_att * (patPct * k.xpMade + (1 - patPct) * k.xpMissed);
+
+  const total = fg0_39 + fg40_49 + fg50Plus + pat;
   return Math.round(total * 10) / 10;
 }
 
