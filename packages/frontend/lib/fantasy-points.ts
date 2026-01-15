@@ -4,7 +4,11 @@
  * Supports all positions: QB, RB, WR, TE, K, DEF.
  */
 
-import { FullScoringConfig, getPointsAllowedScore } from "./scoring-config";
+import {
+  FullScoringConfig,
+  getPointsAllowedScore,
+  DEFAULT_SCORING,
+} from "./scoring-config";
 
 // Legacy scoring config structure (matches Convex schema)
 // Kept for backward compatibility with existing code
@@ -63,6 +67,14 @@ export interface PointsBreakdown {
   total: number;
   categories: { label: string; points: number; detail: string }[];
 }
+
+// Union type for all predictions
+export type AnyPrediction =
+  | QBPrediction
+  | RBPrediction
+  | ReceiverPrediction
+  | KickerPrediction
+  | DefensePrediction;
 
 /**
  * Calculate fantasy points for a QB prediction.
@@ -169,22 +181,31 @@ export function calculateDefensePoints(
 
 /**
  * Route to the correct calculator based on position.
+ * Supports: QB, RB, WR, TE, K, DEF
+ *
+ * For skill positions (QB, RB, WR, TE), accepts ScoringConfig for backward compatibility.
+ * For K/DEF, requires FullScoringConfig.
  */
 export function calculateFantasyPoints(
   position: string,
-  prediction: QBPrediction | RBPrediction | ReceiverPrediction,
-  config: ScoringConfig
+  prediction: AnyPrediction,
+  config: ScoringConfig | FullScoringConfig = DEFAULT_SCORING
 ): number {
   const pos = position.toUpperCase();
 
   switch (pos) {
     case "QB":
-      return calculateQBPoints(prediction as QBPrediction, config);
+      return calculateQBPoints(prediction as QBPrediction, config as ScoringConfig);
     case "RB":
-      return calculateRBPoints(prediction as RBPrediction, config);
+      return calculateRBPoints(prediction as RBPrediction, config as ScoringConfig);
     case "WR":
     case "TE":
-      return calculateReceiverPoints(prediction as ReceiverPrediction, config);
+      return calculateReceiverPoints(prediction as ReceiverPrediction, config as ScoringConfig);
+    case "K":
+      return calculateKickerPoints(prediction as KickerPrediction, config as FullScoringConfig);
+    case "DEF":
+    case "DST":
+      return calculateDefensePoints(prediction as DefensePrediction, config as FullScoringConfig);
     default:
       throw new Error(`Unsupported position: ${position}`);
   }
