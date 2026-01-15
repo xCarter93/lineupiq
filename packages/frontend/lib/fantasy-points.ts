@@ -46,6 +46,18 @@ export interface KickerPrediction {
   pat_pct?: number;
 }
 
+// Defense prediction type
+export interface DefensePrediction {
+  points_allowed: number;
+  def_sacks: number;
+  def_interceptions: number;
+  def_fumbles: number; // Fumble recoveries
+  total_def_tds: number; // Defensive + ST touchdowns
+  // Optional stats
+  def_safeties?: number;
+  blocked_kicks?: number;
+}
+
 // Points breakdown for detailed display
 export interface PointsBreakdown {
   total: number;
@@ -125,6 +137,33 @@ export function calculateKickerPoints(
   const pat = prediction.pat_att * (patPct * k.xpMade + (1 - patPct) * k.xpMissed);
 
   const total = fg0_39 + fg40_49 + fg50Plus + pat;
+  return Math.round(total * 10) / 10;
+}
+
+/**
+ * Calculate fantasy points for a team defense prediction.
+ */
+export function calculateDefensePoints(
+  prediction: DefensePrediction,
+  config: FullScoringConfig
+): number {
+  const d = config.defense;
+
+  // Points allowed tier
+  const paPoints = getPointsAllowedScore(prediction.points_allowed, d);
+
+  // Individual stat contributions
+  const sackPoints = prediction.def_sacks * d.sack;
+  const intPoints = prediction.def_interceptions * d.interception;
+  const fumblePoints = prediction.def_fumbles * d.fumbleRecovery;
+  const tdPoints = prediction.total_def_tds * d.defensiveTd;
+
+  // Optional stats
+  const safetyPoints = (prediction.def_safeties ?? 0) * d.safety;
+  const blockedPoints = (prediction.blocked_kicks ?? 0) * d.blockedKick;
+
+  const total =
+    paPoints + sackPoints + intPoints + fumblePoints + tdPoints + safetyPoints + blockedPoints;
   return Math.round(total * 10) / 10;
 }
 
