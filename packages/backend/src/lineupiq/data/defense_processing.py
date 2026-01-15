@@ -22,21 +22,23 @@ from lineupiq.data.fetchers import fetch_schedules, fetch_team_defense_stats
 logger = logging.getLogger(__name__)
 
 # Defense stat columns from nflreadpy team stats
+# nflreadpy uses def_ prefix for defensive stats
 DEFENSE_STAT_COLUMNS = [
-    "sacks",
-    "interceptions",
-    "fumbles_forced",  # Fumble recoveries
+    "def_sacks",
+    "def_interceptions",
+    "def_fumbles",  # Fumble recoveries
     "def_tds",
-    "safeties",
+    "def_safeties",
     "special_teams_tds",
 ]
 
 # Target columns for defense models
+# Named to match fantasy DST scoring categories
 DEFENSE_TARGETS = [
     "points_allowed",
-    "sacks",
-    "interceptions",
-    "fumbles_forced",
+    "def_sacks",
+    "def_interceptions",
+    "def_fumbles",
     "total_def_tds",  # def_tds + special_teams_tds
 ]
 
@@ -131,9 +133,9 @@ def process_defense_data(seasons: list[int]) -> pl.DataFrame:
     # Add rolling features (opponent-adjusted strength)
     rolling_configs = [
         ("points_allowed", "points_allowed_roll3"),
-        ("sacks", "def_sacks_roll3"),
-        ("interceptions", "def_ints_roll3"),
-        ("fumbles_forced", "def_fumbles_roll3"),
+        ("def_sacks", "def_sacks_roll3"),
+        ("def_interceptions", "def_ints_roll3"),
+        ("def_fumbles", "def_fumbles_roll3"),
         ("total_def_tds", "def_tds_roll3"),
     ]
 

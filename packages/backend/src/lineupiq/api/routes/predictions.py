@@ -353,34 +353,34 @@ async def predict_defense(
     features = prepare_defense_features(request)
     models = get_position_models(req.app.state.models, position)
 
-    # Defense targets match model naming
+    # Defense targets match model naming (using def_ prefix from nflreadpy)
     defense_targets = [
-        ("points_allowed", "points_allowed"),
-        ("sacks", "sacks"),
-        ("interceptions", "interceptions"),
-        ("fumbles_forced", "fumbles_forced"),
-        ("total_def_tds", "total_def_tds"),
+        "points_allowed",
+        "def_sacks",
+        "def_interceptions",
+        "def_fumbles",
+        "total_def_tds",
     ]
 
     predictions_dict: dict[str, float] = {}
 
-    for target_key, model_target in defense_targets:
-        if model_target in models:
-            pred = round(float(models[model_target].predict(features)[0]), 1)
+    for target in defense_targets:
+        if target in models:
+            pred = round(float(models[target].predict(features)[0]), 1)
             # Non-negative except points_allowed can be any value
-            if target_key != "points_allowed":
+            if target != "points_allowed":
                 pred = max(0.0, pred)
-            predictions_dict[target_key] = pred
+            predictions_dict[target] = pred
         else:
             # Default values if model not found
             defaults = {
                 "points_allowed": 21.0,
-                "sacks": 2.0,
-                "interceptions": 1.0,
-                "fumbles_forced": 0.5,
+                "def_sacks": 2.0,
+                "def_interceptions": 1.0,
+                "def_fumbles": 0.5,
                 "total_def_tds": 0.2,
             }
-            predictions_dict[target_key] = defaults.get(target_key, 0.0)
+            predictions_dict[target] = defaults.get(target, 0.0)
 
     response_data = {
         "team": team.upper(),

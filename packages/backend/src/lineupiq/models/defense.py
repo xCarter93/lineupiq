@@ -31,9 +31,9 @@ TRAINING_SEASONS = [2021, 2022, 2023, 2024]
 # Target columns for defense models
 DEF_TARGETS = [
     "points_allowed",
-    "sacks",
-    "interceptions",
-    "fumbles_forced",
+    "def_sacks",
+    "def_interceptions",
+    "def_fumbles",
     "total_def_tds",
 ]
 

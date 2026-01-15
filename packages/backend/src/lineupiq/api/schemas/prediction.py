@@ -271,9 +271,9 @@ class DefensePrediction(BaseModel):
     """Team defense stat predictions."""
 
     points_allowed: float = Field(..., description="Predicted points allowed")
-    sacks: float = Field(..., description="Predicted sacks")
-    interceptions: float = Field(..., description="Predicted interceptions")
-    fumbles_forced: float = Field(..., description="Predicted fumble recoveries")
+    def_sacks: float = Field(..., description="Predicted sacks")
+    def_interceptions: float = Field(..., description="Predicted interceptions")
+    def_fumbles: float = Field(..., description="Predicted fumble recoveries")
     total_def_tds: float = Field(..., description="Predicted defensive/ST touchdowns")
 
     model_config = {
@@ -281,9 +281,9 @@ class DefensePrediction(BaseModel):
             "examples": [
                 {
                     "points_allowed": 21.5,
-                    "sacks": 2.3,
-                    "interceptions": 1.1,
-                    "fumbles_forced": 0.7,
+                    "def_sacks": 2.3,
+                    "def_interceptions": 1.1,
+                    "def_fumbles": 0.7,
                     "total_def_tds": 0.2,
                 }
             ]
@@ -308,9 +308,9 @@ class DefensePredictionResponse(BaseModel):
                     "week": 10,
                     "predictions": {
                         "points_allowed": 21.5,
-                        "sacks": 2.3,
-                        "interceptions": 1.1,
-                        "fumbles_forced": 0.7,
+                        "def_sacks": 2.3,
+                        "def_interceptions": 1.1,
+                        "def_fumbles": 0.7,
                         "total_def_tds": 0.2,
                     },
                 }
