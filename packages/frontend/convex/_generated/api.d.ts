@@ -8,13 +8,21 @@
  * @module
  */
 
+import type * as players from "../players.js";
+import type * as predictions from "../predictions.js";
+import type * as scoringConfigs from "../scoringConfigs.js";
+
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
 } from "convex/server";
 
-declare const fullApi: ApiFromModules<{}>;
+declare const fullApi: ApiFromModules<{
+  players: typeof players;
+  predictions: typeof predictions;
+  scoringConfigs: typeof scoringConfigs;
+}>;
 
 /**
  * A utility for referencing Convex functions in your app's public API.
