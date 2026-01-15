@@ -20,12 +20,16 @@ interface StatDisplayProps {
   label: string;
   value: number;
   unit?: string;
+  isNegative?: boolean; // For fumbles and interceptions
 }
 
-function StatDisplay({ label, value, unit }: StatDisplayProps) {
+function StatDisplay({ label, value, unit, isNegative = false }: StatDisplayProps) {
   return (
     <div className="flex flex-col">
-      <span className="text-3xl font-bold text-foreground tabular-nums">
+      <span className={cn(
+        "text-3xl font-bold tabular-nums",
+        isNegative ? "text-red-600" : "text-foreground"
+      )}>
         {value.toFixed(1)}
         {unit && <span className="text-lg font-normal ml-1">{unit}</span>}
       </span>
@@ -77,6 +81,10 @@ export function StatProjection({
         <>
           <StatDisplay label="Passing Yards" value={qb.passing_yards} />
           <StatDisplay label="Passing TDs" value={qb.passing_tds} />
+          <StatDisplay label="Interceptions" value={qb.interceptions} isNegative />
+          <StatDisplay label="Rushing Yards" value={qb.rushing_yards} />
+          <StatDisplay label="Rushing TDs" value={qb.rushing_tds} />
+          <StatDisplay label="Fumbles Lost" value={qb.fumbles_lost} isNegative />
         </>
       );
     }
@@ -89,7 +97,9 @@ export function StatProjection({
           <StatDisplay label="Rushing TDs" value={rb.rushing_tds} />
           <StatDisplay label="Carries" value={rb.carries} />
           <StatDisplay label="Receiving Yards" value={rb.receiving_yards} />
+          <StatDisplay label="Receiving TDs" value={rb.receiving_tds} />
           <StatDisplay label="Receptions" value={rb.receptions} />
+          <StatDisplay label="Fumbles Lost" value={rb.fumbles_lost} isNegative />
         </>
       );
     }
@@ -101,6 +111,7 @@ export function StatProjection({
         <StatDisplay label="Receiving Yards" value={rec.receiving_yards} />
         <StatDisplay label="Receiving TDs" value={rec.receiving_tds} />
         <StatDisplay label="Receptions" value={rec.receptions} />
+        <StatDisplay label="Fumbles Lost" value={rec.fumbles_lost} isNegative />
       </>
     );
   };
@@ -109,10 +120,10 @@ export function StatProjection({
   const gridCols = cn(
     "grid gap-6",
     position === "QB"
-      ? "grid-cols-2"
+      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-6" // 6 stats
       : position === "RB"
-        ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
-        : "grid-cols-3"
+        ? "grid-cols-2 md:grid-cols-4 lg:grid-cols-7" // 7 stats
+        : "grid-cols-2 md:grid-cols-4" // WR/TE: 4 stats
   );
 
   return (
