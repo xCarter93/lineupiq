@@ -32,7 +32,8 @@ htmlcov/
 # ML artifacts
 *.pkl
 *.joblib
-models/
+# Trained model files (not source code in src/lineupiq/models/)
+/models/
 
 # Data files (large, regeneratable)
 data/raw/**/*.parquet
