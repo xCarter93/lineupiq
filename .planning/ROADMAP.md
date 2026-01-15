@@ -93,7 +93,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [x] 06-01: Cross-validation and metrics
+- [x] 06-01: Model evaluation infrastructure (metrics, holdout validation)
 - [x] 06-02: Feature importance analysis
 - [ ] 06-03: Overfitting detection and correction
 
