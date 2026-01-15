@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import FastAPI
 
 from lineupiq.api.models_loader import load_models
+from lineupiq.api.routes import router
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,9 @@ app = FastAPI(
     description="Fantasy football player stat predictions",
     lifespan=lifespan,
 )
+
+
+app.include_router(router, prefix="/predict", tags=["predictions"])
 
 
 @app.get("/health")
