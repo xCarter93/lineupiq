@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 14 of 17 (Complete Fantasy Stats) - COMPLETE
-Plan: 4 of 4 in current phase
-Status: Phase 14 complete
-Last activity: 2026-01-15 — Completed 14-04-PLAN.md (Frontend Complete Stats Integration)
+Phase: 15 of 17 (Full Roster + Historical Data) - IN PROGRESS
+Plan: 2 of 4 in current phase
+Status: In progress
+Last activity: 2026-01-16 — Completed 15-02-PLAN.md (Convex Schema Enhancements)
 
-Progress: ██████████ 100% (Phase 14 complete, ready for Phase 15)
+Progress: ██████████░░░░░░░░ 50% (Phase 15, plan 2/4)
 
 ## Performance Metrics
 
@@ -87,6 +87,9 @@ Progress: ██████████ 100% (Phase 14 complete, ready for Phas
 | 14-04 | -2 pts per fumble (standard scoring) | Industry standard fantasy football scoring |
 | 14-04 | Red text for negative stats in UI | Visual distinction for INTs/fumbles |
 | 14-04 | Responsive grid layouts (2/4/6/7 cols) | Scale from mobile to full-width desktop |
+| 15-02 | Optional enriched fields for players | Backward compatibility with existing data |
+| 15-02 | by_player_id index for players table | O(1) lookups for efficient upserts |
+| 15-02 | Three playerHistory indexes | Cover all expected query patterns |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -105,7 +108,7 @@ None — ready to begin planning.
 
 ## Session Continuity
 
-Last session: 2026-01-15
-Stopped at: Completed 14-04-PLAN.md (Frontend Complete Stats Integration)
+Last session: 2026-01-16
+Stopped at: Completed 15-02-PLAN.md (Convex Schema Enhancements)
 Resume file: None
-Next action: Begin Phase 15 planning or execution
+Next action: Execute 15-03-PLAN.md (Frontend Roster Sync + Admin Page)
