@@ -52,6 +52,30 @@ export default defineSchema({
     .index("by_team", ["team"])
     .index("by_player_id", ["playerId"]),
 
+  // Cached weekly player stats for historical display
+  playerHistory: defineTable({
+    playerId: v.string(), // gsis_id
+    season: v.number(),
+    week: v.number(),
+    opponentTeam: v.optional(v.string()),
+    // Stats (all optional - not all positions have all stats)
+    passingYards: v.optional(v.number()),
+    passingTds: v.optional(v.number()),
+    interceptions: v.optional(v.number()),
+    rushingYards: v.optional(v.number()),
+    rushingTds: v.optional(v.number()),
+    carries: v.optional(v.number()),
+    receivingYards: v.optional(v.number()),
+    receivingTds: v.optional(v.number()),
+    receptions: v.optional(v.number()),
+    fantasyPoints: v.optional(v.number()),
+    // Metadata
+    updatedAt: v.number(),
+  })
+    .index("by_player", ["playerId"])
+    .index("by_player_season", ["playerId", "season"])
+    .index("by_player_week", ["playerId", "season", "week"]),
+
   // Model validation metrics (from backtesting)
   modelMetrics: defineTable({
     position: v.string(), // "QB", "RB", "WR", "TE"
