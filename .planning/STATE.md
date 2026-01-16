@@ -87,6 +87,9 @@ Progress: ██████████░░░░░░░░ 50% (Phase 15, 
 | 14-04 | -2 pts per fumble (standard scoring) | Industry standard fantasy football scoring |
 | 14-04 | Red text for negative stats in UI | Visual distinction for INTs/fumbles |
 | 14-04 | Responsive grid layouts (2/4/6/7 cols) | Scale from mobile to full-width desktop |
+| 15-01 | Height as int (inches) not string | nflreadpy returns height in inches |
+| 15-01 | Filter null gsis_id from roster | Required for player history lookup |
+| 15-01 | FANTASY_POSITIONS includes K | Roster display needs kickers, separate from ML |
 | 15-02 | Optional enriched fields for players | Backward compatibility with existing data |
 | 15-02 | by_player_id index for players table | O(1) lookups for efficient upserts |
 | 15-02 | Three playerHistory indexes | Cover all expected query patterns |

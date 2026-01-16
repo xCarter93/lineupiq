@@ -91,7 +91,7 @@ Plans:
 **Research**: Unlikely (nflreadpy already in codebase)
 
 Plans:
-- [ ] 15-01: Backend Roster + Player History API (wave 1)
+- [x] 15-01: Backend Roster + Player History API (wave 1) — completed 2026-01-15
 - [x] 15-02: Convex Schema Enhancements (wave 1) — completed 2026-01-16
 - [ ] 15-03: Frontend Roster Sync + Admin Page (wave 2)
 - [ ] 15-04: Historical Display UI Components (wave 3)
@@ -124,7 +124,7 @@ Plans:
 | 12. ML Pipeline Improvements | v1.1 | 5/5 | ✅ Complete | 2026-01-15 |
 | 13. K/DEF + Training | v1.1 | 8/8 | ✅ Complete | 2026-01-15 |
 | 14. Complete Fantasy Stats | v1.1 | 4/4 | ✅ Complete | 2026-01-15 |
-| 15. Full Roster + Historical | v1.1 | 1/4 | In progress | - |
+| 15. Full Roster + Historical | v1.1 | 2/4 | In progress | - |
 | 16. UI Data Visualization | v1.1 | 0/? | Not started | - |
 | 17. Model Explainability UI | v1.1 | 0/? | Not started | - |
 
