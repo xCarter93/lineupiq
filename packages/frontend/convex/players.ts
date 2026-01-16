@@ -63,6 +63,17 @@ export const search = query({
   },
 });
 
+// Get player by playerId
+export const getByPlayerId = query({
+  args: { playerId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("players")
+      .withIndex("by_player_id", (q) => q.eq("playerId", args.playerId))
+      .first();
+  },
+});
+
 // Create or update player
 export const upsert = mutation({
   args: {
@@ -70,33 +81,44 @@ export const upsert = mutation({
     name: v.string(),
     position: v.string(),
     team: v.string(),
+    // Optional enriched fields
+    jerseyNumber: v.optional(v.number()),
+    height: v.optional(v.string()),
+    weight: v.optional(v.number()),
+    college: v.optional(v.string()),
+    yearsExp: v.optional(v.number()),
+    headshotUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    // Check if playerId exists
-    const players = await ctx.db.query("players").collect();
-    const existing = players.find((p) => p.playerId === args.playerId);
+    // Use by_player_id index for efficient lookup
+    const existing = await ctx.db
+      .query("players")
+      .withIndex("by_player_id", (q) => q.eq("playerId", args.playerId))
+      .first();
 
-    if (existing) {
-      // Update existing player
-      await ctx.db.patch(existing._id, {
-        name: args.name,
-        position: args.position,
-        team: args.team,
-      });
-      return existing._id;
-    }
-
-    // Insert new player
-    return await ctx.db.insert("players", {
+    const data = {
       playerId: args.playerId,
       name: args.name,
       position: args.position,
       team: args.team,
-    });
+      jerseyNumber: args.jerseyNumber,
+      height: args.height,
+      weight: args.weight,
+      college: args.college,
+      yearsExp: args.yearsExp,
+      headshotUrl: args.headshotUrl,
+    };
+
+    if (existing) {
+      await ctx.db.patch(existing._id, data);
+      return existing._id;
+    }
+
+    return await ctx.db.insert("players", data);
   },
 });
 
-// Upsert multiple players
+// Upsert multiple players with enriched data
 export const bulkUpsert = mutation({
   args: {
     players: v.array(
@@ -105,34 +127,43 @@ export const bulkUpsert = mutation({
         name: v.string(),
         position: v.string(),
         team: v.string(),
+        // Optional enriched fields
+        jerseyNumber: v.optional(v.number()),
+        height: v.optional(v.string()),
+        weight: v.optional(v.number()),
+        college: v.optional(v.string()),
+        yearsExp: v.optional(v.number()),
+        headshotUrl: v.optional(v.string()),
       })
     ),
   },
   handler: async (ctx, args) => {
-    // Get all existing players for lookup
-    const existingPlayers = await ctx.db.query("players").collect();
-    const existingByPlayerId = new Map(
-      existingPlayers.map((p) => [p.playerId, p])
-    );
-
+    // Use by_player_id index for faster lookups
     let count = 0;
 
     for (const player of args.players) {
-      const existing = existingByPlayerId.get(player.playerId);
+      const existing = await ctx.db
+        .query("players")
+        .withIndex("by_player_id", (q) => q.eq("playerId", player.playerId))
+        .first();
+
+      const data = {
+        playerId: player.playerId,
+        name: player.name,
+        position: player.position,
+        team: player.team,
+        jerseyNumber: player.jerseyNumber,
+        height: player.height,
+        weight: player.weight,
+        college: player.college,
+        yearsExp: player.yearsExp,
+        headshotUrl: player.headshotUrl,
+      };
 
       if (existing) {
-        await ctx.db.patch(existing._id, {
-          name: player.name,
-          position: player.position,
-          team: player.team,
-        });
+        await ctx.db.patch(existing._id, data);
       } else {
-        await ctx.db.insert("players", {
-          playerId: player.playerId,
-          name: player.name,
-          position: player.position,
-          team: player.team,
-        });
+        await ctx.db.insert("players", data);
       }
       count++;
     }
