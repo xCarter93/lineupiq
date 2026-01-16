@@ -19,6 +19,7 @@ import {
 import { useDefaultScoringConfig } from "@/hooks/useScoringConfigs";
 import { useModelMetrics } from "@/hooks/useModelMetrics";
 import { ModelConfidence } from "@/components/matchup/ModelConfidence";
+import { PlayerHistory } from "@/components/matchup/PlayerHistory";
 
 // Default scoring config (Standard) as fallback while Convex loads
 const DEFAULT_SCORING_CONFIG: ScoringConfig = {
@@ -170,6 +171,15 @@ export default function MatchupPage() {
                     playerName={matchupData.playerName}
                     opponentTeam={matchupData.opponentTeam}
                     isLoading={isLoading}
+                  />
+                </div>
+
+                {/* Player History (appears after stat projection) */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
+                  <PlayerHistory
+                    playerId={matchupData.playerId}
+                    playerName={matchupData.playerName}
+                    position={matchupData.position as "QB" | "RB" | "WR" | "TE"}
                   />
                 </div>
               </div>
