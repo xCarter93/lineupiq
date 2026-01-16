@@ -36,13 +36,21 @@ export default defineSchema({
 
   // Player metadata for selection UI
   players: defineTable({
-    playerId: v.string(), // Unique player ID
-    name: v.string(), // Display name
-    position: v.string(), // "QB", "RB", "WR", "TE"
+    playerId: v.string(), // gsis_id from nflreadpy
+    name: v.string(), // Display name (full_name)
+    position: v.string(), // "QB", "RB", "WR", "TE", "K"
     team: v.string(), // Team abbreviation
+    // Enriched fields (optional for backward compatibility)
+    jerseyNumber: v.optional(v.number()),
+    height: v.optional(v.string()), // e.g., "6-2"
+    weight: v.optional(v.number()),
+    college: v.optional(v.string()),
+    yearsExp: v.optional(v.number()),
+    headshotUrl: v.optional(v.string()),
   })
     .index("by_position", ["position"])
-    .index("by_team", ["team"]),
+    .index("by_team", ["team"])
+    .index("by_player_id", ["playerId"]),
 
   // Model validation metrics (from backtesting)
   modelMetrics: defineTable({
