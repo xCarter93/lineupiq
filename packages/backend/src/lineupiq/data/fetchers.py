@@ -19,6 +19,9 @@ SeasonList = int | list[int] | bool | None
 # Skill positions for fantasy football (per PROJECT.md)
 SKILL_POSITIONS: frozenset[str] = frozenset({"QB", "RB", "WR", "TE"})
 
+# Fantasy-relevant positions for roster display (includes K)
+FANTASY_POSITIONS: frozenset[str] = frozenset({"QB", "RB", "WR", "TE", "K"})
+
 
 def fetch_player_stats(
     seasons: SeasonList = None,
@@ -276,3 +279,174 @@ def filter_skill_positions(df: pl.DataFrame) -> pl.DataFrame:
     filtered = df.filter(pl.col("position").is_in(SKILL_POSITIONS))
     logger.debug(f"Filtered from {df.shape[0]} to {filtered.shape[0]} skill position rows")
     return filtered
+
+
+def fetch_rosters(seasons: list[int] | None = None) -> pl.DataFrame:
+    """Fetch NFL roster data from nflreadpy.
+
+    Returns fantasy-relevant position players (QB, RB, WR, TE, K) with
+    biographical and team information suitable for roster display.
+
+    Args:
+        seasons: Year(s) to fetch.
+            - None: Current season (via nfl.get_current_season())
+            - list[int]: Specific seasons (e.g., [2025])
+
+    Returns:
+        Polars DataFrame with columns:
+        - gsis_id: Player unique identifier
+        - full_name: Player's full name
+        - position: Position (QB, RB, WR, TE, K)
+        - team: NFL team abbreviation
+        - jersey_number: Jersey number (may be null)
+        - height: Height string (e.g., "6-2")
+        - weight: Weight in pounds
+        - college: College attended
+        - years_exp: Years of NFL experience
+        - headshot_url: URL to player headshot image
+
+    Raises:
+        ImportError: If nflreadpy is not installed.
+        RuntimeError: If data fetch fails.
+
+    Example:
+        >>> df = fetch_rosters([2025])
+        >>> df.shape[0]  # Fantasy-relevant players
+        563
+        >>> set(df["position"].unique().to_list())
+        {'QB', 'RB', 'WR', 'TE', 'K'}
+    """
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    # Default to current season if not specified
+    if seasons is None:
+        current = nfl.get_current_season()
+        seasons = [current]
+
+    logger.info(f"Fetching rosters: seasons={seasons}")
+
+    try:
+        df = nfl.load_rosters(seasons=seasons)
+
+        # Filter to fantasy-relevant positions
+        df = df.filter(pl.col("position").is_in(FANTASY_POSITIONS))
+
+        # Select relevant columns for roster display
+        roster_cols = [
+            "gsis_id",
+            "full_name",
+            "position",
+            "team",
+            "jersey_number",
+            "height",
+            "weight",
+            "college",
+            "years_exp",
+            "headshot_url",
+        ]
+
+        df = df.select([c for c in roster_cols if c in df.columns])
+
+        logger.info(f"Fetched {df.shape[0]} fantasy-relevant players")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to fetch rosters: {e}")
+        raise RuntimeError(f"Failed to fetch rosters: {e}") from e
+
+
+def fetch_player_history(
+    player_id: str,
+    seasons: list[int] | None = None,
+) -> pl.DataFrame:
+    """Fetch historical weekly stats for a specific player.
+
+    Retrieves game-by-game statistics for a player across multiple seasons,
+    suitable for displaying player history and recent performance trends.
+
+    Args:
+        player_id: Player's gsis_id (e.g., "00-0033873" for Mahomes).
+        seasons: Years to fetch.
+            - None: Last 3 seasons (current, current-1, current-2)
+            - list[int]: Specific seasons (e.g., [2023, 2024, 2025])
+
+    Returns:
+        Polars DataFrame with weekly stats sorted by season desc, week desc:
+        - Identifiers: player_id, player_name, player_display_name, position, season, week
+        - Game context: opponent_team
+        - Passing: passing_yards, passing_tds, passing_interceptions
+        - Rushing: rushing_yards, rushing_tds, carries
+        - Receiving: receiving_yards, receiving_tds, receptions
+        - Fantasy: fantasy_points, fantasy_points_ppr
+
+        Returns empty DataFrame if player not found.
+
+    Raises:
+        ImportError: If nflreadpy is not installed.
+        RuntimeError: If data fetch fails.
+
+    Example:
+        >>> df = fetch_player_history("00-0033873", [2024])  # Mahomes
+        >>> df.shape[0]  # Number of games
+        17
+        >>> df["passing_yards"].mean()
+        281.2
+    """
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    # Default to last 3 seasons if not specified
+    if seasons is None:
+        current = nfl.get_current_season()
+        seasons = list(range(current - 2, current + 1))
+
+    logger.info(f"Fetching player history: player_id={player_id}, seasons={seasons}")
+
+    try:
+        df = nfl.load_player_stats(seasons=seasons, summary_level="week")
+
+        # Filter to specific player
+        df = df.filter(pl.col("player_id") == player_id)
+
+        if df.is_empty():
+            logger.warning(f"No stats found for player_id={player_id}")
+            return df
+
+        # Select relevant columns for history display
+        history_cols = [
+            "player_id",
+            "player_name",
+            "player_display_name",
+            "position",
+            "season",
+            "week",
+            "opponent_team",
+            "passing_yards",
+            "passing_tds",
+            "passing_interceptions",
+            "rushing_yards",
+            "rushing_tds",
+            "carries",
+            "receiving_yards",
+            "receiving_tds",
+            "receptions",
+            "fantasy_points",
+            "fantasy_points_ppr",
+        ]
+
+        df = df.select([c for c in history_cols if c in df.columns])
+
+        # Sort by season desc, week desc for most recent first
+        df = df.sort(["season", "week"], descending=True)
+
+        logger.info(f"Fetched {df.shape[0]} game records for player {player_id}")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to fetch player history: {e}")
+        raise RuntimeError(f"Failed to fetch player history: {e}") from e
