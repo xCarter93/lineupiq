@@ -6,8 +6,9 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_PREDICTION_API_URL || "http://localhost:8000";
 
-// Feature types required by the prediction models (17 features)
+// Feature types required by the prediction models (28 features)
 export interface PredictionFeatures {
+  // Rolling stats (8 features)
   passing_yards_roll3: number;
   passing_tds_roll3: number;
   rushing_yards_roll3: number;
@@ -16,13 +17,29 @@ export interface PredictionFeatures {
   receiving_yards_roll3: number;
   receiving_tds_roll3: number;
   receptions_roll3: number;
+  // Opponent features (5 features)
   opp_pass_defense_strength: number;
   opp_rush_defense_strength: number;
   opp_pass_yards_allowed_rank: number;
   opp_rush_yards_allowed_rank: number;
   opp_total_yards_allowed_rank: number;
+  // Team strength features (3 features)
+  team_points_roll3: number;
+  team_yards_roll3: number;
+  team_plays_roll3: number;
+  // Volatility features (8 features)
+  passing_yards_std3: number;
+  passing_yards_cv3: number;
+  rushing_yards_std3: number;
+  rushing_yards_cv3: number;
+  receiving_yards_std3: number;
+  receiving_yards_cv3: number;
+  receptions_std3: number;
+  receptions_cv3: number;
+  // Weather features (2 features)
   temp_normalized: number;
   wind_normalized: number;
+  // Context features (2 features)
   is_home: boolean;
   is_dome: boolean;
 }
@@ -65,18 +82,25 @@ export function createDefaultFeatures(
   isHome: boolean
 ): PredictionFeatures {
   const base = {
+    // Opponent features (neutral/average values)
     opp_pass_defense_strength: 1.0,
     opp_rush_defense_strength: 1.0,
     opp_pass_yards_allowed_rank: 16,
     opp_rush_yards_allowed_rank: 16,
     opp_total_yards_allowed_rank: 16,
+    // Team strength (league average)
+    team_points_roll3: 22.0,
+    team_yards_roll3: 340.0,
+    team_plays_roll3: 65.0,
+    // Weather
     temp_normalized: 0.6,
     wind_normalized: 0.2,
+    // Context
     is_home: isHome,
     is_dome: false,
   };
 
-  // Position-typical rolling stats
+  // Position-typical rolling stats and volatility
   if (position === "QB") {
     return {
       ...base,
@@ -88,6 +112,15 @@ export function createDefaultFeatures(
       receiving_yards_roll3: 0,
       receiving_tds_roll3: 0,
       receptions_roll3: 0,
+      // QB volatility (moderate passing, low rushing)
+      passing_yards_std3: 50,
+      passing_yards_cv3: 0.2,
+      rushing_yards_std3: 10,
+      rushing_yards_cv3: 0.5,
+      receiving_yards_std3: 0,
+      receiving_yards_cv3: 0,
+      receptions_std3: 0,
+      receptions_cv3: 0,
     };
   }
 
@@ -102,6 +135,15 @@ export function createDefaultFeatures(
       receiving_yards_roll3: 20,
       receiving_tds_roll3: 0.1,
       receptions_roll3: 2.5,
+      // RB volatility (moderate rushing, low receiving)
+      passing_yards_std3: 0,
+      passing_yards_cv3: 0,
+      rushing_yards_std3: 25,
+      rushing_yards_cv3: 0.4,
+      receiving_yards_std3: 15,
+      receiving_yards_cv3: 0.6,
+      receptions_std3: 1.5,
+      receptions_cv3: 0.5,
     };
   }
 
@@ -116,6 +158,15 @@ export function createDefaultFeatures(
     receiving_yards_roll3: 55,
     receiving_tds_roll3: 0.4,
     receptions_roll3: 4,
+    // WR/TE volatility (high receiving variance)
+    passing_yards_std3: 0,
+    passing_yards_cv3: 0,
+    rushing_yards_std3: 5,
+    rushing_yards_cv3: 0.5,
+    receiving_yards_std3: 30,
+    receiving_yards_cv3: 0.5,
+    receptions_std3: 2,
+    receptions_cv3: 0.4,
   };
 }
 

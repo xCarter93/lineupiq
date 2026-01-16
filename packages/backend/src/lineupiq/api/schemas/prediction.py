@@ -67,6 +67,43 @@ class PredictionRequest(BaseModel):
         ..., description="Normalized wind speed (0-1 scale)"
     )
 
+    # Team strength features (3 features)
+    team_points_roll3: float = Field(
+        ..., description="3-week rolling average of team points scored"
+    )
+    team_yards_roll3: float = Field(
+        ..., description="3-week rolling average of team total yards"
+    )
+    team_plays_roll3: float = Field(
+        ..., description="3-week rolling average of team plays (pace)"
+    )
+
+    # Volatility features (8 features)
+    passing_yards_std3: float = Field(
+        ..., description="3-week standard deviation of passing yards"
+    )
+    passing_yards_cv3: float = Field(
+        ..., description="3-week coefficient of variation of passing yards"
+    )
+    rushing_yards_std3: float = Field(
+        ..., description="3-week standard deviation of rushing yards"
+    )
+    rushing_yards_cv3: float = Field(
+        ..., description="3-week coefficient of variation of rushing yards"
+    )
+    receiving_yards_std3: float = Field(
+        ..., description="3-week standard deviation of receiving yards"
+    )
+    receiving_yards_cv3: float = Field(
+        ..., description="3-week coefficient of variation of receiving yards"
+    )
+    receptions_std3: float = Field(
+        ..., description="3-week standard deviation of receptions"
+    )
+    receptions_cv3: float = Field(
+        ..., description="3-week coefficient of variation of receptions"
+    )
+
     # Context features (2 features)
     is_home: bool = Field(
         ..., description="Whether the player is playing at home"
@@ -94,6 +131,17 @@ class PredictionRequest(BaseModel):
                     "opp_total_yards_allowed_rank": 18.0,
                     "temp_normalized": 0.6,
                     "wind_normalized": 0.2,
+                    "team_points_roll3": 24.5,
+                    "team_yards_roll3": 350.0,
+                    "team_plays_roll3": 65.0,
+                    "passing_yards_std3": 50.0,
+                    "passing_yards_cv3": 0.2,
+                    "rushing_yards_std3": 25.0,
+                    "rushing_yards_cv3": 0.3,
+                    "receiving_yards_std3": 0.0,
+                    "receiving_yards_cv3": 0.0,
+                    "receptions_std3": 0.0,
+                    "receptions_cv3": 0.0,
                     "is_home": True,
                     "is_dome": False,
                 }
