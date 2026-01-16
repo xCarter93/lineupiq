@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 15 of 17 (Full Roster + Historical Data) - IN PROGRESS
-Plan: 2 of 4 in current phase
+Plan: 3 of 4 in current phase
 Status: In progress
-Last activity: 2026-01-16 — Completed 15-02-PLAN.md (Convex Schema Enhancements)
+Last activity: 2026-01-16 — Completed 15-03-PLAN.md (Frontend Roster Sync + Admin Page)
 
-Progress: ██████████░░░░░░░░ 50% (Phase 15, plan 2/4)
+Progress: ███████████░░░░░░░ 55% (Phase 15, plan 3/4)
 
 ## Performance Metrics
 
@@ -93,6 +93,9 @@ Progress: ██████████░░░░░░░░ 50% (Phase 15, 
 | 15-02 | Optional enriched fields for players | Backward compatibility with existing data |
 | 15-02 | by_player_id index for players table | O(1) lookups for efficient upserts |
 | 15-02 | Three playerHistory indexes | Cover all expected query patterns |
+| 15-03 | Height int→string conversion in hook | API returns int, Convex expects string |
+| 15-03 | Batch size of 100 for Convex ops | Convex transaction limits, 100 is safe |
+| 15-03 | Custom progress bar with Tailwind | Avoids adding Progress UI component |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -112,6 +115,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 15-02-PLAN.md (Convex Schema Enhancements)
+Stopped at: Completed 15-03-PLAN.md (Frontend Roster Sync + Admin Page)
 Resume file: None
-Next action: Execute 15-03-PLAN.md (Frontend Roster Sync + Admin Page)
+Next action: Execute 15-04-PLAN.md (Historical Display UI Components)
