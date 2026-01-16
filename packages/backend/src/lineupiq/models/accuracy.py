@@ -141,7 +141,7 @@ def summarize_backtest_results(backtest_results: list[dict[str, Any]]) -> dict[s
                     "mae": float,
                     "rmse": float,
                     "confidence": str,
-                    "n_samples": int,
+                    "sample_count": int,
                 },
                 ...
             ]
@@ -189,7 +189,7 @@ def summarize_backtest_results(backtest_results: list[dict[str, Any]]) -> dict[s
             "mae": round(metrics["mae"], 2),
             "rmse": round(metrics["rmse"], 2),
             "confidence": confidence,
-            "n_samples": result["n_samples"],
+            "sample_count": result["n_samples"],
         }
         model_summaries.append(model_summary)
 
