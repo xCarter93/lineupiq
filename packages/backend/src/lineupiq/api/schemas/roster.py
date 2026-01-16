@@ -13,7 +13,7 @@ class PlayerRoster(BaseModel):
     position: str = Field(..., description="Position (QB, RB, WR, TE, K)")
     team: str = Field(..., description="NFL team abbreviation")
     jersey_number: int | None = Field(None, description="Jersey number")
-    height: str | None = Field(None, description="Height (e.g., '6-2')")
+    height: int | None = Field(None, description="Height in inches")
     weight: int | None = Field(None, description="Weight in pounds")
     college: str | None = Field(None, description="College attended")
     years_exp: int | None = Field(None, description="Years of NFL experience")
@@ -28,7 +28,7 @@ class PlayerRoster(BaseModel):
                     "position": "QB",
                     "team": "KC",
                     "jersey_number": 15,
-                    "height": "6-2",
+                    "height": 74,
                     "weight": 225,
                     "college": "Texas Tech",
                     "years_exp": 8,
@@ -58,7 +58,7 @@ class RosterResponse(BaseModel):
                             "position": "QB",
                             "team": "KC",
                             "jersey_number": 15,
-                            "height": "6-2",
+                            "height": 74,
                             "weight": 225,
                             "college": "Texas Tech",
                             "years_exp": 8,

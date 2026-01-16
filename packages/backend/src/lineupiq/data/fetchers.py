@@ -335,6 +335,9 @@ def fetch_rosters(seasons: list[int] | None = None) -> pl.DataFrame:
         # Filter to fantasy-relevant positions
         df = df.filter(pl.col("position").is_in(FANTASY_POSITIONS))
 
+        # Filter out players without gsis_id (required for player lookup)
+        df = df.filter(pl.col("gsis_id").is_not_null())
+
         # Select relevant columns for roster display
         roster_cols = [
             "gsis_id",
