@@ -14,6 +14,12 @@ from lineupiq.api.schemas.prediction import (
     RBPredictionResponse,
     ReceiverPredictionResponse,
 )
+from lineupiq.api.schemas.roster import (
+    PlayerHistoryResponse,
+    PlayerRoster,
+    RosterResponse,
+    WeeklyStats,
+)
 from lineupiq.api.schemas.validation import (
     ModelMetrics,
     OverallMetrics,
@@ -36,4 +42,8 @@ __all__ = [
     "OverallMetrics",
     "PredictionInterval",
     "ValidationResponse",
+    "PlayerRoster",
+    "RosterResponse",
+    "WeeklyStats",
+    "PlayerHistoryResponse",
 ]
