@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from lineupiq.api.cache import PredictionCache
 from lineupiq.api.models_loader import load_models
-from lineupiq.api.routes import router, validation_router
+from lineupiq.api.routes import roster_router, router, validation_router
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,7 @@ app.add_middleware(
 
 app.include_router(router, prefix="/predict", tags=["predictions"])
 app.include_router(validation_router, prefix="/api/validation", tags=["validation"])
+app.include_router(roster_router, prefix="/api", tags=["roster"])
 
 
 @app.get("/health")
