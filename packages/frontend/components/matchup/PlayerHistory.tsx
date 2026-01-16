@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SectionLabel } from "@/components/ui/section-label";
 import { usePlayerHistory, calculateSeasonAverages } from "@/hooks/usePlayerHistory";
+import { FantasyPointsChart } from "@/components/charts";
 import { cn } from "@/lib/utils";
 
 interface PlayerHistoryProps {
@@ -106,13 +107,36 @@ function SeasonSummary({ games, season, position }: SeasonSummaryProps) {
   const avg = calculateSeasonAverages(games, season);
   if (!avg) return <div className="text-muted-foreground text-sm">No data for {season}</div>;
 
+  // Filter and sort games for this season (ascending for chart)
+  const seasonGames = games
+    .filter(g => g.season === season)
+    .sort((a, b) => a.week - b.week);
+
+  // Transform for chart (only need week + fantasyPoints)
+  const chartData = seasonGames
+    .filter(g => g.fantasyPoints !== undefined)
+    .map(g => ({
+      week: g.week,
+      fantasyPoints: g.fantasyPoints ?? 0,
+    }));
+
   return (
     <div className="space-y-4">
+      {/* Season header */}
       <div className="flex items-center justify-between">
         <h4 className="font-semibold">{season} Season</h4>
         <span className="text-sm text-muted-foreground">{avg.games} games</span>
       </div>
 
+      {/* Fantasy Points Trend Chart */}
+      {chartData.length > 1 && (
+        <div className="bg-muted/20 rounded-lg p-4">
+          <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Fantasy Points Trend</p>
+          <FantasyPointsChart data={chartData} />
+        </div>
+      )}
+
+      {/* Season averages display */}
       <div className="bg-muted/30 rounded-lg p-4">
         <div className="grid grid-cols-4 md:grid-cols-6 gap-4 text-center">
           {position === "QB" && (
