@@ -9,6 +9,7 @@
  */
 
 import type * as modelMetrics from "../modelMetrics.js";
+import type * as playerHistory from "../playerHistory.js";
 import type * as players from "../players.js";
 import type * as predictions from "../predictions.js";
 import type * as scoringConfigs from "../scoringConfigs.js";
@@ -22,6 +23,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   modelMetrics: typeof modelMetrics;
+  playerHistory: typeof playerHistory;
   players: typeof players;
   predictions: typeof predictions;
   scoringConfigs: typeof scoringConfigs;
