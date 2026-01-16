@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 15 of 17 (Full Roster + Historical Data) - IN PROGRESS
-Plan: 3 of 4 in current phase
-Status: In progress
-Last activity: 2026-01-16 — Completed 15-03-PLAN.md (Frontend Roster Sync + Admin Page)
+Phase: 15 of 17 (Full Roster + Historical Data) - COMPLETE
+Plan: 4 of 4 in current phase
+Status: Phase complete
+Last activity: 2026-01-16 — Completed 15-04-PLAN.md (Historical Display UI Components)
 
-Progress: ███████████░░░░░░░ 55% (Phase 15, plan 3/4)
+Progress: ████████████░░░░░░ 60% (Phase 15 complete)
 
 ## Performance Metrics
 
@@ -96,6 +96,9 @@ Progress: ███████████░░░░░░░ 55% (Phase 15, 
 | 15-03 | Height int→string conversion in hook | API returns int, Convex expects string |
 | 15-03 | Batch size of 100 for Convex ops | Convex transaction limits, 100 is safe |
 | 15-03 | Custom progress bar with Tailwind | Avoids adding Progress UI component |
+| 15-04 | Custom tabs with Tailwind | No Tabs UI component in project |
+| 15-04 | Cache-first data loading | Check Convex first, fetch API if empty |
+| 15-04 | Display last 10 games per season | Balance completeness and UI scrollability |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -115,6 +118,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-16
-Stopped at: Completed 15-03-PLAN.md (Frontend Roster Sync + Admin Page)
+Stopped at: Completed 15-04-PLAN.md (Historical Display UI Components)
 Resume file: None
-Next action: Execute 15-04-PLAN.md (Historical Display UI Components)
+Next action: Plan Phase 16 (Model Feature Enhancement)
