@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 15 of 17 (Full Roster + Historical Data) - COMPLETE
-Plan: 4 of 4 in current phase
-Status: Phase complete
-Last activity: 2026-01-16 — Completed 15-04-PLAN.md (Historical Display UI Components)
+Phase: 16 of 17 (UI Data Visualization) - IN PROGRESS
+Plan: 1 of ? in current phase
+Status: In progress
+Last activity: 2026-01-15 — Completed 16-01-PLAN.md (Recharts Setup)
 
-Progress: ████████████░░░░░░ 60% (Phase 15 complete)
+Progress: █████████████░░░░░ 65% (Phase 16 plan 01 complete)
 
 ## Performance Metrics
 
@@ -99,6 +99,8 @@ Progress: ████████████░░░░░░ 60% (Phase 15 c
 | 15-04 | Custom tabs with Tailwind | No Tabs UI component in project |
 | 15-04 | Cache-first data loading | Check Convex first, fetch API if empty |
 | 15-04 | Display last 10 games per season | Balance completeness and UI scrollability |
+| 16-01 | Direct recharts install (not shadcn/ui chart) | Avoids potential Tailwind v4 compatibility issues |
+| 16-01 | module: esnext in tsconfig.base.json | Required for TypeScript dynamic import support |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -117,7 +119,7 @@ None — ready to begin planning.
 
 ## Session Continuity
 
-Last session: 2026-01-16
-Stopped at: Completed 15-04-PLAN.md (Historical Display UI Components)
+Last session: 2026-01-15
+Stopped at: Completed 16-01-PLAN.md (Recharts Setup)
 Resume file: None
-Next action: Plan Phase 16 (Model Feature Enhancement)
+Next action: Execute remaining Phase 16 plans or plan next phase

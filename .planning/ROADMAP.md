@@ -104,7 +104,7 @@ Plans:
 **Research topics**: Recharts API, chart types for sports data, responsive charting patterns
 
 Plans:
-- [ ] 16-01: TBD
+- [x] 16-01: Recharts Setup — completed 2026-01-15
 
 #### Phase 17: Model Explainability UI
 
@@ -125,7 +125,7 @@ Plans:
 | 13. K/DEF + Training | v1.1 | 8/8 | ✅ Complete | 2026-01-15 |
 | 14. Complete Fantasy Stats | v1.1 | 4/4 | ✅ Complete | 2026-01-15 |
 | 15. Full Roster + Historical | v1.1 | 4/4 | ✅ Complete | 2026-01-16 |
-| 16. UI Data Visualization | v1.1 | 0/? | Not started | - |
+| 16. UI Data Visualization | v1.1 | 1/? | In progress | - |
 | 17. Model Explainability UI | v1.1 | 0/? | Not started | - |
 
 ---
