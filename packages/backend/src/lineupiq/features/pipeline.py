@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 FEATURES_DIR = Path(__file__).parent.parent.parent.parent / "data" / "features"
 
 
-def build_features(seasons: list[int], rolling_window: int = 3) -> pl.DataFrame:
+def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     """Build ML-ready feature dataset from raw NFL data.
 
     This is the main entry point for feature engineering. It orchestrates:
@@ -41,23 +41,26 @@ def build_features(seasons: list[int], rolling_window: int = 3) -> pl.DataFrame:
     5. Add volatility features (std, CV for key stats)
     6. Weather features are already included from process_player_stats
 
+    Rolling window expanded from 3 to 5 games (Phase 19.1) to better capture
+    recent performance trends, especially for volatile stats like touchdowns.
+
     Args:
         seasons: List of seasons to process (e.g., [2023, 2024]).
-        rolling_window: Number of games for rolling averages (default: 3).
+        rolling_window: Number of games for rolling averages (default: 5).
 
     Returns:
         Complete feature DataFrame ready for ML training, with:
         - Player identifiers (player_id, player_name, position, etc.)
-        - Rolling stats (passing_yards_roll3, rushing_yards_roll3, etc.)
+        - Rolling stats (passing_yards_roll5, rushing_yards_roll5, etc.)
         - Opponent strength (opp_pass_defense_strength, opp_rush_defense_strength)
-        - Team strength (team_points_roll3, team_yards_roll3, team_plays_roll3)
-        - Volatility metrics (passing_yards_std3, rushing_yards_cv3, etc.)
+        - Team strength (team_points_roll5, team_yards_roll5, team_plays_roll5)
+        - Volatility metrics (passing_yards_std5, rushing_yards_cv5, etc.)
         - Weather features (temp_normalized, wind_normalized, is_dome)
         - Game context (is_home, opponent, week, season)
 
     Example:
         >>> df = build_features([2024])
-        >>> "passing_yards_roll3" in df.columns
+        >>> "passing_yards_roll5" in df.columns
         True
         >>> "opp_pass_defense_strength" in df.columns
         True
@@ -133,22 +136,22 @@ def get_feature_columns() -> list[str]:
 
     Example:
         >>> cols = get_feature_columns()
-        >>> "passing_yards_roll3" in cols
+        >>> "passing_yards_roll5" in cols
         True
         >>> "player_id" in cols
         False
     """
-    # Rolling features (default window=3)
+    # Rolling features (default window=5, expanded from 3 in Phase 19.1)
     # Note: interceptions not available in cleaned data
     rolling_features = [
-        "passing_yards_roll3",
-        "passing_tds_roll3",
-        "rushing_yards_roll3",
-        "rushing_tds_roll3",
-        "carries_roll3",
-        "receiving_yards_roll3",
-        "receiving_tds_roll3",
-        "receptions_roll3",
+        "passing_yards_roll5",
+        "passing_tds_roll5",
+        "rushing_yards_roll5",
+        "rushing_tds_roll5",
+        "carries_roll5",
+        "receiving_yards_roll5",
+        "receiving_tds_roll5",
+        "receptions_roll5",
     ]
 
     # Opponent features

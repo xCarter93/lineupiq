@@ -33,7 +33,7 @@ class TestBuildFeaturesColumns:
         assert len(rolling_cols) >= 6, f"Expected at least 6 rolling columns, got {rolling_cols}"
 
         # Check specific expected columns
-        expected = ["passing_yards_roll3", "rushing_yards_roll3", "receiving_yards_roll3"]
+        expected = ["passing_yards_roll5", "rushing_yards_roll5", "receiving_yards_roll5"]
         for col in expected:
             assert col in feature_df.columns, f"Missing rolling column: {col}"
 
@@ -70,7 +70,7 @@ class TestBuildFeaturesNoNulls:
 
     def test_rolling_features_have_values(self, feature_df):
         """Rolling features should have values (min_periods=1)."""
-        rolling_cols = [c for c in feature_df.columns if "_roll3" in c]
+        rolling_cols = [c for c in feature_df.columns if "_roll5" in c]
 
         for col in rolling_cols:
             non_null_count = feature_df[col].drop_nulls().len()
@@ -99,8 +99,8 @@ class TestGetFeatureColumns:
     def test_includes_rolling_features(self):
         """Should include rolling feature columns."""
         cols = get_feature_columns()
-        assert "passing_yards_roll3" in cols
-        assert "rushing_yards_roll3" in cols
+        assert "passing_yards_roll5" in cols
+        assert "rushing_yards_roll5" in cols
 
     def test_includes_opponent_features(self):
         """Should include opponent strength columns."""
@@ -169,9 +169,9 @@ class TestBuildFeaturesWithWindow:
         roll5_cols = [c for c in df.columns if "_roll5" in c]
         assert len(roll5_cols) >= 6, f"Expected _roll5 columns, got {roll5_cols}"
 
-        # Should NOT have _roll3 columns
-        roll3_cols = [c for c in df.columns if "_roll3" in c]
-        assert len(roll3_cols) == 0, f"Should not have _roll3 columns with window=5: {roll3_cols}"
+        # Should NOT have _roll5 columns
+        roll5_cols = [c for c in df.columns if "_roll5" in c]
+        assert len(roll5_cols) == 0, f"Should not have _roll5 columns with window=5: {roll5_cols}"
 
 
 class TestSaveAndLoadFeatures:
@@ -197,6 +197,6 @@ class TestSaveAndLoadFeatures:
             assert set(loaded.columns) == set(df.columns), "Column mismatch"
 
             # Verify data matches for a sample column
-            orig_vals = df["passing_yards_roll3"].drop_nulls().to_list()[:10]
-            load_vals = loaded["passing_yards_roll3"].drop_nulls().to_list()[:10]
+            orig_vals = df["passing_yards_roll5"].drop_nulls().to_list()[:10]
+            load_vals = loaded["passing_yards_roll5"].drop_nulls().to_list()[:10]
             assert orig_vals == load_vals, "Data values don't match after roundtrip"

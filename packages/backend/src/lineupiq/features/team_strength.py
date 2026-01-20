@@ -5,9 +5,9 @@ Computes rolling team-level metrics that provide context for individual
 player performance predictions.
 
 Key features:
-- team_points_roll3: Rolling 3-game average points scored
-- team_yards_roll3: Rolling 3-game average total yards
-- team_plays_roll3: Rolling 3-game average plays per game (pace)
+- team_points_roll5: Rolling 3-game average points scored
+- team_yards_roll5: Rolling 3-game average total yards
+- team_plays_roll5: Rolling 3-game average plays per game (pace)
 """
 
 import logging
@@ -30,8 +30,8 @@ def compute_team_strength(
         window: Rolling window size (default: 3 games).
 
     Returns:
-        DataFrame with columns: season, week, team, team_points_roll3,
-        team_yards_roll3, team_plays_roll3.
+        DataFrame with columns: season, week, team, team_points_roll5,
+        team_yards_roll5, team_plays_roll5.
     """
     logger.info(f"Computing team strength features with window={window}")
 

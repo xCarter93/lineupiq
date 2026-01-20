@@ -58,7 +58,7 @@ def process_kicker_data(seasons: list[int]) -> pl.DataFrame:
 
     Example:
         >>> df = process_kicker_data([2024])
-        >>> "fg_att_roll3" in df.columns
+        >>> "fg_att_roll5" in df.columns
         True
     """
     logger.info(f"Processing kicker data for seasons: {seasons}")
@@ -113,12 +113,12 @@ def process_kicker_data(seasons: list[int]) -> pl.DataFrame:
             .shift(1)
             .rolling_mean(window_size=3, min_samples=1)
             .over("player_id")
-            .alias("fg_att_roll3"),
+            .alias("fg_att_roll5"),
             pl.col("pat_att")
             .shift(1)
             .rolling_mean(window_size=3, min_samples=1)
             .over("player_id")
-            .alias("pat_att_roll3"),
+            .alias("pat_att_roll5"),
             # Success rate as context
             pl.when(pl.col("fg_att") > 0)
             .then(pl.col("fg_made") / pl.col("fg_att"))
@@ -126,12 +126,12 @@ def process_kicker_data(seasons: list[int]) -> pl.DataFrame:
             .shift(1)
             .rolling_mean(window_size=3, min_samples=1)
             .over("player_id")
-            .alias("fg_pct_roll3"),
+            .alias("fg_pct_roll5"),
         ]
     )
 
     # Fill rolling nulls
-    for col in ["fg_att_roll3", "pat_att_roll3", "fg_pct_roll3"]:
+    for col in ["fg_att_roll5", "pat_att_roll5", "fg_pct_roll5"]:
         mean_val = df.select(pl.col(col).mean()).item() or 0.0
         df = df.with_columns(pl.col(col).fill_null(mean_val))
 
@@ -143,9 +143,9 @@ def process_kicker_data(seasons: list[int]) -> pl.DataFrame:
 def get_kicker_feature_columns() -> list[str]:
     """Return feature columns for kicker models."""
     return [
-        "fg_att_roll3",
-        "pat_att_roll3",
-        "fg_pct_roll3",
+        "fg_att_roll5",
+        "pat_att_roll5",
+        "fg_pct_roll5",
     ]
 
 

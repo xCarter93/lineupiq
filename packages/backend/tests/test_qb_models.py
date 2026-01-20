@@ -32,7 +32,7 @@ def sample_qb_data() -> pl.DataFrame:
 
     # Add feature columns with random values
     for col in feature_cols:
-        if col.endswith("_roll3"):
+        if col.endswith("_roll5"):
             # Rolling stats - reasonable ranges
             if "yards" in col:
                 data[col] = np.random.uniform(50, 300, n_rows).tolist()
@@ -105,8 +105,8 @@ class TestPrepareQbData:
         df_with_nulls = sample_qb_data.with_columns(
             pl.when(pl.col("week") <= 5)
             .then(None)
-            .otherwise(pl.col("passing_yards_roll3"))
-            .alias("passing_yards_roll3")
+            .otherwise(pl.col("passing_yards_roll5"))
+            .alias("passing_yards_roll5")
         )
 
         X, y_dict = prepare_qb_data(df_with_nulls)

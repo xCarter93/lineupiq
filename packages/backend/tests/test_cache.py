@@ -164,14 +164,14 @@ def client():
 
 # Sample prediction request data
 SAMPLE_REQUEST = {
-    "passing_yards_roll3": 250.5,
-    "passing_tds_roll3": 1.8,
-    "rushing_yards_roll3": 15.0,
-    "rushing_tds_roll3": 0.2,
-    "carries_roll3": 3.0,
-    "receiving_yards_roll3": 0.0,
-    "receiving_tds_roll3": 0.0,
-    "receptions_roll3": 0.0,
+    "passing_yards_roll5": 250.5,
+    "passing_tds_roll5": 1.8,
+    "rushing_yards_roll5": 15.0,
+    "rushing_tds_roll5": 0.2,
+    "carries_roll5": 3.0,
+    "receiving_yards_roll5": 0.0,
+    "receiving_tds_roll5": 0.0,
+    "receptions_roll5": 0.0,
     "opp_pass_defense_strength": 0.95,
     "opp_rush_defense_strength": 1.05,
     "opp_pass_yards_allowed_rank": 15.0,

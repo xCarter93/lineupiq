@@ -54,7 +54,7 @@ def process_defense_data(seasons: list[int]) -> pl.DataFrame:
 
     Example:
         >>> df = process_defense_data([2024])
-        >>> "points_allowed_roll3" in df.columns
+        >>> "points_allowed_roll5" in df.columns
         True
     """
     logger.info(f"Processing defense data for seasons: {seasons}")
@@ -132,11 +132,11 @@ def process_defense_data(seasons: list[int]) -> pl.DataFrame:
 
     # Add rolling features (opponent-adjusted strength)
     rolling_configs = [
-        ("points_allowed", "points_allowed_roll3"),
-        ("def_sacks", "def_sacks_roll3"),
-        ("def_interceptions", "def_ints_roll3"),
-        ("def_fumbles", "def_fumbles_roll3"),
-        ("total_def_tds", "def_tds_roll3"),
+        ("points_allowed", "points_allowed_roll5"),
+        ("def_sacks", "def_sacks_roll5"),
+        ("def_interceptions", "def_ints_roll5"),
+        ("def_fumbles", "def_fumbles_roll5"),
+        ("total_def_tds", "def_tds_roll5"),
     ]
 
     for src_col, dest_col in rolling_configs:
@@ -151,11 +151,11 @@ def process_defense_data(seasons: list[int]) -> pl.DataFrame:
 
     # Fill rolling nulls with league averages
     rolling_cols = [
-        "points_allowed_roll3",
-        "def_sacks_roll3",
-        "def_ints_roll3",
-        "def_fumbles_roll3",
-        "def_tds_roll3",
+        "points_allowed_roll5",
+        "def_sacks_roll5",
+        "def_ints_roll5",
+        "def_fumbles_roll5",
+        "def_tds_roll5",
     ]
     for col in rolling_cols:
         if col in df.columns:
@@ -170,11 +170,11 @@ def process_defense_data(seasons: list[int]) -> pl.DataFrame:
 def get_defense_feature_columns() -> list[str]:
     """Return feature columns for defense models."""
     return [
-        "points_allowed_roll3",
-        "def_sacks_roll3",
-        "def_ints_roll3",
-        "def_fumbles_roll3",
-        "def_tds_roll3",
+        "points_allowed_roll5",
+        "def_sacks_roll5",
+        "def_ints_roll5",
+        "def_fumbles_roll5",
+        "def_tds_roll5",
     ]
 
 

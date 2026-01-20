@@ -11,14 +11,14 @@ from pydantic import BaseModel, Field
 # Feature display names for human-readable explanations
 FEATURE_DISPLAY_NAMES: dict[str, str] = {
     # Rolling stats
-    "passing_yards_roll3": "Recent Passing Yards",
-    "passing_tds_roll3": "Recent Passing TDs",
-    "rushing_yards_roll3": "Recent Rushing Yards",
-    "rushing_tds_roll3": "Recent Rushing TDs",
-    "carries_roll3": "Recent Carries",
-    "receiving_yards_roll3": "Recent Receiving Yards",
-    "receiving_tds_roll3": "Recent Receiving TDs",
-    "receptions_roll3": "Recent Receptions",
+    "passing_yards_roll5": "Recent Passing Yards",
+    "passing_tds_roll5": "Recent Passing TDs",
+    "rushing_yards_roll5": "Recent Rushing Yards",
+    "rushing_tds_roll5": "Recent Rushing TDs",
+    "carries_roll5": "Recent Carries",
+    "receiving_yards_roll5": "Recent Receiving Yards",
+    "receiving_tds_roll5": "Recent Receiving TDs",
+    "receptions_roll5": "Recent Receptions",
     # Opponent features
     "opp_pass_defense_strength": "Opponent Pass Defense",
     "opp_rush_defense_strength": "Opponent Rush Defense",
@@ -29,18 +29,18 @@ FEATURE_DISPLAY_NAMES: dict[str, str] = {
     "temp_normalized": "Game Temperature",
     "wind_normalized": "Wind Conditions",
     # Team strength features
-    "team_points_roll3": "Team Recent Scoring",
-    "team_yards_roll3": "Team Recent Yardage",
-    "team_plays_roll3": "Team Pace",
+    "team_points_roll5": "Team Recent Scoring",
+    "team_yards_roll5": "Team Recent Yardage",
+    "team_plays_roll5": "Team Pace",
     # Volatility features
-    "passing_yards_std3": "Passing Volatility",
-    "passing_yards_cv3": "Passing Consistency",
-    "rushing_yards_std3": "Rushing Volatility",
-    "rushing_yards_cv3": "Rushing Consistency",
-    "receiving_yards_std3": "Receiving Volatility",
-    "receiving_yards_cv3": "Receiving Consistency",
-    "receptions_std3": "Receptions Volatility",
-    "receptions_cv3": "Receptions Consistency",
+    "passing_yards_std5": "Passing Volatility",
+    "passing_yards_cv5": "Passing Consistency",
+    "rushing_yards_std5": "Rushing Volatility",
+    "rushing_yards_cv5": "Rushing Consistency",
+    "receiving_yards_std5": "Receiving Volatility",
+    "receiving_yards_cv5": "Receiving Consistency",
+    "receptions_std5": "Receptions Volatility",
+    "receptions_cv5": "Receptions Consistency",
     # Context features
     "is_home": "Home Field Advantage",
     "is_dome": "Indoor Stadium",
@@ -82,7 +82,7 @@ class FeatureContribution(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                    "feature": "passing_yards_roll3",
+                    "feature": "passing_yards_roll5",
                     "display_name": "Recent Passing Yards",
                     "value": 280.5,
                     "contribution": 15.3,
@@ -100,28 +100,28 @@ class ExplainabilityRequest(BaseModel):
     """
 
     # Rolling stats (8 features)
-    passing_yards_roll3: float = Field(
+    passing_yards_roll5: float = Field(
         ..., description="3-week rolling average of passing yards"
     )
-    passing_tds_roll3: float = Field(
+    passing_tds_roll5: float = Field(
         ..., description="3-week rolling average of passing TDs"
     )
-    rushing_yards_roll3: float = Field(
+    rushing_yards_roll5: float = Field(
         ..., description="3-week rolling average of rushing yards"
     )
-    rushing_tds_roll3: float = Field(
+    rushing_tds_roll5: float = Field(
         ..., description="3-week rolling average of rushing TDs"
     )
-    carries_roll3: float = Field(
+    carries_roll5: float = Field(
         ..., description="3-week rolling average of carries"
     )
-    receiving_yards_roll3: float = Field(
+    receiving_yards_roll5: float = Field(
         ..., description="3-week rolling average of receiving yards"
     )
-    receiving_tds_roll3: float = Field(
+    receiving_tds_roll5: float = Field(
         ..., description="3-week rolling average of receiving TDs"
     )
-    receptions_roll3: float = Field(
+    receptions_roll5: float = Field(
         ..., description="3-week rolling average of receptions"
     )
 
@@ -151,39 +151,39 @@ class ExplainabilityRequest(BaseModel):
     )
 
     # Team strength features (3 features)
-    team_points_roll3: float = Field(
+    team_points_roll5: float = Field(
         ..., description="3-week rolling average of team points scored"
     )
-    team_yards_roll3: float = Field(
+    team_yards_roll5: float = Field(
         ..., description="3-week rolling average of team total yards"
     )
-    team_plays_roll3: float = Field(
+    team_plays_roll5: float = Field(
         ..., description="3-week rolling average of team plays (pace)"
     )
 
     # Volatility features (8 features)
-    passing_yards_std3: float = Field(
+    passing_yards_std5: float = Field(
         ..., description="3-week standard deviation of passing yards"
     )
-    passing_yards_cv3: float = Field(
+    passing_yards_cv5: float = Field(
         ..., description="3-week coefficient of variation of passing yards"
     )
-    rushing_yards_std3: float = Field(
+    rushing_yards_std5: float = Field(
         ..., description="3-week standard deviation of rushing yards"
     )
-    rushing_yards_cv3: float = Field(
+    rushing_yards_cv5: float = Field(
         ..., description="3-week coefficient of variation of rushing yards"
     )
-    receiving_yards_std3: float = Field(
+    receiving_yards_std5: float = Field(
         ..., description="3-week standard deviation of receiving yards"
     )
-    receiving_yards_cv3: float = Field(
+    receiving_yards_cv5: float = Field(
         ..., description="3-week coefficient of variation of receiving yards"
     )
-    receptions_std3: float = Field(
+    receptions_std5: float = Field(
         ..., description="3-week standard deviation of receptions"
     )
-    receptions_cv3: float = Field(
+    receptions_cv5: float = Field(
         ..., description="3-week coefficient of variation of receptions"
     )
 
@@ -199,14 +199,14 @@ class ExplainabilityRequest(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                    "passing_yards_roll3": 280.0,
-                    "passing_tds_roll3": 2.0,
-                    "rushing_yards_roll3": 20.0,
-                    "rushing_tds_roll3": 0.3,
-                    "carries_roll3": 3.0,
-                    "receiving_yards_roll3": 0.0,
-                    "receiving_tds_roll3": 0.0,
-                    "receptions_roll3": 0.0,
+                    "passing_yards_roll5": 280.0,
+                    "passing_tds_roll5": 2.0,
+                    "rushing_yards_roll5": 20.0,
+                    "rushing_tds_roll5": 0.3,
+                    "carries_roll5": 3.0,
+                    "receiving_yards_roll5": 0.0,
+                    "receiving_tds_roll5": 0.0,
+                    "receptions_roll5": 0.0,
                     "opp_pass_defense_strength": 0.5,
                     "opp_rush_defense_strength": 0.5,
                     "opp_pass_yards_allowed_rank": 16.0,
@@ -214,17 +214,17 @@ class ExplainabilityRequest(BaseModel):
                     "opp_total_yards_allowed_rank": 16.0,
                     "temp_normalized": 0.5,
                     "wind_normalized": 0.2,
-                    "team_points_roll3": 24.0,
-                    "team_yards_roll3": 350.0,
-                    "team_plays_roll3": 65.0,
-                    "passing_yards_std3": 40.0,
-                    "passing_yards_cv3": 0.15,
-                    "rushing_yards_std3": 10.0,
-                    "rushing_yards_cv3": 0.3,
-                    "receiving_yards_std3": 0.0,
-                    "receiving_yards_cv3": 0.0,
-                    "receptions_std3": 0.0,
-                    "receptions_cv3": 0.0,
+                    "team_points_roll5": 24.0,
+                    "team_yards_roll5": 350.0,
+                    "team_plays_roll5": 65.0,
+                    "passing_yards_std5": 40.0,
+                    "passing_yards_cv5": 0.15,
+                    "rushing_yards_std5": 10.0,
+                    "rushing_yards_cv5": 0.3,
+                    "receiving_yards_std5": 0.0,
+                    "receiving_yards_cv5": 0.0,
+                    "receptions_std5": 0.0,
+                    "receptions_cv5": 0.0,
                     "is_home": True,
                     "is_dome": False,
                 }
@@ -259,7 +259,7 @@ class ExplainabilityResponse(BaseModel):
                     "base_value": 245.2,
                     "contributions": [
                         {
-                            "feature": "passing_yards_roll3",
+                            "feature": "passing_yards_roll5",
                             "display_name": "Recent Passing Yards",
                             "value": 280.0,
                             "contribution": 25.3,

@@ -21,14 +21,14 @@ def client() -> Generator[TestClient, None, None]:
 def sample_features() -> dict:
     """Sample feature values for testing predictions."""
     return {
-        "passing_yards_roll3": 250.0,
-        "passing_tds_roll3": 1.8,
-        "rushing_yards_roll3": 15.0,
-        "rushing_tds_roll3": 0.2,
-        "carries_roll3": 3.0,
-        "receiving_yards_roll3": 45.0,
-        "receiving_tds_roll3": 0.3,
-        "receptions_roll3": 4.5,
+        "passing_yards_roll5": 250.0,
+        "passing_tds_roll5": 1.8,
+        "rushing_yards_roll5": 15.0,
+        "rushing_tds_roll5": 0.2,
+        "carries_roll5": 3.0,
+        "receiving_yards_roll5": 45.0,
+        "receiving_tds_roll5": 0.3,
+        "receptions_roll5": 4.5,
         "opp_pass_defense_strength": 0.95,
         "opp_rush_defense_strength": 1.05,
         "opp_pass_yards_allowed_rank": 15.0,
@@ -119,8 +119,8 @@ def test_invalid_request(client: TestClient) -> None:
     """Test that missing fields return 422 validation error."""
     # Missing required fields
     incomplete_request = {
-        "passing_yards_roll3": 250.0,
-        "passing_tds_roll3": 1.8,
+        "passing_yards_roll5": 250.0,
+        "passing_tds_roll5": 1.8,
         # Missing all other fields
     }
 

@@ -17,29 +17,29 @@ class PredictionRequest(BaseModel):
     """
 
     # Rolling stats (8 features)
-    passing_yards_roll3: float = Field(
-        ..., description="3-week rolling average of passing yards"
+    passing_yards_roll5: float = Field(
+        ..., description="5-week rolling average of passing yards"
     )
-    passing_tds_roll3: float = Field(
-        ..., description="3-week rolling average of passing TDs"
+    passing_tds_roll5: float = Field(
+        ..., description="5-week rolling average of passing TDs"
     )
-    rushing_yards_roll3: float = Field(
-        ..., description="3-week rolling average of rushing yards"
+    rushing_yards_roll5: float = Field(
+        ..., description="5-week rolling average of rushing yards"
     )
-    rushing_tds_roll3: float = Field(
-        ..., description="3-week rolling average of rushing TDs"
+    rushing_tds_roll5: float = Field(
+        ..., description="5-week rolling average of rushing TDs"
     )
-    carries_roll3: float = Field(
-        ..., description="3-week rolling average of carries"
+    carries_roll5: float = Field(
+        ..., description="5-week rolling average of carries"
     )
-    receiving_yards_roll3: float = Field(
-        ..., description="3-week rolling average of receiving yards"
+    receiving_yards_roll5: float = Field(
+        ..., description="5-week rolling average of receiving yards"
     )
-    receiving_tds_roll3: float = Field(
-        ..., description="3-week rolling average of receiving TDs"
+    receiving_tds_roll5: float = Field(
+        ..., description="5-week rolling average of receiving TDs"
     )
-    receptions_roll3: float = Field(
-        ..., description="3-week rolling average of receptions"
+    receptions_roll5: float = Field(
+        ..., description="5-week rolling average of receptions"
     )
 
     # Opponent features (5 features)
@@ -68,40 +68,40 @@ class PredictionRequest(BaseModel):
     )
 
     # Team strength features (3 features)
-    team_points_roll3: float = Field(
-        ..., description="3-week rolling average of team points scored"
+    team_points_roll5: float = Field(
+        ..., description="5-week rolling average of team points scored"
     )
-    team_yards_roll3: float = Field(
-        ..., description="3-week rolling average of team total yards"
+    team_yards_roll5: float = Field(
+        ..., description="5-week rolling average of team total yards"
     )
-    team_plays_roll3: float = Field(
-        ..., description="3-week rolling average of team plays (pace)"
+    team_plays_roll5: float = Field(
+        ..., description="5-week rolling average of team plays (pace)"
     )
 
     # Volatility features (8 features)
-    passing_yards_std3: float = Field(
-        ..., description="3-week standard deviation of passing yards"
+    passing_yards_std5: float = Field(
+        ..., description="5-week standard deviation of passing yards"
     )
-    passing_yards_cv3: float = Field(
-        ..., description="3-week coefficient of variation of passing yards"
+    passing_yards_cv5: float = Field(
+        ..., description="5-week coefficient of variation of passing yards"
     )
-    rushing_yards_std3: float = Field(
-        ..., description="3-week standard deviation of rushing yards"
+    rushing_yards_std5: float = Field(
+        ..., description="5-week standard deviation of rushing yards"
     )
-    rushing_yards_cv3: float = Field(
-        ..., description="3-week coefficient of variation of rushing yards"
+    rushing_yards_cv5: float = Field(
+        ..., description="5-week coefficient of variation of rushing yards"
     )
-    receiving_yards_std3: float = Field(
-        ..., description="3-week standard deviation of receiving yards"
+    receiving_yards_std5: float = Field(
+        ..., description="5-week standard deviation of receiving yards"
     )
-    receiving_yards_cv3: float = Field(
-        ..., description="3-week coefficient of variation of receiving yards"
+    receiving_yards_cv5: float = Field(
+        ..., description="5-week coefficient of variation of receiving yards"
     )
-    receptions_std3: float = Field(
-        ..., description="3-week standard deviation of receptions"
+    receptions_std5: float = Field(
+        ..., description="5-week standard deviation of receptions"
     )
-    receptions_cv3: float = Field(
-        ..., description="3-week coefficient of variation of receptions"
+    receptions_cv5: float = Field(
+        ..., description="5-week coefficient of variation of receptions"
     )
 
     # Context features (2 features)
@@ -116,14 +116,14 @@ class PredictionRequest(BaseModel):
         "json_schema_extra": {
             "examples": [
                 {
-                    "passing_yards_roll3": 250.5,
-                    "passing_tds_roll3": 1.8,
-                    "rushing_yards_roll3": 15.0,
-                    "rushing_tds_roll3": 0.2,
-                    "carries_roll3": 3.0,
-                    "receiving_yards_roll3": 0.0,
-                    "receiving_tds_roll3": 0.0,
-                    "receptions_roll3": 0.0,
+                    "passing_yards_roll5": 250.5,
+                    "passing_tds_roll5": 1.8,
+                    "rushing_yards_roll5": 15.0,
+                    "rushing_tds_roll5": 0.2,
+                    "carries_roll5": 3.0,
+                    "receiving_yards_roll5": 0.0,
+                    "receiving_tds_roll5": 0.0,
+                    "receptions_roll5": 0.0,
                     "opp_pass_defense_strength": 0.95,
                     "opp_rush_defense_strength": 1.05,
                     "opp_pass_yards_allowed_rank": 15.0,
@@ -131,17 +131,17 @@ class PredictionRequest(BaseModel):
                     "opp_total_yards_allowed_rank": 18.0,
                     "temp_normalized": 0.6,
                     "wind_normalized": 0.2,
-                    "team_points_roll3": 24.5,
-                    "team_yards_roll3": 350.0,
-                    "team_plays_roll3": 65.0,
-                    "passing_yards_std3": 50.0,
-                    "passing_yards_cv3": 0.2,
-                    "rushing_yards_std3": 25.0,
-                    "rushing_yards_cv3": 0.3,
-                    "receiving_yards_std3": 0.0,
-                    "receiving_yards_cv3": 0.0,
-                    "receptions_std3": 0.0,
-                    "receptions_cv3": 0.0,
+                    "team_points_roll5": 24.5,
+                    "team_yards_roll5": 350.0,
+                    "team_plays_roll5": 65.0,
+                    "passing_yards_std5": 50.0,
+                    "passing_yards_cv5": 0.2,
+                    "rushing_yards_std5": 25.0,
+                    "rushing_yards_cv5": 0.3,
+                    "receiving_yards_std5": 0.0,
+                    "receiving_yards_cv5": 0.0,
+                    "receptions_std5": 0.0,
+                    "receptions_cv5": 0.0,
                     "is_home": True,
                     "is_dome": False,
                 }
@@ -241,23 +241,23 @@ class KickerPredictionRequest(BaseModel):
     Contains rolling stat features for kicker model inference.
     """
 
-    fg_att_roll3: float = Field(
-        ..., description="3-week rolling average of FG attempts"
+    fg_att_roll5: float = Field(
+        ..., description="5-week rolling average of FG attempts"
     )
-    pat_att_roll3: float = Field(
-        ..., description="3-week rolling average of PAT attempts"
+    pat_att_roll5: float = Field(
+        ..., description="5-week rolling average of PAT attempts"
     )
-    fg_pct_roll3: float = Field(
-        ..., description="3-week rolling average of FG percentage"
+    fg_pct_roll5: float = Field(
+        ..., description="5-week rolling average of FG percentage"
     )
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
-                    "fg_att_roll3": 2.5,
-                    "pat_att_roll3": 3.2,
-                    "fg_pct_roll3": 0.85,
+                    "fg_att_roll5": 2.5,
+                    "pat_att_roll5": 3.2,
+                    "fg_pct_roll5": 0.85,
                 }
             ]
         }
@@ -316,31 +316,31 @@ class DefensePredictionRequest(BaseModel):
     Contains rolling stat features for defense model inference.
     """
 
-    points_allowed_roll3: float = Field(
-        ..., description="3-week rolling average of points allowed"
+    points_allowed_roll5: float = Field(
+        ..., description="5-week rolling average of points allowed"
     )
-    def_sacks_roll3: float = Field(
-        ..., description="3-week rolling average of sacks"
+    def_sacks_roll5: float = Field(
+        ..., description="5-week rolling average of sacks"
     )
-    def_ints_roll3: float = Field(
-        ..., description="3-week rolling average of interceptions"
+    def_ints_roll5: float = Field(
+        ..., description="5-week rolling average of interceptions"
     )
-    def_fumbles_roll3: float = Field(
-        ..., description="3-week rolling average of fumble recoveries"
+    def_fumbles_roll5: float = Field(
+        ..., description="5-week rolling average of fumble recoveries"
     )
-    def_tds_roll3: float = Field(
-        ..., description="3-week rolling average of defensive/ST touchdowns"
+    def_tds_roll5: float = Field(
+        ..., description="5-week rolling average of defensive/ST touchdowns"
     )
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
-                    "points_allowed_roll3": 21.3,
-                    "def_sacks_roll3": 2.5,
-                    "def_ints_roll3": 1.2,
-                    "def_fumbles_roll3": 0.8,
-                    "def_tds_roll3": 0.3,
+                    "points_allowed_roll5": 21.3,
+                    "def_sacks_roll5": 2.5,
+                    "def_ints_roll5": 1.2,
+                    "def_fumbles_roll5": 0.8,
+                    "def_tds_roll5": 0.3,
                 }
             ]
         }
@@ -417,7 +417,7 @@ class PlayerFeaturesResponse(BaseModel):
         ..., description="The 28 feature values for model input"
     )
     has_sufficient_data: bool = Field(
-        ..., description="True if player has >= 3 games for reliable rolling stats"
+        ..., description="True if player has >= 5 games for reliable rolling stats"
     )
 
     model_config = {
@@ -431,30 +431,30 @@ class PlayerFeaturesResponse(BaseModel):
                     "games_available": 17,
                     "has_sufficient_data": True,
                     "features": {
-                        "passing_yards_roll3": 245.7,
-                        "passing_tds_roll3": 1.7,
-                        "rushing_yards_roll3": 42.3,
-                        "rushing_tds_roll3": 0.7,
-                        "carries_roll3": 8.3,
-                        "receiving_yards_roll3": 0.0,
-                        "receiving_tds_roll3": 0.0,
-                        "receptions_roll3": 0.0,
+                        "passing_yards_roll5": 245.7,
+                        "passing_tds_roll5": 1.7,
+                        "rushing_yards_roll5": 42.3,
+                        "rushing_tds_roll5": 0.7,
+                        "carries_roll5": 8.3,
+                        "receiving_yards_roll5": 0.0,
+                        "receiving_tds_roll5": 0.0,
+                        "receptions_roll5": 0.0,
                         "opp_pass_defense_strength": 0.5,
                         "opp_rush_defense_strength": 0.6,
                         "opp_pass_yards_allowed_rank": 16.0,
                         "opp_rush_yards_allowed_rank": 18.0,
                         "opp_total_yards_allowed_rank": 17.0,
-                        "team_points_roll3": 28.5,
-                        "team_yards_roll3": 365.0,
-                        "team_plays_roll3": 68.0,
-                        "passing_yards_std3": 45.2,
-                        "passing_yards_cv3": 0.18,
-                        "rushing_yards_std3": 22.1,
-                        "rushing_yards_cv3": 0.52,
-                        "receiving_yards_std3": 0.0,
-                        "receiving_yards_cv3": 0.0,
-                        "receptions_std3": 0.0,
-                        "receptions_cv3": 0.0,
+                        "team_points_roll5": 28.5,
+                        "team_yards_roll5": 365.0,
+                        "team_plays_roll5": 68.0,
+                        "passing_yards_std5": 45.2,
+                        "passing_yards_cv5": 0.18,
+                        "rushing_yards_std5": 22.1,
+                        "rushing_yards_cv5": 0.52,
+                        "receiving_yards_std5": 0.0,
+                        "receiving_yards_cv5": 0.0,
+                        "receptions_std5": 0.0,
+                        "receptions_cv5": 0.0,
                         "temp_normalized": 0.5,
                         "wind_normalized": 0.2,
                         "is_home": True,

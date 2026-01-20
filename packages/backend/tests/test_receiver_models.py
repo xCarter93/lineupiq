@@ -33,7 +33,7 @@ def sample_wr_data() -> pl.DataFrame:
 
     # Add feature columns with random values
     for col in feature_cols:
-        if col.endswith("_roll3"):
+        if col.endswith("_roll5"):
             # Rolling stats - reasonable ranges
             if "yards" in col:
                 data[col] = np.random.uniform(20, 150, n_rows).tolist()
@@ -81,7 +81,7 @@ def sample_te_data() -> pl.DataFrame:
 
     # Add feature columns with random values
     for col in feature_cols:
-        if col.endswith("_roll3"):
+        if col.endswith("_roll5"):
             # Rolling stats - reasonable ranges
             if "yards" in col:
                 data[col] = np.random.uniform(10, 100, n_rows).tolist()
@@ -179,8 +179,8 @@ class TestPrepareReceiverDataValidation:
         df_with_nulls = sample_wr_data.with_columns(
             pl.when(pl.col("week") <= 5)
             .then(None)
-            .otherwise(pl.col("receiving_yards_roll3"))
-            .alias("receiving_yards_roll3")
+            .otherwise(pl.col("receiving_yards_roll5"))
+            .alias("receiving_yards_roll5")
         )
 
         X, y_dict = prepare_receiver_data(df_with_nulls, "WR")
