@@ -106,6 +106,8 @@ Progress: ██████████████░░░░ 70% (Phase 16.1
 | 16.1-01 | Neutral values for opponent/team strength | Future: look up actual rankings from cached data |
 | 16.1-02 | No code changes for chart fix | Data flow correct; issue is seed data using fake player IDs |
 | 16.1-02 | User must sync roster for real player IDs | Admin -> "Sync 2025 Roster" fetches real gsis_ids |
+| 16.1-FIX | Explicit hex colors for Recharts | CSS variables use OKLCH which doesn't work with Recharts HSL wrapper |
+| 16.1-FIX | AreaChart with gradient over LineChart | Better visual prominence for data trends |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -126,6 +128,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 16.1-02-PLAN.md (Fix Chart Visualization)
+Stopped at: Completed 16.1-FIX.md (UAT chart visibility fix)
 Resume file: None
-Next action: Plan or execute Phase 17
+Next action: Re-verify with /gsd:verify-work 16.1 or proceed to Phase 17
