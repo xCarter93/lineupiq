@@ -25,7 +25,7 @@ interface StatDisplayProps {
 
 function StatDisplay({ label, value, unit, isNegative = false }: StatDisplayProps) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col items-center text-center p-4 bg-muted/20 rounded-lg">
       <span className={cn(
         "text-3xl font-bold tabular-nums",
         isNegative ? "text-red-600" : "text-foreground"
@@ -33,7 +33,7 @@ function StatDisplay({ label, value, unit, isNegative = false }: StatDisplayProp
         {value.toFixed(1)}
         {unit && <span className="text-lg font-normal ml-1">{unit}</span>}
       </span>
-      <span className="text-sm text-muted-foreground uppercase tracking-wide mt-1">
+      <span className="text-xs text-muted-foreground uppercase tracking-wide mt-2">
         {label}
       </span>
     </div>
@@ -42,9 +42,9 @@ function StatDisplay({ label, value, unit, isNegative = false }: StatDisplayProp
 
 function StatSkeleton() {
   return (
-    <div className="flex flex-col">
-      <div className="h-9 w-20 bg-muted/50 rounded animate-pulse" />
-      <div className="h-4 w-16 bg-muted/30 rounded animate-pulse mt-2" />
+    <div className="flex flex-col items-center text-center p-4 bg-muted/20 rounded-lg">
+      <div className="h-9 w-16 bg-muted/50 rounded animate-pulse" />
+      <div className="h-3 w-20 bg-muted/30 rounded animate-pulse mt-3" />
     </div>
   );
 }
@@ -64,7 +64,10 @@ export function StatProjection({
           <SectionLabel className="block mb-2">PROJECTED STATS</SectionLabel>
           <div className="h-5 w-48 bg-muted/30 rounded animate-pulse" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+          <StatSkeleton />
+          <StatSkeleton />
+          <StatSkeleton />
           <StatSkeleton />
           <StatSkeleton />
           <StatSkeleton />
@@ -116,14 +119,14 @@ export function StatProjection({
     );
   };
 
-  // Determine grid columns based on stat count
+  // Determine grid columns based on stat count - full width layout
   const gridCols = cn(
-    "grid gap-6",
+    "grid gap-4",
     position === "QB"
-      ? "grid-cols-2 md:grid-cols-3 lg:grid-cols-6" // 6 stats
+      ? "grid-cols-3 sm:grid-cols-6" // 6 stats - 3 per row on mobile, all on desktop
       : position === "RB"
-        ? "grid-cols-2 md:grid-cols-4 lg:grid-cols-7" // 7 stats
-        : "grid-cols-2 md:grid-cols-4" // WR/TE: 4 stats
+        ? "grid-cols-2 sm:grid-cols-4 lg:grid-cols-7" // 7 stats
+        : "grid-cols-2 sm:grid-cols-4" // WR/TE: 4 stats
   );
 
   return (

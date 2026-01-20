@@ -260,63 +260,59 @@ export default function MatchupPage() {
                   </div>
                 </div>
 
-                {/* Dashboard Grid: 3 columns on desktop */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
-                  {/* Left column: Fantasy Points + Model Confidence (spans 5 cols on lg) */}
-                  <div className="md:col-span-1 lg:col-span-5 space-y-6">
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
-                      <FantasyPointsCard
-                        points={fantasyPoints}
-                        breakdown={pointsBreakdown}
-                        scoringConfigName={scoringConfigName}
-                        isLoading={isLoading}
-                        playerHeadshotUrl={matchupData.playerHeadshotUrl}
-                        playerName={matchupData.playerName}
-                      />
-                    </div>
+                {/* Row 1: Stat Projections (full width - stats need room) */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
+                  <StatProjection
+                    position={
+                      matchupData.position as "QB" | "RB" | "WR" | "TE"
+                    }
+                    prediction={prediction!}
+                    playerName={matchupData.playerName}
+                    opponentTeam={matchupData.opponentTeam}
+                    isLoading={isLoading}
+                  />
+                </div>
+
+                {/* Row 2: Fantasy Points + Explainability (2-column) */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                  {/* Left: Fantasy Points Card */}
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
+                    <FantasyPointsCard
+                      points={fantasyPoints}
+                      breakdown={pointsBreakdown}
+                      scoringConfigName={scoringConfigName}
+                      isLoading={isLoading}
+                      playerHeadshotUrl={matchupData.playerHeadshotUrl}
+                      playerName={matchupData.playerName}
+                    />
                   </div>
 
-                  {/* Middle column: Stats + History (spans 4 cols on lg) */}
-                  <div className="md:col-span-1 lg:col-span-4 space-y-6">
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
-                      <StatProjection
-                        position={
-                          matchupData.position as "QB" | "RB" | "WR" | "TE"
-                        }
-                        prediction={prediction!}
-                        playerName={matchupData.playerName}
-                        opponentTeam={matchupData.opponentTeam}
-                        isLoading={isLoading}
-                      />
-                    </div>
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
-                      <PlayerHistory
-                        playerId={matchupData.playerId}
-                        playerName={matchupData.playerName}
-                        position={
-                          matchupData.position as "QB" | "RB" | "WR" | "TE"
-                        }
-                      />
-                    </div>
+                  {/* Right: Explainability Panel */}
+                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
+                    <ExplainabilityPanel
+                      position={matchupData.position}
+                      target={getPrimaryTarget(matchupData.position)}
+                      prediction={explanationData?.prediction ?? fantasyPoints}
+                      baseValue={explanationData?.baseValue ?? 0}
+                      contributions={explanationData?.contributions ?? []}
+                      summary={
+                        explanationData?.summary ??
+                        "Loading prediction explanation..."
+                      }
+                      isLoading={isLoadingExplanation}
+                    />
                   </div>
+                </div>
 
-                  {/* Right column: Explainability (spans 3 cols on lg) */}
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-300">
-                      <ExplainabilityPanel
-                        position={matchupData.position}
-                        target={getPrimaryTarget(matchupData.position)}
-                        prediction={explanationData?.prediction ?? fantasyPoints}
-                        baseValue={explanationData?.baseValue ?? 0}
-                        contributions={explanationData?.contributions ?? []}
-                        summary={
-                          explanationData?.summary ??
-                          "Loading prediction explanation..."
-                        }
-                        isLoading={isLoadingExplanation}
-                      />
-                    </div>
-                  </div>
+                {/* Row 3: Player History (full width) */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-300 mt-6">
+                  <PlayerHistory
+                    playerId={matchupData.playerId}
+                    playerName={matchupData.playerName}
+                    position={
+                      matchupData.position as "QB" | "RB" | "WR" | "TE"
+                    }
+                  />
                 </div>
               </>
             )}
