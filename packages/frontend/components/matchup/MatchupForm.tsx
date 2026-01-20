@@ -24,10 +24,11 @@ export interface MatchupData {
 
 interface MatchupFormProps {
   onSubmit: (matchup: MatchupData) => void;
+  onPlayerChange?: () => void;
   isLoading?: boolean;
 }
 
-export function MatchupForm({ onSubmit, isLoading = false }: MatchupFormProps) {
+export function MatchupForm({ onSubmit, onPlayerChange, isLoading = false }: MatchupFormProps) {
   // Player selection state
   const [selectedPosition, setSelectedPosition] = useState("all");
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
@@ -44,9 +45,15 @@ export function MatchupForm({ onSubmit, isLoading = false }: MatchupFormProps) {
     // Clear selected player when position changes
     setSelectedPlayer(null);
     setSelectedPlayerId(null);
+    // Notify parent to clear projections
+    onPlayerChange?.();
   };
 
   const handlePlayerSelect = (playerId: string, player: Player) => {
+    // If player changed, notify parent to clear projections
+    if (playerId !== selectedPlayerId) {
+      onPlayerChange?.();
+    }
     setSelectedPlayerId(playerId);
     setSelectedPlayer(player);
   };

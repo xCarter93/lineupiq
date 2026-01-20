@@ -10,6 +10,7 @@ interface PlayerHistoryProps {
   playerId: string | null;
   playerName: string;
   position: "QB" | "RB" | "WR" | "TE";
+  compact?: boolean;
 }
 
 function StatCell({ value, label, isNegative = false }: { value: number | undefined; label: string; isNegative?: boolean }) {
@@ -179,7 +180,7 @@ function SeasonSummary({ games, season, position }: SeasonSummaryProps) {
   );
 }
 
-export function PlayerHistory({ playerId, playerName, position }: PlayerHistoryProps) {
+export function PlayerHistory({ playerId, playerName, position, compact = false }: PlayerHistoryProps) {
   const { games, isLoading, error } = usePlayerHistory(playerId);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
 
@@ -194,49 +195,55 @@ export function PlayerHistory({ playerId, playerName, position }: PlayerHistoryP
   const activeSeason = selectedSeason ?? seasons[0] ?? null;
 
   if (isLoading) {
+    const content = (
+      <div className="animate-pulse space-y-4">
+        <div className="h-6 bg-muted/50 rounded w-1/4" />
+        <div className="h-24 bg-muted/30 rounded" />
+        <div className="h-32 bg-muted/30 rounded" />
+      </div>
+    );
+    if (compact) return content;
     return (
       <div className="bg-white rounded-xl shadow-sm p-8">
         <SectionLabel className="mb-4">RECENT PERFORMANCE</SectionLabel>
-        <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-muted/50 rounded w-1/4" />
-          <div className="h-24 bg-muted/30 rounded" />
-          <div className="h-32 bg-muted/30 rounded" />
-        </div>
+        {content}
       </div>
     );
   }
 
   if (error) {
+    const content = <p className="text-red-600 text-sm">{error}</p>;
+    if (compact) return content;
     return (
       <div className="bg-white rounded-xl shadow-sm p-8">
         <SectionLabel className="mb-4">RECENT PERFORMANCE</SectionLabel>
-        <p className="text-red-600 text-sm">{error}</p>
+        {content}
       </div>
     );
   }
 
   if (games.length === 0) {
+    const content = <p className="text-muted-foreground text-sm">No historical data available for {playerName}</p>;
+    if (compact) return content;
     return (
       <div className="bg-white rounded-xl shadow-sm p-8">
         <SectionLabel className="mb-4">RECENT PERFORMANCE</SectionLabel>
-        <p className="text-muted-foreground text-sm">No historical data available for {playerName}</p>
+        {content}
       </div>
     );
   }
 
-  return (
-    <div className="bg-white rounded-xl shadow-sm p-8">
-      <SectionLabel className="mb-6">RECENT PERFORMANCE</SectionLabel>
-
+  const historyContent = (
+    <>
       {/* Custom Tabs using Tailwind */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="inline-flex bg-muted/30 rounded-lg p-1 gap-1">
           {seasons.map(season => (
             <button
               key={season}
               onClick={() => setSelectedSeason(season)}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-md transition-colors",
+                "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
                 activeSeason === season
                   ? "bg-white text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
@@ -252,6 +259,17 @@ export function PlayerHistory({ playerId, playerName, position }: PlayerHistoryP
       {activeSeason && (
         <SeasonSummary games={games} season={activeSeason} position={position} />
       )}
+    </>
+  );
+
+  if (compact) {
+    return <div>{historyContent}</div>;
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-8">
+      <SectionLabel className="mb-6">RECENT PERFORMANCE</SectionLabel>
+      {historyContent}
     </div>
   );
 }

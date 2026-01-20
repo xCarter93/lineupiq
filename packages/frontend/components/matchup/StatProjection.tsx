@@ -14,6 +14,7 @@ interface StatProjectionProps {
   playerName: string;
   opponentTeam: string;
   isLoading?: boolean;
+  compact?: boolean;
 }
 
 interface StatDisplayProps {
@@ -55,6 +56,7 @@ export function StatProjection({
   playerName,
   opponentTeam,
   isLoading = false,
+  compact = false,
 }: StatProjectionProps) {
   // Render loading skeleton
   if (isLoading) {
@@ -128,6 +130,23 @@ export function StatProjection({
         ? "grid-cols-2 sm:grid-cols-4 lg:grid-cols-7" // 7 stats
         : "grid-cols-2 sm:grid-cols-4" // WR/TE: 4 stats
   );
+
+  // Compact mode: no card wrapper, smaller padding
+  if (compact) {
+    return (
+      <div
+        role="region"
+        aria-label={`Projected stats for ${playerName} versus ${opponentTeam}`}
+      >
+        <p className="text-sm text-muted-foreground mb-3">
+          <span className="font-medium text-foreground">{playerName}</span>
+          <span className="mx-2">vs</span>
+          <span className="font-medium text-foreground">{opponentTeam}</span>
+        </p>
+        <div className={gridCols}>{renderStats()}</div>
+      </div>
+    );
+  }
 
   return (
     <div

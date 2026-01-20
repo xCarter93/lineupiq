@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { SectionLabel } from "@/components/ui/section-label";
+import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { MatchupForm, MatchupData } from "@/components/matchup/MatchupForm";
 import { StatProjection } from "@/components/matchup/StatProjection";
 import { FantasyPointsCard } from "@/components/matchup/FantasyPointsCard";
@@ -68,6 +69,14 @@ export default function MatchupPage() {
     : DEFAULT_SCORING_CONFIG;
 
   const scoringConfigName = convexConfig?.name || "Standard";
+
+  // Clear projections when player changes
+  const handlePlayerChange = () => {
+    setPrediction(null);
+    setMatchupData(null);
+    setExplanationData(null);
+    setError(null);
+  };
 
   const handleSubmit = async (matchup: MatchupData) => {
     setIsLoading(true);
@@ -202,11 +211,13 @@ export default function MatchupPage() {
       ? getPointsBreakdown(matchupData.position, prediction, scoringConfig)
       : { total: 0, categories: [] };
 
+  const hasResults = prediction || isLoading || error;
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}
-        <div className="mb-12">
+        <div className="mb-8">
           <SectionLabel className="mb-4 block">MATCHUP SIMULATOR</SectionLabel>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground mb-3">
             Build Your Matchup
@@ -216,17 +227,20 @@ export default function MatchupPage() {
           </p>
         </div>
 
-        {/* Matchup Form - constrain width */}
-        <div className="max-w-4xl">
-          <MatchupForm onSubmit={handleSubmit} isLoading={isLoading} />
-        </div>
+        {/* Master-Detail Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Form + Primary Results */}
+          <div className="lg:col-span-7 space-y-6">
+            {/* Matchup Form */}
+            <MatchupForm
+              onSubmit={handleSubmit}
+              onPlayerChange={handlePlayerChange}
+              isLoading={isLoading}
+            />
 
-        {/* Results Section */}
-        {(isLoading || prediction || error) && matchupData && (
-          <div className="mt-8 animate-in fade-in duration-300">
             {/* Error State */}
             {error && !isLoading && (
-              <div className="max-w-4xl bg-white rounded-xl shadow-sm p-6 border-l-4 border-destructive">
+              <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-destructive animate-in fade-in duration-300">
                 <SectionLabel className="mb-3 block">ERROR</SectionLabel>
                 <p className="text-destructive font-medium mb-2">
                   Failed to get prediction
@@ -235,7 +249,7 @@ export default function MatchupPage() {
                   {error}
                 </p>
                 <button
-                  onClick={() => handleSubmit(matchupData)}
+                  onClick={() => matchupData && handleSubmit(matchupData)}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
                 >
                   Try Again
@@ -243,81 +257,104 @@ export default function MatchupPage() {
               </div>
             )}
 
-            {/* Success State - Dashboard Grid Layout */}
-            {(prediction || isLoading) && !error && (
+            {/* Primary Results: Fantasy Points Hero */}
+            {(prediction || isLoading) && !error && matchupData && (
+              <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <FantasyPointsCard
+                  points={fantasyPoints}
+                  breakdown={pointsBreakdown}
+                  scoringConfigName={scoringConfigName}
+                  isLoading={isLoading}
+                  playerHeadshotUrl={matchupData.playerHeadshotUrl}
+                  playerName={matchupData.playerName}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Detail Sections (collapsible) */}
+          <div className="lg:col-span-5 space-y-4">
+            {/* Only show when we have results */}
+            {hasResults && matchupData && !error && (
               <>
-                {/* Model Confidence Bar - Full Width */}
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mb-6">
-                  <div className="bg-white rounded-xl shadow-sm px-6 py-4 flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      Model Performance
-                    </span>
-                    <ModelConfidence
-                      accuracyPct={overallAccuracy}
-                      confidence={overallConfidence}
-                      isLoading={metricsLoading}
-                    />
-                  </div>
+                {/* Model Confidence - always visible */}
+                <div className="bg-white rounded-xl shadow-sm px-4 py-3 flex items-center justify-between animate-in fade-in duration-300">
+                  <span className="text-sm text-muted-foreground">
+                    Model Performance
+                  </span>
+                  <ModelConfidence
+                    accuracyPct={overallAccuracy}
+                    confidence={overallConfidence}
+                    isLoading={metricsLoading}
+                  />
                 </div>
 
-                {/* Row 1: Stat Projections (full width - stats need room) */}
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
+                {/* Stat Breakdown */}
+                <CollapsibleSection
+                  title="Stat Projections"
+                  badge={matchupData.position}
+                  defaultOpen={false}
+                  className="animate-in fade-in slide-in-from-right-2 duration-300 delay-75"
+                >
                   <StatProjection
-                    position={
-                      matchupData.position as "QB" | "RB" | "WR" | "TE"
-                    }
+                    position={matchupData.position as "QB" | "RB" | "WR" | "TE"}
                     prediction={prediction!}
                     playerName={matchupData.playerName}
                     opponentTeam={matchupData.opponentTeam}
                     isLoading={isLoading}
+                    compact
                   />
-                </div>
+                </CollapsibleSection>
 
-                {/* Row 2: Fantasy Points + Explainability (2-column) */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-                  {/* Left: Fantasy Points Card */}
-                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
-                    <FantasyPointsCard
-                      points={fantasyPoints}
-                      breakdown={pointsBreakdown}
-                      scoringConfigName={scoringConfigName}
-                      isLoading={isLoading}
-                      playerHeadshotUrl={matchupData.playerHeadshotUrl}
-                      playerName={matchupData.playerName}
-                    />
-                  </div>
+                {/* Why This Projection */}
+                <CollapsibleSection
+                  title="Why This Projection?"
+                  badge="SHAP"
+                  defaultOpen={false}
+                  className="animate-in fade-in slide-in-from-right-2 duration-300 delay-150"
+                >
+                  <ExplainabilityPanel
+                    position={matchupData.position}
+                    target={getPrimaryTarget(matchupData.position)}
+                    prediction={explanationData?.prediction ?? fantasyPoints}
+                    baseValue={explanationData?.baseValue ?? 0}
+                    contributions={explanationData?.contributions ?? []}
+                    summary={
+                      explanationData?.summary ??
+                      "Loading prediction explanation..."
+                    }
+                    isLoading={isLoadingExplanation}
+                    compact
+                  />
+                </CollapsibleSection>
 
-                  {/* Right: Explainability Panel */}
-                  <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
-                    <ExplainabilityPanel
-                      position={matchupData.position}
-                      target={getPrimaryTarget(matchupData.position)}
-                      prediction={explanationData?.prediction ?? fantasyPoints}
-                      baseValue={explanationData?.baseValue ?? 0}
-                      contributions={explanationData?.contributions ?? []}
-                      summary={
-                        explanationData?.summary ??
-                        "Loading prediction explanation..."
-                      }
-                      isLoading={isLoadingExplanation}
-                    />
-                  </div>
-                </div>
-
-                {/* Row 3: Player History (full width) */}
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-300 mt-6">
+                {/* Recent Performance */}
+                <CollapsibleSection
+                  title="Recent Performance"
+                  badge="History"
+                  defaultOpen={false}
+                  className="animate-in fade-in slide-in-from-right-2 duration-300 delay-200"
+                >
                   <PlayerHistory
                     playerId={matchupData.playerId}
                     playerName={matchupData.playerName}
-                    position={
-                      matchupData.position as "QB" | "RB" | "WR" | "TE"
-                    }
+                    position={matchupData.position as "QB" | "RB" | "WR" | "TE"}
+                    compact
                   />
-                </div>
+                </CollapsibleSection>
               </>
             )}
+
+            {/* Empty state for right column when no results */}
+            {!hasResults && (
+              <div className="hidden lg:block bg-white/50 rounded-xl border-2 border-dashed border-muted p-8 text-center animate-in fade-in duration-300">
+                <p className="text-muted-foreground">
+                  Select a player and get a prediction to see detailed analysis
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
