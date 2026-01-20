@@ -5,16 +5,15 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Accurate stat-level predictions from well-engineered features and properly trained models.
-**Current focus:** v1.1 Model Confidence
+**Current focus:** None — milestone v1.1 complete
 
 ## Current Position
 
-Phase: 17 (Model Explainability UI) - COMPLETE
-Plan: 4 of 4 in current phase
-Status: Phase 17 complete, v1.1 milestone complete
-Last activity: 2026-01-19 — Completed 17-04-PLAN.md (Visual Verification)
+Milestone: v1.1 Model Confidence - ARCHIVED
+Status: Milestone complete and archived
+Last activity: 2026-01-19 — v1.1 milestone archived
 
-Progress: ████████████████████ 100% (v1.1 Model Confidence complete)
+Progress: No active milestone — ready for v1.2 planning
 
 ## Performance Metrics
 
@@ -138,6 +137,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 17-03-PLAN.md (Dashboard Integration)
+Stopped at: v1.1 milestone archived
 Resume file: None
-Next action: Execute 17-04-PLAN.md (Polish and Testing)
+Next action: Plan v1.2 milestone when ready

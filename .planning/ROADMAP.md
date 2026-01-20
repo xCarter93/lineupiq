@@ -29,119 +29,29 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 
 </details>
 
-### ✅ v1.1 Model Confidence (SHIPPED 2026-01-19)
+<details>
+<summary>✅ v1.1 Model Confidence (Phases 11-17) — SHIPPED 2026-01-19</summary>
 
-**Milestone Goal:** Research-first ML improvements, expand to all positions (K/DEF), and build user trust through data-rich visualizations.
+- [x] Phase 11: ML Pipeline Audit (1/1 plan) — completed 2026-01-15
+- [x] Phase 12: ML Pipeline Improvements (5/5 plans) — completed 2026-01-15
+- [x] Phase 13: K/DEF + Training Improvements (8/8 plans) — completed 2026-01-15
+- [x] Phase 14: Complete Fantasy Stats (4/4 plans) — completed 2026-01-15
+- [x] Phase 15: Full Roster + Historical (4/4 plans) — completed 2026-01-16
+- [x] Phase 16: UI Data Visualization (1/1 plan) — completed 2026-01-15
+- [x] Phase 16.1: Re-evaluate Models & Viz (3/3 plans) — completed 2026-01-20
+- [x] Phase 17: Model Explainability UI (4/4 plans) — completed 2026-01-19
 
-#### Phase 11: ML Pipeline Audit & Research
+**Full details:** [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 
-**Goal**: Review current ML practices, research alternatives, document recommendations
-**Depends on**: v1.0 MVP complete
-**Research**: Likely (explicit research phase)
-**Research topics**: Data cleaning best practices, null handling strategies, feature completeness audit, model architecture options (XGBoost vs ensemble vs neural nets), sports analytics papers
-
-Plans:
-- [x] 11-01: ML Pipeline Audit (AUDIT-REPORT.md) — completed 2026-01-15
-
-#### Phase 12: ML Pipeline Improvements
-
-**Goal**: Implement research findings (data cleaning, features, model architecture)
-**Depends on**: Phase 11
-**Research**: Unlikely (implementing findings from research phase)
-
-Plans:
-- [x] 12-01: Backtesting infrastructure — completed 2026-01-15
-- [x] 12-02: Prediction intervals with MAPIE — completed 2026-01-15
-- [x] 12-03: Convex schema for model metrics — completed 2026-01-15
-- [x] 12-04: Validation API endpoints — completed 2026-01-15
-- [x] 12-05: Model Confidence UI — completed 2026-01-15
-
-#### Phase 13: K/DEF Models + Training Improvements
-
-**Goal**: Add kicker/defense positions, implement Phase 11 audit improvements, complete fantasy scoring
-**Depends on**: Phase 12
-**Research**: No (data exploration complete)
-
-Plans:
-- [x] 13-01: LightGBM Migration (wave 1) — completed 2026-01-15
-- [x] 13-02: Team Strength & Volatility Features (wave 1) — completed 2026-01-15
-- [x] 13-03: K/DEF Data Pipeline (wave 1) — completed 2026-01-15
-- [x] 13-04: Complete Fantasy Scoring Config (wave 1) — completed 2026-01-15
-- [x] 13-05: Kicker Models + API (wave 2) — completed 2026-01-15
-- [x] 13-06: Defense Models + API (wave 2) — completed 2026-01-15
-- [x] 13-07: Retrain Skill Position Models (wave 2) — completed 2026-01-15
-- [x] 13-08: Backtest All Models (wave 3) — completed 2026-01-15
-
-#### Phase 14: Complete Fantasy Stats
-
-**Goal**: Add missing stats to scoring calculations and UI display
-**Depends on**: Phase 13
-**Research**: Unlikely (extending existing patterns)
-
-Plans:
-- [x] 14-01: QB Complete Stats (wave 1) — completed 2026-01-15
-- [x] 14-02: RB Complete Stats (wave 1) — completed 2026-01-15
-- [x] 14-03: WR/TE Complete Stats (wave 1) — completed 2026-01-15
-- [x] 14-04: Frontend Integration (wave 2) — completed 2026-01-15
-
-#### Phase 15: Full Roster + Historical Data
-
-**Goal**: Import current 2025-26 roster, add 3-year historical display
-**Depends on**: Phase 14
-**Research**: Unlikely (nflreadpy already in codebase)
-
-Plans:
-- [x] 15-01: Backend Roster + Player History API (wave 1) — completed 2026-01-15
-- [x] 15-02: Convex Schema Enhancements (wave 1) — completed 2026-01-16
-- [x] 15-03: Frontend Roster Sync + Admin Page (wave 2) — completed 2026-01-16
-- [x] 15-04: Historical Display UI Components (wave 3) — completed 2026-01-16
-
-#### Phase 16: UI Data Visualization
-
-**Goal**: Recharts integration for stats and history visualization
-**Depends on**: Phase 15
-**Research**: Likely (new library integration)
-**Research topics**: Recharts API, chart types for sports data, responsive charting patterns
-
-Plans:
-- [x] 16-01: Recharts Setup — completed 2026-01-15
-
-#### Phase 16.1: Re-evaluate Models and Data Visualization (INSERTED)
-
-**Goal**: Fix player-specific predictions and chart visualization
-**Depends on**: Phase 16
-**Research**: Complete (16.1-RESEARCH.md)
-
-Plans:
-- [x] 16.1-01: Fix Player-Specific Predictions (Backend + Frontend) — completed 2026-01-19
-- [x] 16.1-02: Fix Chart Visualization — completed 2026-01-20
-
-#### Phase 17: Model Explainability UI
-
-**Goal**: Feature contribution bars and prediction context
-**Depends on**: Phase 16.1
-**Research**: Unlikely (implementing known pattern)
-
-Plans:
-- [x] 17-01: Backend SHAP API — completed 2026-01-19
-- [x] 17-02: Foundational UI Components — completed 2026-01-19
-- [x] 17-03: Dashboard Integration — completed 2026-01-19
-- [x] 17-04: Visual Verification — completed 2026-01-19
+</details>
 
 ## Progress
 
-| Phase | Milestone | Plans | Status | Completed |
-|-------|-----------|-------|--------|-----------|
-| 1-10 | v1.0 MVP | 30/30 | ✅ Complete | 2026-01-15 |
-| 11. ML Pipeline Audit | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
-| 12. ML Pipeline Improvements | v1.1 | 5/5 | ✅ Complete | 2026-01-15 |
-| 13. K/DEF + Training | v1.1 | 8/8 | ✅ Complete | 2026-01-15 |
-| 14. Complete Fantasy Stats | v1.1 | 4/4 | ✅ Complete | 2026-01-15 |
-| 15. Full Roster + Historical | v1.1 | 4/4 | ✅ Complete | 2026-01-16 |
-| 16. UI Data Visualization | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
-| 16.1 Re-evaluate Models & Viz | v1.1 | 2/2 | ✅ Complete | 2026-01-20 |
-| 17. Model Explainability UI | v1.1 | 4/4 | ✅ Complete | 2026-01-19 |
+| Milestone | Phases | Plans | Status | Shipped |
+|-----------|--------|-------|--------|---------|
+| v1.0 MVP | 1-10 | 30/30 | ✅ Complete | 2026-01-15 |
+| v1.1 Model Confidence | 11-17 | 30/30 | ✅ Complete | 2026-01-19 |
 
 ---
 
-**Project Status:** v1.1 Model Confidence COMPLETE
+**Project Status:** v1.1 Model Confidence COMPLETE — Ready for v1.2 planning
