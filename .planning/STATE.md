@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 16 of 17 (UI Data Visualization) - IN PROGRESS
-Plan: 1 of ? in current phase
-Status: In progress
-Last activity: 2026-01-15 — Completed 16-01-PLAN.md (Recharts Setup)
+Phase: 16.1 (Re-evaluate Models and Data Visualization) - IN PROGRESS
+Plan: 1 of 2 in current phase
+Status: Plan 01 complete, ready for Plan 02
+Last activity: 2026-01-19 — Completed 16.1-01-PLAN.md (Fix Player-Specific Predictions)
 
-Progress: █████████████░░░░░ 65% (Phase 16 plan 01 complete)
+Progress: ██████████████░░░░ 68% (16.1-01 complete)
 
 ## Performance Metrics
 
@@ -101,6 +101,9 @@ Progress: █████████████░░░░░ 65% (Phase 16 p
 | 15-04 | Display last 10 games per season | Balance completeness and UI scrollability |
 | 16-01 | Direct recharts install (not shadcn/ui chart) | Avoids potential Tailwind v4 compatibility issues |
 | 16-01 | module: esnext in tsconfig.base.json | Required for TypeScript dynamic import support |
+| 16.1-01 | Player features computed from 2-season history | Sufficient data for reliable rolling stats |
+| 16.1-01 | Merge player stats with position defaults | Ensures all 28 features present for model input |
+| 16.1-01 | Neutral values for opponent/team strength | Future: look up actual rankings from cached data |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -108,6 +111,7 @@ Progress: █████████████░░░░░ 65% (Phase 16 p
 
 - v1.0 MVP shipped: Foundation through polish, 10 phases (2026-01-15)
 - Milestone v1.1 created: Model Confidence, 7 phases (Phase 11-17)
+- Phase 16.1 inserted after Phase 16: Re-evaluate models and data visualization (URGENT)
 
 ### Pending Todos
 
@@ -119,7 +123,7 @@ None — ready to begin planning.
 
 ## Session Continuity
 
-Last session: 2026-01-15
-Stopped at: Completed 16-01-PLAN.md (Recharts Setup)
+Last session: 2026-01-19
+Stopped at: Completed 16.1-01-PLAN.md (Fix Player-Specific Predictions)
 Resume file: None
-Next action: Execute remaining Phase 16 plans or plan next phase
+Next action: Execute 16.1-02-PLAN.md
