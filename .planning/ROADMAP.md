@@ -62,16 +62,20 @@ Plans:
 - [x] 18-02: Lazy load heavy components with next/dynamic — completed 2026-01-20
 - [x] 18-03: Loading UX polish + Web Vitals monitoring — completed 2026-01-20
 
-#### Phase 19: Ensemble Models
+#### Phase 19: Ensemble Models & XGBoost Parity
 
 **Goal**: Combine LightGBM + XGBoost models using stacking/voting ensembles for improved prediction accuracy
 **Depends on**: Phase 18
-**Research**: Likely (architectural decision on ensemble strategies)
-**Research topics**: Stacking vs voting vs blending, model weight optimization, ensemble validation
-**Plans**: TBD
+**Research**: Complete (19-RESEARCH.md)
+**Plans**: 4/4 complete
 
 Plans:
-- [ ] 19-01: TBD
+- [x] 19-01: Train XGBoost models for all positions — completed 2026-01-20
+- [x] 19-02: Implement ensemble strategies (voting, stacking) — completed 2026-01-20
+- [x] 19-03: Benchmark ensembles vs single models on 2024 holdout — completed 2026-01-20
+- [x] 19-04: Integration decision (keep-single models) — completed 2026-01-20
+
+**Outcome**: Ensembles NOT adopted. Benchmarking showed single models win 20/21 stats (95.2%). LightGBM remains production default.
 
 #### Phase 20: Advanced Features
 
@@ -159,7 +163,7 @@ Plans:
 | 16.1. Re-evaluate Models & Viz | v1.1 | 3/3 | Complete | 2026-01-20 |
 | 17. Model Explainability UI | v1.1 | 4/4 | Complete | 2026-01-19 |
 | 18. Performance Fixes | v1.2 | 3/3 | Complete | 2026-01-20 |
-| 19. Ensemble Models | v1.2 | 0/? | Not started | - |
+| 19. Ensemble Models | v1.2 | 4/4 | Complete | 2026-01-20 |
 | 20. Advanced Features | v1.2 | 0/? | Not started | - |
 | 21. Position Tuning | v1.2 | 0/? | Not started | - |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
@@ -169,4 +173,4 @@ Plans:
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 18 complete, Phase 19 ready to plan
+**Project Status:** v1.2 Platform Maturity — Phase 19 complete, Phase 20 ready to plan
