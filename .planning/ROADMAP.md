@@ -7,7 +7,7 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 ## Milestones
 
 - ✅ **[v1.0 MVP](milestones/v1.0-ROADMAP.md)** — Phases 1-10 (shipped 2026-01-15)
-- 🚧 **v1.1 Model Confidence** — Phases 11-17 (in progress)
+- ✅ **v1.1 Model Confidence** — Phases 11-17 (shipped 2026-01-19)
 
 ## Completed Milestones
 
@@ -29,7 +29,7 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 
 </details>
 
-### 🚧 v1.1 Model Confidence (In Progress)
+### ✅ v1.1 Model Confidence (SHIPPED 2026-01-19)
 
 **Milestone Goal:** Research-first ML improvements, expand to all positions (K/DEF), and build user trust through data-rich visualizations.
 
@@ -125,8 +125,8 @@ Plans:
 Plans:
 - [x] 17-01: Backend SHAP API — completed 2026-01-19
 - [x] 17-02: Foundational UI Components — completed 2026-01-19
-- [ ] 17-03: Dashboard Integration
-- [ ] 17-04: Polish & Testing
+- [x] 17-03: Dashboard Integration — completed 2026-01-19
+- [x] 17-04: Visual Verification — completed 2026-01-19
 
 ## Progress
 
@@ -140,8 +140,8 @@ Plans:
 | 15. Full Roster + Historical | v1.1 | 4/4 | ✅ Complete | 2026-01-16 |
 | 16. UI Data Visualization | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
 | 16.1 Re-evaluate Models & Viz | v1.1 | 2/2 | ✅ Complete | 2026-01-20 |
-| 17. Model Explainability UI | v1.1 | 2/4 | In progress | - |
+| 17. Model Explainability UI | v1.1 | 4/4 | ✅ Complete | 2026-01-19 |
 
 ---
 
-**Project Status:** v1.1 Model Confidence in progress
+**Project Status:** v1.1 Model Confidence COMPLETE
