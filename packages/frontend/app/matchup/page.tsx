@@ -7,7 +7,6 @@ import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { MatchupForm, MatchupData } from "@/components/matchup/MatchupForm";
 import { StatProjection } from "@/components/matchup/StatProjection";
 import { FantasyPointsCard } from "@/components/matchup/FantasyPointsCard";
-import { ExplainabilityPanel } from "@/components/matchup/ExplainabilityPanel";
 import {
   predict,
   createDefaultFeatures,
@@ -36,6 +35,20 @@ const PlayerHistory = dynamic(
   {
     loading: () => <div className="h-48 rounded-lg bg-muted animate-pulse" />,
     ssr: false, // Chart rendering uses browser APIs
+  }
+);
+
+// Lazy load ExplainabilityPanel with SHAP visualization logic
+const ExplainabilityPanel = dynamic(
+  () => import("@/components/matchup/ExplainabilityPanel").then((mod) => ({ default: mod.ExplainabilityPanel })),
+  {
+    loading: () => (
+      <div className="space-y-3">
+        <div className="h-4 bg-muted animate-pulse rounded" />
+        <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+        <div className="h-24 bg-muted animate-pulse rounded" />
+      </div>
+    ),
   }
 );
 
