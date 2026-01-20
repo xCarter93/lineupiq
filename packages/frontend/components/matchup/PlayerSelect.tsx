@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+import { FixedSizeList } from "react-window";
 
 // Get initials from player name (e.g., "Patrick Mahomes" -> "PM")
 function getInitials(name: string): string {
@@ -25,6 +26,62 @@ function getInitials(name: string): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+// Virtualized list wrapper for ComboboxList
+interface VirtualizedListProps {
+  players: Player[];
+  selectedValue: string | null;
+  onPlayerClick: (playerId: string) => void;
+}
+
+function VirtualizedComboboxList({ players, selectedValue, onPlayerClick }: VirtualizedListProps) {
+  // Item height: 48px (player item with avatar is ~48px tall)
+  const ITEM_HEIGHT = 48;
+  const MAX_HEIGHT = 300; // Max height for dropdown
+
+  // Calculate visible height to avoid empty space
+  const listHeight = Math.min(MAX_HEIGHT, players.length * ITEM_HEIGHT);
+
+  // Row renderer for react-window
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const player = players[index];
+    return (
+      <div style={style}>
+        <ComboboxItem
+          key={player.playerId}
+          value={player.playerId}
+          className={cn(
+            "hover:bg-muted/50 flex items-center gap-2",
+            selectedValue === player.playerId && "bg-primary/10 text-primary"
+          )}
+        >
+          <Avatar
+            src={player.headshotUrl}
+            alt={player.name}
+            fallback={getInitials(player.name)}
+            size="sm"
+          />
+          <span>{player.name}</span>
+          <span className="text-muted-foreground ml-auto text-xs px-2 py-0.5 bg-muted/50 rounded">
+            {player.team}
+          </span>
+        </ComboboxItem>
+      </div>
+    );
+  };
+
+  return (
+    <FixedSizeList
+      height={listHeight}
+      itemCount={players.length}
+      itemSize={ITEM_HEIGHT}
+      width="100%"
+      className="no-scrollbar"
+    >
+      {Row}
+    </FixedSizeList>
+  );
 }
 
 export interface Player {
@@ -150,30 +207,15 @@ export function PlayerSelect({
           "bg-white rounded-xl shadow-lg border-border/30"
         )}
       >
-        <ComboboxList>
-          {filteredPlayers.map((player) => (
-            <ComboboxItem
-              key={player.playerId}
-              value={player.playerId}
-              className={cn(
-                "hover:bg-muted/50 flex items-center gap-2",
-                value === player.playerId && "bg-primary/10 text-primary"
-              )}
-            >
-              <Avatar
-                src={player.headshotUrl}
-                alt={player.name}
-                fallback={getInitials(player.name)}
-                size="sm"
-              />
-              <span>{player.name}</span>
-              <span className="text-muted-foreground ml-auto text-xs px-2 py-0.5 bg-muted/50 rounded">
-                {player.team}
-              </span>
-            </ComboboxItem>
-          ))}
-        </ComboboxList>
-        <ComboboxEmpty>No players found</ComboboxEmpty>
+        {filteredPlayers.length > 0 ? (
+          <VirtualizedComboboxList
+            players={filteredPlayers}
+            selectedValue={value}
+            onPlayerClick={handleSelect}
+          />
+        ) : (
+          <ComboboxEmpty>No players found</ComboboxEmpty>
+        )}
       </ComboboxContent>
     </Combobox>
   );
