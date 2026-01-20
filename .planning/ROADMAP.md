@@ -114,7 +114,7 @@ Plans:
 
 Plans:
 - [x] 16.1-01: Fix Player-Specific Predictions (Backend + Frontend) — completed 2026-01-19
-- [ ] 16.1-02: Fix Chart Visualization
+- [x] 16.1-02: Fix Chart Visualization — completed 2026-01-20
 
 #### Phase 17: Model Explainability UI
 
@@ -136,7 +136,7 @@ Plans:
 | 14. Complete Fantasy Stats | v1.1 | 4/4 | ✅ Complete | 2026-01-15 |
 | 15. Full Roster + Historical | v1.1 | 4/4 | ✅ Complete | 2026-01-16 |
 | 16. UI Data Visualization | v1.1 | 1/? | In progress | - |
-| 16.1 Re-evaluate Models & Viz | v1.1 | 1/2 | In progress | - |
+| 16.1 Re-evaluate Models & Viz | v1.1 | 2/2 | ✅ Complete | 2026-01-20 |
 | 17. Model Explainability UI | v1.1 | 0/? | Not started | - |
 
 ---

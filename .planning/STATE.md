@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 16.1 (Re-evaluate Models and Data Visualization) - IN PROGRESS
-Plan: 1 of 2 in current phase
-Status: Plan 01 complete, ready for Plan 02
-Last activity: 2026-01-19 — Completed 16.1-01-PLAN.md (Fix Player-Specific Predictions)
+Phase: 16.1 (Re-evaluate Models and Data Visualization) - COMPLETE
+Plan: 2 of 2 in current phase
+Status: Phase 16.1 complete, ready for Phase 17
+Last activity: 2026-01-20 — Completed 16.1-02-PLAN.md (Fix Chart Visualization)
 
-Progress: ██████████████░░░░ 68% (16.1-01 complete)
+Progress: ██████████████░░░░ 70% (Phase 16.1 complete)
 
 ## Performance Metrics
 
@@ -104,6 +104,8 @@ Progress: ██████████████░░░░ 68% (16.1-01 co
 | 16.1-01 | Player features computed from 2-season history | Sufficient data for reliable rolling stats |
 | 16.1-01 | Merge player stats with position defaults | Ensures all 28 features present for model input |
 | 16.1-01 | Neutral values for opponent/team strength | Future: look up actual rankings from cached data |
+| 16.1-02 | No code changes for chart fix | Data flow correct; issue is seed data using fake player IDs |
+| 16.1-02 | User must sync roster for real player IDs | Admin -> "Sync 2025 Roster" fetches real gsis_ids |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -123,7 +125,7 @@ None — ready to begin planning.
 
 ## Session Continuity
 
-Last session: 2026-01-19
-Stopped at: Completed 16.1-01-PLAN.md (Fix Player-Specific Predictions)
+Last session: 2026-01-20
+Stopped at: Completed 16.1-02-PLAN.md (Fix Chart Visualization)
 Resume file: None
-Next action: Execute 16.1-02-PLAN.md
+Next action: Plan or execute Phase 17
