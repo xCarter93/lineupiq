@@ -237,8 +237,10 @@ def benchmark_ensemble_strategies(
     logger.info(f"Benchmarking ensemble strategies for {position}_{stat}")
 
     # Load pre-trained models
+    # LightGBM models use base name (e.g., "passing_yards")
+    # XGBoost models use _xgb suffix (e.g., "passing_yards_xgb")
     try:
-        lgbm_model, _ = load_model(position, f"{stat}_lgbm")
+        lgbm_model, _ = load_model(position, stat)
         xgb_model, _ = load_model(position, f"{stat}_xgb")
     except FileNotFoundError as e:
         logger.error(f"Models not found for {position}_{stat}: {e}")
