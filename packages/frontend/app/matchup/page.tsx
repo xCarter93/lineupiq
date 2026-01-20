@@ -215,7 +215,7 @@ export default function MatchupPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-[1600px] mx-auto px-6 lg:px-10 py-12">
         {/* Hero Section */}
         <div className="mb-8">
           <SectionLabel className="mb-4 block">MATCHUP SIMULATOR</SectionLabel>
@@ -228,9 +228,9 @@ export default function MatchupPage() {
         </div>
 
         {/* Master-Detail Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column: Form + Primary Results */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="space-y-6">
             {/* Matchup Form */}
             <MatchupForm
               onSubmit={handleSubmit}
@@ -273,7 +273,7 @@ export default function MatchupPage() {
           </div>
 
           {/* Right Column: Detail Sections (collapsible) */}
-          <div className="lg:col-span-5 space-y-4">
+          <div className="space-y-4">
             {/* Only show when we have results */}
             {hasResults && matchupData && !error && (
               <>
