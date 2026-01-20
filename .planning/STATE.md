@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 16.1 (Re-evaluate Models and Data Visualization) - COMPLETE
-Plan: 2 of 2 in current phase
-Status: Phase 16.1 complete, ready for Phase 17
-Last activity: 2026-01-20 — Completed 16.1-02-PLAN.md (Fix Chart Visualization)
+Phase: 17 (Model Explainability UI) - IN PROGRESS
+Plan: 2 of 4 in current phase
+Status: Plan 02 complete, 2 plans remaining
+Last activity: 2026-01-19 — Completed 17-02-PLAN.md (Foundational UI Components)
 
-Progress: ██████████████░░░░ 70% (Phase 16.1 complete)
+Progress: ██████████████░░░░ 75% (Phase 17 in progress)
 
 ## Performance Metrics
 
@@ -108,6 +108,9 @@ Progress: ██████████████░░░░ 70% (Phase 16.1
 | 16.1-02 | User must sync roster for real player IDs | Admin -> "Sync 2025 Roster" fetches real gsis_ids |
 | 16.1-FIX | Explicit hex colors for Recharts | CSS variables use OKLCH which doesn't work with Recharts HSL wrapper |
 | 16.1-FIX | AreaChart with gradient over LineChart | Better visual prominence for data trends |
+| 17-02 | Plain img tag over Next/Image for NFL CDN | Simpler, no domain config needed |
+| 17-02 | Top 5 contributions shown by default | Most impactful factors first, expandable for full list |
+| 17-02 | Emerald/red for positive/negative SHAP | Consistent with ModelConfidence coloring |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -127,7 +130,7 @@ None — ready to begin planning.
 
 ## Session Continuity
 
-Last session: 2026-01-20
-Stopped at: Completed 16.1-FIX.md (UAT chart visibility fix)
+Last session: 2026-01-19
+Stopped at: Completed 17-02-PLAN.md (Foundational UI Components)
 Resume file: None
-Next action: Re-verify with /gsd:verify-work 16.1 or proceed to Phase 17
+Next action: Execute 17-03-PLAN.md (Dashboard Integration)

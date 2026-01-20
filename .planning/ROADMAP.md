@@ -123,7 +123,10 @@ Plans:
 **Research**: Unlikely (implementing known pattern)
 
 Plans:
-- [ ] 17-01: TBD
+- [ ] 17-01: Backend SHAP API
+- [x] 17-02: Foundational UI Components — completed 2026-01-19
+- [ ] 17-03: Dashboard Integration
+- [ ] 17-04: Polish & Testing
 
 ## Progress
 
@@ -135,9 +138,9 @@ Plans:
 | 13. K/DEF + Training | v1.1 | 8/8 | ✅ Complete | 2026-01-15 |
 | 14. Complete Fantasy Stats | v1.1 | 4/4 | ✅ Complete | 2026-01-15 |
 | 15. Full Roster + Historical | v1.1 | 4/4 | ✅ Complete | 2026-01-16 |
-| 16. UI Data Visualization | v1.1 | 1/? | In progress | - |
+| 16. UI Data Visualization | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
 | 16.1 Re-evaluate Models & Viz | v1.1 | 2/2 | ✅ Complete | 2026-01-20 |
-| 17. Model Explainability UI | v1.1 | 0/? | Not started | - |
+| 17. Model Explainability UI | v1.1 | 1/4 | In progress | - |
 
 ---
 
