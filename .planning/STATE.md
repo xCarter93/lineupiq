@@ -128,6 +128,9 @@ Progress: ██░░░░░░░░ 13%
 | 18-03 | Verification over new features for Task 1 | All loading states already implemented; focused on confirming smooth UX |
 | 18-03 | Development-only Web Vitals logging | Simple implementation; production analytics deferred to later |
 | 18-03 | ANALYZE=true environment flag for bundle analyzer | Only runs when explicitly needed, doesn't affect normal builds |
+| 19-01 | 30 Optuna trials for XGBoost models | Consistent with Phase 13-01 LightGBM decision |
+| 19-01 | _xgb.joblib suffix for XGBoost models | Clear distinction from LightGBM models |
+| 19-01 | Mirror LightGBM training function patterns | XGBoost functions follow same structure with model_type parameter |
 | 19-02 | VotingRegressor for simple/weighted averaging | Standard sklearn approach for ensemble averaging |
 | 19-02 | Ridge(alpha=1.0) for stacking meta-learner | Prevents overfitting on correlated base predictions |
 | 19-02 | cv=5 default for stacking | Generates out-of-fold predictions to avoid data leakage |
