@@ -286,6 +286,67 @@ export async function predict(
 }
 
 // =============================================================================
+// Player Features API
+// =============================================================================
+
+/**
+ * Response from the player features endpoint.
+ * Contains computed feature values based on player's historical performance.
+ */
+export interface PlayerFeaturesResponse {
+  player_id: string;
+  player_name: string;
+  position: string;
+  team: string;
+  games_available: number;
+  features: Record<string, number | boolean>;
+  has_sufficient_data: boolean;
+}
+
+/**
+ * Fetch player-specific features for prediction.
+ * Returns computed rolling stats and volatility based on player's actual history.
+ */
+export async function fetchPlayerFeatures(
+  playerId: string,
+  opponentTeam?: string,
+  isHome: boolean = true
+): Promise<PlayerFeaturesResponse> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  const params = new URLSearchParams();
+  if (opponentTeam) params.append("opponent_team", opponentTeam);
+  params.append("is_home", String(isHome));
+
+  const queryString = params.toString();
+  const url = `${API_BASE_URL}/api/player/${playerId}/features${queryString ? `?${queryString}` : ""}`;
+
+  let response: Response;
+
+  try {
+    response = await fetch(url, { signal: controller.signal });
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Player features request timed out");
+    }
+    throw new Error("Could not connect to player features API");
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new Error(`Player not found: ${playerId}`);
+    }
+    throw new Error(`Player features fetch failed: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// =============================================================================
 // Validation Metrics API
 // =============================================================================
 

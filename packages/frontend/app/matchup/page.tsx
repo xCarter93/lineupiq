@@ -8,7 +8,9 @@ import { FantasyPointsCard } from "@/components/matchup/FantasyPointsCard";
 import {
   predict,
   createDefaultFeatures,
+  fetchPlayerFeatures,
   type Prediction,
+  type PredictionFeatures,
 } from "@/lib/prediction-api";
 import {
   calculateFantasyPoints,
@@ -62,7 +64,84 @@ export default function MatchupPage() {
     setPrediction(null);
 
     try {
-      const features = createDefaultFeatures(matchup.position, matchup.isHome);
+      // Fetch player-specific features from their historical data
+      let features: PredictionFeatures;
+
+      try {
+        const playerFeatures = await fetchPlayerFeatures(
+          matchup.playerId,
+          matchup.opponentTeam,
+          matchup.isHome
+        );
+
+        // Start with position defaults as base
+        const defaults = createDefaultFeatures(matchup.position, matchup.isHome);
+
+        // Merge player-specific features on top (overrides defaults for stats they have)
+        features = {
+          ...defaults,
+          // Override with player's actual stats for the fields that exist
+          passing_yards_roll3:
+            (playerFeatures.features.passing_yards_roll3 as number) ??
+            defaults.passing_yards_roll3,
+          passing_tds_roll3:
+            (playerFeatures.features.passing_tds_roll3 as number) ??
+            defaults.passing_tds_roll3,
+          rushing_yards_roll3:
+            (playerFeatures.features.rushing_yards_roll3 as number) ??
+            defaults.rushing_yards_roll3,
+          rushing_tds_roll3:
+            (playerFeatures.features.rushing_tds_roll3 as number) ??
+            defaults.rushing_tds_roll3,
+          carries_roll3:
+            (playerFeatures.features.carries_roll3 as number) ??
+            defaults.carries_roll3,
+          receiving_yards_roll3:
+            (playerFeatures.features.receiving_yards_roll3 as number) ??
+            defaults.receiving_yards_roll3,
+          receiving_tds_roll3:
+            (playerFeatures.features.receiving_tds_roll3 as number) ??
+            defaults.receiving_tds_roll3,
+          receptions_roll3:
+            (playerFeatures.features.receptions_roll3 as number) ??
+            defaults.receptions_roll3,
+          // Volatility features
+          passing_yards_std3:
+            (playerFeatures.features.passing_yards_std3 as number) ??
+            defaults.passing_yards_std3,
+          passing_yards_cv3:
+            (playerFeatures.features.passing_yards_cv3 as number) ??
+            defaults.passing_yards_cv3,
+          rushing_yards_std3:
+            (playerFeatures.features.rushing_yards_std3 as number) ??
+            defaults.rushing_yards_std3,
+          rushing_yards_cv3:
+            (playerFeatures.features.rushing_yards_cv3 as number) ??
+            defaults.rushing_yards_cv3,
+          receiving_yards_std3:
+            (playerFeatures.features.receiving_yards_std3 as number) ??
+            defaults.receiving_yards_std3,
+          receiving_yards_cv3:
+            (playerFeatures.features.receiving_yards_cv3 as number) ??
+            defaults.receiving_yards_cv3,
+          receptions_std3:
+            (playerFeatures.features.receptions_std3 as number) ??
+            defaults.receptions_std3,
+          receptions_cv3:
+            (playerFeatures.features.receptions_cv3 as number) ??
+            defaults.receptions_cv3,
+          // Keep home/away from matchup
+          is_home: matchup.isHome,
+        };
+      } catch (featureErr) {
+        // Fallback to position defaults if player features unavailable
+        console.warn(
+          "Player features unavailable, using position defaults:",
+          featureErr
+        );
+        features = createDefaultFeatures(matchup.position, matchup.isHome);
+      }
+
       const result = await predict(matchup.position, features);
       setPrediction(result);
     } catch (err) {
