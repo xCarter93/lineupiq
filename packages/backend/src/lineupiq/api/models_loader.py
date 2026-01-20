@@ -57,9 +57,18 @@ def load_models() -> dict[str, Any]:
     models: dict[str, Any] = {}
 
     model_list = list_models()
-    logger.info(f"Found {len(model_list)} models to load")
+    logger.info(f"Found {len(model_list)} models on disk")
 
-    for position, target in model_list:
+    # Filter to only base models (exclude XGBoost variants and ensemble models)
+    base_models = [
+        (pos, target) for pos, target in model_list
+        if not target.endswith("_xgb") and not target.endswith("_voting_weighted")
+        and not target.endswith("_voting_simple") and not target.endswith("_stacking")
+    ]
+
+    logger.info(f"Loading {len(base_models)} base models (checking for ensemble versions)")
+
+    for position, target in base_models:
         model_name = f"{position}_{target}"
 
         # Try to load ensemble model first (preferred)
