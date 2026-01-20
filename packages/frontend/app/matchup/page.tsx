@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { SectionLabel } from "@/components/ui/section-label";
 import { MatchupForm, MatchupData } from "@/components/matchup/MatchupForm";
 import { StatProjection } from "@/components/matchup/StatProjection";
 import { FantasyPointsCard } from "@/components/matchup/FantasyPointsCard";
+import { ExplainabilityPanel } from "@/components/matchup/ExplainabilityPanel";
 import {
   predict,
   createDefaultFeatures,
@@ -12,6 +13,11 @@ import {
   type Prediction,
   type PredictionFeatures,
 } from "@/lib/prediction-api";
+import {
+  fetchExplanation,
+  getPrimaryTarget,
+  type ExplainabilityResponse,
+} from "@/lib/explainability-api";
 import {
   calculateFantasyPoints,
   getPointsBreakdown,
@@ -35,6 +41,12 @@ export default function MatchupPage() {
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [explanationData, setExplanationData] =
+    useState<ExplainabilityResponse | null>(null);
+  const [isLoadingExplanation, setIsLoadingExplanation] = useState(false);
+
+  // Keep track of features for explanation requests
+  const featuresRef = useRef<PredictionFeatures | null>(null);
 
   // Get default scoring config from Convex
   const { config: convexConfig } = useDefaultScoringConfig();
@@ -62,6 +74,7 @@ export default function MatchupPage() {
     setError(null);
     setMatchupData(matchup);
     setPrediction(null);
+    setExplanationData(null);
 
     try {
       // Fetch player-specific features from their historical data
@@ -142,8 +155,22 @@ export default function MatchupPage() {
         features = createDefaultFeatures(matchup.position, matchup.isHome);
       }
 
+      // Store features for explanation request
+      featuresRef.current = features;
+
       const result = await predict(matchup.position, features);
       setPrediction(result);
+
+      // Fetch explanation for the primary stat after prediction succeeds
+      setIsLoadingExplanation(true);
+      const primaryTarget = getPrimaryTarget(matchup.position);
+      const explanation = await fetchExplanation(
+        matchup.position,
+        primaryTarget,
+        features
+      );
+      setExplanationData(explanation);
+      setIsLoadingExplanation(false);
     } catch (err) {
       // Provide helpful error message for API not running
       if (
@@ -160,6 +187,7 @@ export default function MatchupPage() {
       }
     } finally {
       setIsLoading(false);
+      setIsLoadingExplanation(false);
     }
   };
 
@@ -176,7 +204,7 @@ export default function MatchupPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="mb-12">
           <SectionLabel className="mb-4 block">MATCHUP SIMULATOR</SectionLabel>
@@ -188,15 +216,17 @@ export default function MatchupPage() {
           </p>
         </div>
 
-        {/* Matchup Form */}
-        <MatchupForm onSubmit={handleSubmit} isLoading={isLoading} />
+        {/* Matchup Form - constrain width */}
+        <div className="max-w-4xl">
+          <MatchupForm onSubmit={handleSubmit} isLoading={isLoading} />
+        </div>
 
         {/* Results Section */}
         {(isLoading || prediction || error) && matchupData && (
           <div className="mt-8 animate-in fade-in duration-300">
             {/* Error State */}
             {error && !isLoading && (
-              <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-destructive">
+              <div className="max-w-4xl bg-white rounded-xl shadow-sm p-6 border-l-4 border-destructive">
                 <SectionLabel className="mb-3 block">ERROR</SectionLabel>
                 <p className="text-destructive font-medium mb-2">
                   Failed to get prediction
@@ -213,11 +243,11 @@ export default function MatchupPage() {
               </div>
             )}
 
-            {/* Success State - Two column layout */}
+            {/* Success State - Dashboard Grid Layout */}
             {(prediction || isLoading) && !error && (
-              <div className="space-y-6">
-                {/* Model Confidence Indicator */}
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <>
+                {/* Model Confidence Bar - Full Width */}
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mb-6">
                   <div className="bg-white rounded-xl shadow-sm px-6 py-4 flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
                       Model Performance
@@ -230,38 +260,65 @@ export default function MatchupPage() {
                   </div>
                 </div>
 
-                {/* Fantasy Points Card - Hero (appears first) */}
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
-                  <FantasyPointsCard
-                    points={fantasyPoints}
-                    breakdown={pointsBreakdown}
-                    scoringConfigName={scoringConfigName}
-                    isLoading={isLoading}
-                  />
-                </div>
+                {/* Dashboard Grid: 3 columns on desktop */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+                  {/* Left column: Fantasy Points + Model Confidence (spans 5 cols on lg) */}
+                  <div className="md:col-span-1 lg:col-span-5 space-y-6">
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-75">
+                      <FantasyPointsCard
+                        points={fantasyPoints}
+                        breakdown={pointsBreakdown}
+                        scoringConfigName={scoringConfigName}
+                        isLoading={isLoading}
+                        playerHeadshotUrl={matchupData.playerHeadshotUrl}
+                        playerName={matchupData.playerName}
+                      />
+                    </div>
+                  </div>
 
-                {/* Stat Projection (appears after fantasy points) */}
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
-                  <StatProjection
-                    position={
-                      matchupData.position as "QB" | "RB" | "WR" | "TE"
-                    }
-                    prediction={prediction!}
-                    playerName={matchupData.playerName}
-                    opponentTeam={matchupData.opponentTeam}
-                    isLoading={isLoading}
-                  />
-                </div>
+                  {/* Middle column: Stats + History (spans 4 cols on lg) */}
+                  <div className="md:col-span-1 lg:col-span-4 space-y-6">
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-150">
+                      <StatProjection
+                        position={
+                          matchupData.position as "QB" | "RB" | "WR" | "TE"
+                        }
+                        prediction={prediction!}
+                        playerName={matchupData.playerName}
+                        opponentTeam={matchupData.opponentTeam}
+                        isLoading={isLoading}
+                      />
+                    </div>
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
+                      <PlayerHistory
+                        playerId={matchupData.playerId}
+                        playerName={matchupData.playerName}
+                        position={
+                          matchupData.position as "QB" | "RB" | "WR" | "TE"
+                        }
+                      />
+                    </div>
+                  </div>
 
-                {/* Player History (appears after stat projection) */}
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-200">
-                  <PlayerHistory
-                    playerId={matchupData.playerId}
-                    playerName={matchupData.playerName}
-                    position={matchupData.position as "QB" | "RB" | "WR" | "TE"}
-                  />
+                  {/* Right column: Explainability (spans 3 cols on lg) */}
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 delay-300">
+                      <ExplainabilityPanel
+                        position={matchupData.position}
+                        target={getPrimaryTarget(matchupData.position)}
+                        prediction={explanationData?.prediction ?? fantasyPoints}
+                        baseValue={explanationData?.baseValue ?? 0}
+                        contributions={explanationData?.contributions ?? []}
+                        summary={
+                          explanationData?.summary ??
+                          "Loading prediction explanation..."
+                        }
+                        isLoading={isLoadingExplanation}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         )}

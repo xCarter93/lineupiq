@@ -19,6 +19,7 @@ export interface MatchupData {
   week: number;
   season: number;
   isHome: boolean;
+  playerHeadshotUrl?: string;
 }
 
 interface MatchupFormProps {
@@ -66,6 +67,7 @@ export function MatchupForm({ onSubmit, isLoading = false }: MatchupFormProps) {
       week,
       season,
       isHome,
+      playerHeadshotUrl: selectedPlayer.headshotUrl,
     });
   };
 
