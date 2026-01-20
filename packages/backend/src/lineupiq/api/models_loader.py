@@ -6,9 +6,11 @@ filtering models by position.
 """
 
 import logging
+from pathlib import Path
 from typing import Any
 
 from lineupiq.models import list_models, load_model
+from lineupiq.models.ensemble import load_ensemble
 
 logger = logging.getLogger(__name__)
 
@@ -16,32 +18,39 @@ logger = logging.getLogger(__name__)
 def load_models() -> dict[str, Any]:
     """Load all trained models from disk.
 
-    Uses lineupiq.models.list_models() to discover all saved models,
-    then loads each one using lineupiq.models.load_model().
+    Prefers ensemble models (voting_weighted) over single models when available.
 
-    NOTE: Ensemble Models Decision (Phase 19, 2026-01-20)
-    ======================================================
-    This API uses single models (LightGBM or XGBoost) rather than ensembles.
+    NOTE: Ensemble Models Decision - UPDATED (Phase 19, 2026-01-20)
+    ================================================================
+    This API uses ENSEMBLE models (weighted voting) for production predictions.
 
-    Benchmarking in Phase 19-03 showed:
+    Initial benchmarking (Phase 19-03, 2024 holdout):
+    - Trained on 2022-2023 (2 years)
     - Ensembles beat single models on only 1/21 stats (4.8%)
-    - LightGBM wins 17/21 stats (81%)
-    - High correlation (0.890) indicates insufficient model diversity
-    - Ensemble overhead (2 models + meta-learner) not justified
+    - Decision: Keep single models
 
-    See: .planning/phases/19-ensemble-models/BENCHMARK_RESULTS.md
+    Validation benchmarking (2025 holdout):
+    - Trained on 2020-2024 (5 years)
+    - Ensembles beat single models on 20/21 stats (95.2%)!
+    - 2-4% improvement across most stats
+    - Decision REVERSED: Adopt weighted voting ensembles
 
-    If ensemble models are revisited in the future, this function would need
-    to check for *_ensemble.joblib files and prefer them over single models.
+    Key insight: Ensembles require sufficient training data (5+ years) to outperform
+    single models. With production-realistic training windows, ensembles consistently
+    improve predictions.
+
+    See:
+    - .planning/phases/19-ensemble-models/BENCHMARK_RESULTS.md (2024 holdout)
+    - .planning/phases/19-ensemble-models/BENCHMARK_RESULTS_2025.md (2025 holdout)
 
     Returns:
         Dict mapping model names (e.g., "QB_passing_yards") to loaded
-        model objects (LightGBM or XGBoost).
+        model objects (VotingRegressor ensembles or single LightGBM/XGBoost).
 
     Example:
         >>> models = load_models()
         >>> len(models)
-        13
+        21
         >>> "QB_passing_yards" in models
         True
     """
@@ -52,9 +61,17 @@ def load_models() -> dict[str, Any]:
 
     for position, target in model_list:
         model_name = f"{position}_{target}"
-        model, _metadata = load_model(position, target)
-        models[model_name] = model
-        logger.debug(f"Loaded model: {model_name}")
+
+        # Try to load ensemble model first (preferred)
+        try:
+            model = load_ensemble(position, target, "voting_weighted")
+            models[model_name] = model
+            logger.debug(f"Loaded ensemble model: {model_name}")
+        except FileNotFoundError:
+            # Fall back to single model if ensemble not available
+            model, _metadata = load_model(position, target)
+            models[model_name] = model
+            logger.debug(f"Loaded single model: {model_name} (ensemble not available)")
 
     logger.info(f"Successfully loaded {len(models)} models")
     return models
