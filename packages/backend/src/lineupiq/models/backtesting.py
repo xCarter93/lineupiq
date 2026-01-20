@@ -32,6 +32,7 @@ from lineupiq.data.kicker_processing import (
     process_kicker_data,
 )
 from lineupiq.features.pipeline import build_features, get_feature_columns
+from lineupiq.models.ensemble import load_ensemble
 from lineupiq.models.persistence import list_models, load_model
 
 logger = logging.getLogger(__name__)
@@ -125,8 +126,15 @@ def run_backtest(
     """
     logger.info(f"Running backtest for {position}_{target}")
 
-    # Load trained model
-    model, model_metadata = load_model(position, target)
+    # Try to load ensemble model first (preferred), fall back to single model
+    try:
+        model = load_ensemble(position, target, "voting_weighted")
+        logger.debug(f"Using ensemble model for {position}_{target}")
+        model_metadata = {}  # Ensembles don't have metadata dict
+    except FileNotFoundError:
+        # Fall back to single model if ensemble not available
+        model, model_metadata = load_model(position, target)
+        logger.debug(f"Using single model for {position}_{target}")
 
     # Get feature columns based on position
     if position == "K":
@@ -200,6 +208,10 @@ def run_all_backtests(holdout_df: pl.DataFrame) -> list[dict[str, Any]]:
     Iterates through all saved models, runs backtests, and collects results.
     Handles errors gracefully, logging warnings for failed models.
 
+    Note: Only backtests base models (excludes XGBoost variants and ensemble models).
+    The API loader will automatically use ensemble models if available when loading
+    the base model name.
+
     Args:
         holdout_df: Holdout DataFrame with features and target columns.
 
@@ -213,11 +225,22 @@ def run_all_backtests(holdout_df: pl.DataFrame) -> list[dict[str, Any]]:
         >>> all("predictions" in r for r in results)
         True
     """
-    models = list_models()
-    logger.info(f"Running backtests for {len(models)} trained models")
+    all_models = list_models()
+
+    # Filter to only base models (exclude XGBoost variants and ensemble models)
+    # This prevents trying to backtest "_xgb" and "_voting_weighted" models directly
+    base_models = [
+        (pos, target) for pos, target in all_models
+        if not target.endswith("_xgb")
+        and not target.endswith("_voting_weighted")
+        and not target.endswith("_voting_simple")
+        and not target.endswith("_stacking")
+    ]
+
+    logger.info(f"Running backtests for {len(base_models)} base models (from {len(all_models)} total saved models)")
 
     results = []
-    for position, target in models:
+    for position, target in base_models:
         try:
             result = run_backtest(position, target, holdout_df)
             results.append(result)
@@ -228,7 +251,7 @@ def run_all_backtests(holdout_df: pl.DataFrame) -> list[dict[str, Any]]:
         except Exception as e:
             logger.error(f"Error running backtest for {position}_{target}: {e}")
 
-    logger.info(f"Successfully ran {len(results)}/{len(models)} backtests")
+    logger.info(f"Successfully ran {len(results)}/{len(base_models)} backtests")
     return results
 
 
