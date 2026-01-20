@@ -19,9 +19,24 @@ def load_models() -> dict[str, Any]:
     Uses lineupiq.models.list_models() to discover all saved models,
     then loads each one using lineupiq.models.load_model().
 
+    NOTE: Ensemble Models Decision (Phase 19, 2026-01-20)
+    ======================================================
+    This API uses single models (LightGBM or XGBoost) rather than ensembles.
+
+    Benchmarking in Phase 19-03 showed:
+    - Ensembles beat single models on only 1/21 stats (4.8%)
+    - LightGBM wins 17/21 stats (81%)
+    - High correlation (0.890) indicates insufficient model diversity
+    - Ensemble overhead (2 models + meta-learner) not justified
+
+    See: .planning/phases/19-ensemble-models/BENCHMARK_RESULTS.md
+
+    If ensemble models are revisited in the future, this function would need
+    to check for *_ensemble.joblib files and prefer them over single models.
+
     Returns:
         Dict mapping model names (e.g., "QB_passing_yards") to loaded
-        XGBoost model objects.
+        model objects (LightGBM or XGBoost).
 
     Example:
         >>> models = load_models()
