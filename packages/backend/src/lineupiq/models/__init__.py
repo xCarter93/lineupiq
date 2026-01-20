@@ -110,6 +110,12 @@ from lineupiq.models.uncertainty import (
     get_interval_coverage,
     predict_with_intervals,
 )
+from lineupiq.models.ensemble import (
+    create_voting_ensemble,
+    create_stacking_ensemble,
+    save_ensemble,
+    load_ensemble,
+)
 
 __all__ = [
     # Training
@@ -170,4 +176,9 @@ __all__ = [
     "format_interval_response",
     "calculate_interval_width",
     "get_interval_coverage",
+    # Ensemble Models
+    "create_voting_ensemble",
+    "create_stacking_ensemble",
+    "save_ensemble",
+    "load_ensemble",
 ]
