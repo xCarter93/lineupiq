@@ -2,6 +2,14 @@
 Pydantic schemas for the LineupIQ API.
 """
 
+from lineupiq.api.schemas.explainability import (
+    ExplainabilityRequest,
+    ExplainabilityResponse,
+    FeatureContribution,
+    FEATURE_DISPLAY_NAMES,
+    TARGET_DISPLAY_NAMES,
+    VALID_TARGETS,
+)
 from lineupiq.api.schemas.prediction import (
     DefensePrediction,
     DefensePredictionRequest,
@@ -48,4 +56,10 @@ __all__ = [
     "RosterResponse",
     "WeeklyStats",
     "PlayerHistoryResponse",
+    "ExplainabilityRequest",
+    "ExplainabilityResponse",
+    "FeatureContribution",
+    "FEATURE_DISPLAY_NAMES",
+    "TARGET_DISPLAY_NAMES",
+    "VALID_TARGETS",
 ]
