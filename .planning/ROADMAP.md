@@ -8,6 +8,7 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 
 - ✅ **[v1.0 MVP](milestones/v1.0-ROADMAP.md)** — Phases 1-10 (shipped 2026-01-15)
 - ✅ **v1.1 Model Confidence** — Phases 11-17 (shipped 2026-01-19)
+- 🚧 **v1.2 Platform Maturity** — Phases 18-25 (in progress)
 
 ## Completed Milestones
 
@@ -45,13 +46,125 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 
 </details>
 
+### 🚧 v1.2 Platform Maturity (In Progress)
+
+**Milestone Goal:** Mature the platform with performance optimizations, ensemble models, advanced features, and enhanced UI capabilities for production readiness.
+
+#### Phase 18: Performance Fixes & Optimization
+
+**Goal**: Fix player selection lag and optimize frontend/API performance through code splitting, lazy loading, and smarter caching
+**Depends on**: Previous milestone complete
+**Research**: Unlikely (established Next.js optimization patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 18-01: TBD (run /gsd:plan-phase 18 to break down)
+
+#### Phase 19: Ensemble Models
+
+**Goal**: Combine LightGBM + XGBoost models using stacking/voting ensembles for improved prediction accuracy
+**Depends on**: Phase 18
+**Research**: Likely (architectural decision on ensemble strategies)
+**Research topics**: Stacking vs voting vs blending, model weight optimization, ensemble validation
+**Plans**: TBD
+
+Plans:
+- [ ] 19-01: TBD
+
+#### Phase 20: Advanced Features
+
+**Goal**: Expand feature engineering with weather data, injury reports, and matchup-specific signals
+**Depends on**: Phase 19
+**Research**: Likely (new API integrations)
+**Research topics**: Weather data APIs, injury report sources, integration patterns with nflreadpy pipeline
+**Plans**: TBD
+
+Plans:
+- [ ] 20-01: TBD
+
+#### Phase 21: Position-Specific Tuning
+
+**Goal**: Deep hyperparameter optimization for each position (QB, RB, WR, TE, K, DEF) with position-specific feature sets
+**Depends on**: Phase 20
+**Research**: Unlikely (extends existing Optuna tuning patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 21-01: TBD
+
+#### Phase 22: Multi-Player Comparison UI
+
+**Goal**: Build side-by-side player comparison interface for lineup decision support
+**Depends on**: Phase 21
+**Research**: Unlikely (internal UI patterns)
+**Plans**: TBD
+
+Plans:
+- [ ] 22-01: TBD
+
+#### Phase 23: Season-Long View UI
+
+**Goal**: Display weekly projections across full season with playoff scheduling support
+**Depends on**: Phase 22
+**Research**: Unlikely (data visualization with existing Recharts)
+**Plans**: TBD
+
+Plans:
+- [ ] 23-01: TBD
+
+#### Phase 24: Real-Time Data Updates
+
+**Goal**: Sync with latest NFL data for injuries and roster changes in real-time
+**Depends on**: Phase 23
+**Research**: Likely (new integration with real-time data sources)
+**Research topics**: NFL injury/roster APIs, polling vs webhooks, cache invalidation strategies
+**Plans**: TBD
+
+Plans:
+- [ ] 24-01: TBD
+
+#### Phase 25: Advanced Stats Pipeline
+
+**Goal**: Add target share, snap counts, and red zone usage metrics to feature pipeline
+**Depends on**: Phase 24
+**Research**: Likely (new data sources for advanced stats)
+**Research topics**: Target share data availability, snap count APIs, red zone metrics sources
+**Plans**: TBD
+
+Plans:
+- [ ] 25-01: TBD
+
 ## Progress
 
-| Milestone | Phases | Plans | Status | Shipped |
-|-----------|--------|-------|--------|---------|
-| v1.0 MVP | 1-10 | 30/30 | ✅ Complete | 2026-01-15 |
-| v1.1 Model Confidence | 11-17 | 30/30 | ✅ Complete | 2026-01-19 |
+| Phase | Milestone | Plans | Status | Completed |
+|-------|-----------|-------|--------|-----------|
+| 1. Foundation | v1.0 | 3/3 | Complete | 2026-01-14 |
+| 2. Data Pipeline | v1.0 | 2/2 | Complete | 2026-01-14 |
+| 3. Data Processing | v1.0 | 3/3 | Complete | 2026-01-15 |
+| 4. Feature Engineering | v1.0 | 3/3 | Complete | 2026-01-15 |
+| 5. Model Development | v1.0 | 4/4 | Complete | 2026-01-15 |
+| 6. Model Evaluation | v1.0 | 3/3 | Complete | 2026-01-15 |
+| 7. Prediction API | v1.0 | 3/3 | Complete | 2026-01-15 |
+| 8. Convex Backend | v1.0 | 3/3 | Complete | 2026-01-15 |
+| 9. Matchup UI | v1.0 | 3/3 | Complete | 2026-01-15 |
+| 10. Integration & Polish | v1.0 | 3/3 | Complete | 2026-01-15 |
+| 11. ML Pipeline Audit | v1.1 | 1/1 | Complete | 2026-01-15 |
+| 12. ML Pipeline Improvements | v1.1 | 5/5 | Complete | 2026-01-15 |
+| 13. K/DEF + Training | v1.1 | 8/8 | Complete | 2026-01-15 |
+| 14. Complete Fantasy Stats | v1.1 | 4/4 | Complete | 2026-01-15 |
+| 15. Full Roster + Historical | v1.1 | 4/4 | Complete | 2026-01-16 |
+| 16. UI Data Visualization | v1.1 | 1/1 | Complete | 2026-01-15 |
+| 16.1. Re-evaluate Models & Viz | v1.1 | 3/3 | Complete | 2026-01-20 |
+| 17. Model Explainability UI | v1.1 | 4/4 | Complete | 2026-01-19 |
+| 18. Performance Fixes | v1.2 | 0/? | Not started | - |
+| 19. Ensemble Models | v1.2 | 0/? | Not started | - |
+| 20. Advanced Features | v1.2 | 0/? | Not started | - |
+| 21. Position Tuning | v1.2 | 0/? | Not started | - |
+| 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
+| 23. Season-Long View | v1.2 | 0/? | Not started | - |
+| 24. Real-Time Updates | v1.2 | 0/? | Not started | - |
+| 25. Advanced Stats | v1.2 | 0/? | Not started | - |
 
 ---
 
-**Project Status:** v1.1 Model Confidence COMPLETE — Ready for v1.2 planning
+**Project Status:** v1.2 Platform Maturity — Phase 18 ready to plan

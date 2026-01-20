@@ -5,15 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-15)
 
 **Core value:** Accurate stat-level predictions from well-engineered features and properly trained models.
-**Current focus:** None — milestone v1.1 complete
+**Current focus:** v1.2 Platform Maturity — performance, ensemble models, and enhanced UI
 
 ## Current Position
 
-Milestone: v1.1 Model Confidence - ARCHIVED
-Status: Milestone complete and archived
-Last activity: 2026-01-19 — v1.1 milestone archived
+Phase: 18 of 25 (Performance Fixes & Optimization)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-01-20 - Milestone v1.2 created
 
-Progress: No active milestone — ready for v1.2 planning
+Progress: ░░░░░░░░░░ 0%
 
 ## Performance Metrics
 
@@ -125,10 +126,11 @@ Progress: No active milestone — ready for v1.2 planning
 - v1.0 MVP shipped: Foundation through polish, 10 phases (2026-01-15)
 - Milestone v1.1 created: Model Confidence, 7 phases (Phase 11-17)
 - Phase 16.1 inserted after Phase 16: Re-evaluate models and data visualization (URGENT)
+- Milestone v1.2 created: Platform Maturity, 8 phases (Phase 18-25)
 
 ### Pending Todos
 
-None — milestone just created.
+None
 
 ### Blockers/Concerns
 
@@ -136,7 +138,7 @@ None — ready to begin planning.
 
 ## Session Continuity
 
-Last session: 2026-01-19
-Stopped at: v1.1 milestone archived
+Last session: 2026-01-20
+Stopped at: Milestone v1.2 initialization
 Resume file: None
-Next action: Plan v1.2 milestone when ready
+Next action: Plan Phase 18 (Performance Fixes & Optimization)
