@@ -11,6 +11,7 @@ Key functions:
 - create_stacking_ensemble: Create StackingRegressor with Ridge meta-learner
 - save_ensemble: Save ensemble model to disk
 - load_ensemble: Load ensemble model from disk
+- benchmark_ensemble_strategies: Benchmark all strategies on holdout data
 """
 
 import logging
@@ -18,8 +19,13 @@ from pathlib import Path
 from typing import Any, Literal
 
 import joblib
+import numpy as np
+from numpy.typing import NDArray
 from sklearn.ensemble import StackingRegressor, VotingRegressor
 from sklearn.linear_model import Ridge
+from sklearn.metrics import mean_absolute_error, r2_score
+
+from lineupiq.models.persistence import load_model
 
 logger = logging.getLogger(__name__)
 
@@ -185,3 +191,137 @@ def load_ensemble(
     logger.info(f"Loaded {ensemble_type} ensemble from {filepath}")
 
     return ensemble
+
+
+def benchmark_ensemble_strategies(
+    position: str,
+    stat: str,
+    X_train: NDArray[np.floating[Any]],
+    y_train: NDArray[np.floating[Any]],
+    X_holdout: NDArray[np.floating[Any]],
+    y_holdout: NDArray[np.floating[Any]],
+) -> dict[str, Any]:
+    """Benchmark all ensemble strategies against single models on holdout data.
+
+    Loads LightGBM and XGBoost models for position/stat, evaluates 5 strategies
+    on holdout data (lgbm_solo, xgb_solo, voting_simple, voting_weighted, stacking),
+    and identifies the best performer by lowest MAE.
+
+    Args:
+        position: Player position (e.g., "QB", "RB", "WR", "TE").
+        stat: Target stat (e.g., "passing_yards", "rushing_tds").
+        X_train: Training features for fitting ensembles.
+        y_train: Training target for fitting ensembles.
+        X_holdout: Holdout features for evaluation.
+        y_holdout: Holdout target for evaluation.
+
+    Returns:
+        Dict with keys:
+        - results: Dict mapping strategy name to {"mae": float, "r2": float}
+        - best_strategy: Name of strategy with lowest MAE
+        - correlation: Correlation between LightGBM and XGBoost predictions (diversity metric)
+        - optimal_weights: [lgbm_weight, xgb_weight] from grid search
+
+    Raises:
+        FileNotFoundError: If LightGBM or XGBoost model files don't exist.
+
+    Example:
+        >>> results = benchmark_ensemble_strategies(
+        ...     "QB", "passing_yards", X_train, y_train, X_holdout, y_holdout
+        ... )
+        >>> results["best_strategy"]
+        'stacking'
+        >>> results["results"]["stacking"]["mae"]
+        45.2
+    """
+    logger.info(f"Benchmarking ensemble strategies for {position}_{stat}")
+
+    # Load pre-trained models
+    try:
+        lgbm_model, _ = load_model(position, f"{stat}_lgbm")
+        xgb_model, _ = load_model(position, f"{stat}_xgb")
+    except FileNotFoundError as e:
+        logger.error(f"Models not found for {position}_{stat}: {e}")
+        raise
+
+    # Strategy 1: LightGBM solo
+    logger.info(f"Evaluating lgbm_solo for {position}_{stat}")
+    lgbm_pred_holdout = lgbm_model.predict(X_holdout)
+    lgbm_mae = mean_absolute_error(y_holdout, lgbm_pred_holdout)
+    lgbm_r2 = r2_score(y_holdout, lgbm_pred_holdout)
+
+    # Strategy 2: XGBoost solo
+    logger.info(f"Evaluating xgb_solo for {position}_{stat}")
+    xgb_pred_holdout = xgb_model.predict(X_holdout)
+    xgb_mae = mean_absolute_error(y_holdout, xgb_pred_holdout)
+    xgb_r2 = r2_score(y_holdout, xgb_pred_holdout)
+
+    # Check prediction diversity (correlation)
+    correlation = np.corrcoef(lgbm_pred_holdout, xgb_pred_holdout)[0, 1]
+    logger.info(f"Base model correlation: {correlation:.3f}")
+
+    # Strategy 3: Simple voting (equal weights)
+    logger.info(f"Evaluating voting_simple for {position}_{stat}")
+    voting_simple = create_voting_ensemble(lgbm_model, xgb_model)
+    voting_simple.fit(X_train, y_train)
+    voting_simple_pred = voting_simple.predict(X_holdout)
+    voting_simple_mae = mean_absolute_error(y_holdout, voting_simple_pred)
+    voting_simple_r2 = r2_score(y_holdout, voting_simple_pred)
+
+    # Strategy 4: Weighted voting (grid search for optimal weights)
+    logger.info(f"Grid searching optimal weights for {position}_{stat}")
+    best_mae = float("inf")
+    best_weights = [0.5, 0.5]
+
+    # Grid search: 0.0, 0.05, 0.10, ..., 1.0 for lgbm weight
+    for lgbm_weight in np.linspace(0, 1, 21):
+        xgb_weight = 1 - lgbm_weight
+        weights = [lgbm_weight, xgb_weight]
+
+        # Create weighted ensemble
+        voting_weighted = create_voting_ensemble(lgbm_model, xgb_model, weights=weights)
+        voting_weighted.fit(X_train, y_train)
+        weighted_pred = voting_weighted.predict(X_holdout)
+        weighted_mae = mean_absolute_error(y_holdout, weighted_pred)
+
+        if weighted_mae < best_mae:
+            best_mae = weighted_mae
+            best_weights = weights
+
+    logger.info(f"Optimal weights: {best_weights} (MAE: {best_mae:.2f})")
+
+    # Evaluate with optimal weights
+    voting_weighted = create_voting_ensemble(lgbm_model, xgb_model, weights=best_weights)
+    voting_weighted.fit(X_train, y_train)
+    voting_weighted_pred = voting_weighted.predict(X_holdout)
+    voting_weighted_mae = mean_absolute_error(y_holdout, voting_weighted_pred)
+    voting_weighted_r2 = r2_score(y_holdout, voting_weighted_pred)
+
+    # Strategy 5: Stacking with Ridge meta-learner
+    logger.info(f"Evaluating stacking for {position}_{stat}")
+    stacking = create_stacking_ensemble(lgbm_model, xgb_model, cv=5)
+    stacking.fit(X_train, y_train)
+    stacking_pred = stacking.predict(X_holdout)
+    stacking_mae = mean_absolute_error(y_holdout, stacking_pred)
+    stacking_r2 = r2_score(y_holdout, stacking_pred)
+
+    # Compile results
+    results = {
+        "lgbm_solo": {"mae": lgbm_mae, "r2": lgbm_r2},
+        "xgb_solo": {"mae": xgb_mae, "r2": xgb_r2},
+        "voting_simple": {"mae": voting_simple_mae, "r2": voting_simple_r2},
+        "voting_weighted": {"mae": voting_weighted_mae, "r2": voting_weighted_r2},
+        "stacking": {"mae": stacking_mae, "r2": stacking_r2},
+    }
+
+    # Identify best strategy
+    best_strategy = min(results, key=lambda k: results[k]["mae"])
+
+    logger.info(f"Best strategy for {position}_{stat}: {best_strategy} (MAE: {results[best_strategy]['mae']:.2f})")
+
+    return {
+        "results": results,
+        "best_strategy": best_strategy,
+        "correlation": correlation,
+        "optimal_weights": best_weights,
+    }
