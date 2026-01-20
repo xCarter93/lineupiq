@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 19 of 25 (Ensemble Models & XGBoost Parity)
-Plan: 2 of 3 in current phase
+Plan: 3 of 3 in current phase
 Status: Complete
-Last activity: 2026-01-20 - Completed 19-02-PLAN.md
+Last activity: 2026-01-20 - Completed 19-03-PLAN.md (Ensemble Benchmarking)
 
 Progress: ██░░░░░░░░ 13%
 
@@ -136,6 +136,9 @@ Progress: ██░░░░░░░░ 13%
 | 19-02 | cv=5 default for stacking | Generates out-of-fold predictions to avoid data leakage |
 | 19-02 | passthrough=False in stacking | Use only base predictions, not original features |
 | 19-02 | Ensemble naming: {position}_{target}_{ensemble_type}.joblib | Consistent with existing persistence patterns |
+| 19-03 | Do NOT adopt ensemble models | Benchmarked 21 stats: ensembles only beat single models on 1 stat (4.8%) |
+| 19-03 | High correlation (0.890) indicates insufficient diversity | LightGBM/XGBoost predictions too similar to benefit from averaging |
+| 19-03 | Keep LightGBM as production default | Wins 17/21 stats (81%), already performing well without ensemble overhead |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -157,6 +160,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 19-02-PLAN.md (Ensemble Infrastructure)
+Stopped at: Completed 19-03-PLAN.md (Ensemble Benchmarking)
 Resume file: None
-Next action: Execute 19-03-PLAN.md (Ensemble Benchmarking)
+Next action: Phase 19 complete - review roadmap for next phase
