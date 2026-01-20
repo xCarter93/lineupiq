@@ -5,9 +5,9 @@ Computes rolling team-level metrics that provide context for individual
 player performance predictions.
 
 Key features:
-- team_points_roll5: Rolling 3-game average points scored
-- team_yards_roll5: Rolling 3-game average total yards
-- team_plays_roll5: Rolling 3-game average plays per game (pace)
+- team_points_roll5: Rolling 5-game average points scored
+- team_yards_roll5: Rolling 5-game average total yards
+- team_plays_roll5: Rolling 5-game average plays per game (pace)
 """
 
 import logging
@@ -20,18 +20,18 @@ logger = logging.getLogger(__name__)
 def compute_team_strength(
     team_stats_df: pl.DataFrame,
     schedules_df: pl.DataFrame,
-    window: int = 3,
+    window: int = 5,
 ) -> pl.DataFrame:
     """Compute rolling team offensive strength metrics.
 
     Args:
         team_stats_df: Team stats from nflreadpy load_team_stats().
         schedules_df: Schedules from nflreadpy load_schedules().
-        window: Rolling window size (default: 3 games).
+        window: Rolling window size (default: 5 games).
 
     Returns:
-        DataFrame with columns: season, week, team, team_points_roll5,
-        team_yards_roll5, team_plays_roll5.
+        DataFrame with columns: season, week, team, team_points_roll{window},
+        team_yards_roll{window}, team_plays_roll{window}.
     """
     logger.info(f"Computing team strength features with window={window}")
 
@@ -113,11 +113,11 @@ def compute_team_strength(
     return features
 
 
-def get_team_strength_columns(window: int = 3) -> list[str]:
+def get_team_strength_columns(window: int = 5) -> list[str]:
     """Return list of team strength feature column names.
 
     Args:
-        window: Rolling window size used in compute_team_strength.
+        window: Rolling window size used in compute_team_strength (default: 5).
 
     Returns:
         List of column names for team strength features.

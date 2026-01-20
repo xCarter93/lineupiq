@@ -77,10 +77,22 @@ Plans:
 
 **Outcome**: Ensembles NOT adopted. Benchmarking showed single models win 20/21 stats (95.2%). LightGBM remains production default.
 
+#### Phase 19.1: Re-evaluate Recent Performance Metrics (INSERTED)
+
+**Goal**: [Urgent work - to be planned]
+**Depends on**: Phase 19
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 19.1 to break down)
+
+**Details**:
+[To be added during planning]
+
 #### Phase 20: Advanced Features
 
 **Goal**: Expand feature engineering with weather data, injury reports, and matchup-specific signals
-**Depends on**: Phase 19
+**Depends on**: Phase 19.1
 **Research**: Likely (new API integrations)
 **Research topics**: Weather data APIs, injury report sources, integration patterns with nflreadpy pipeline
 **Plans**: TBD
