@@ -298,3 +298,166 @@ def train_receiver_models(
 
     logger.info(f"Completed training {len(results)} receiver models (WR + TE)")
     return results
+
+
+def train_wr_models_xgboost(
+    seasons: list[int] | None = None,
+    n_trials: int = 30,
+) -> dict[str, tuple[Any, dict[str, Any]]]:
+    """Train XGBoost models for all WR receiving targets.
+
+    Trains XGBoost models (level-wise tree growth) to complement existing
+    LightGBM models (leaf-wise tree growth) for ensemble methods. Uses same
+    Optuna tuning and validation approach as train_wr_models().
+
+    Models saved with _xgb.joblib suffix for distinction from LightGBM models.
+
+    Args:
+        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
+        n_trials: Number of Optuna trials per target (default: 30).
+
+    Returns:
+        Dict mapping target name to (model, metrics) tuple.
+        Metrics include cv_rmse_mean, cv_rmse_std, best_params, n_samples, model_type.
+
+    Example:
+        >>> results = train_wr_models_xgboost([2023, 2024], n_trials=10)
+        >>> "receiving_yards" in results
+        True
+        >>> model, metrics = results["receiving_yards"]
+        >>> metrics["model_type"]
+        'xgboost'
+    """
+    if seasons is None:
+        seasons = [2021, 2022, 2023, 2024]
+
+    logger.info(f"Training WR XGBoost models for seasons {seasons}")
+
+    # Load features
+    df = build_features(seasons)
+
+    # Prepare WR data
+    X, y_dict = prepare_receiver_data(df, "WR")
+
+    results: dict[str, tuple[Any, dict[str, Any]]] = {}
+
+    for target in RECEIVER_TARGETS:
+        logger.info(f"Training WR {target} XGBoost model...")
+        y = y_dict[target]
+
+        # Tune hyperparameters with XGBoost
+        best_params, study = tune_hyperparameters(
+            X, y, n_trials=n_trials, model_type="xgboost"
+        )
+
+        # Train final model with best params
+        model, cv_scores = train_model(X, y, params=best_params, model_type="xgboost")
+
+        # Calculate metrics (scores are negative RMSE, so negate)
+        cv_rmse = -cv_scores
+        metrics = {
+            "position": "WR",
+            "target": target,
+            "model_type": "xgboost",
+            "cv_rmse_mean": float(cv_rmse.mean()),
+            "cv_rmse_std": float(cv_rmse.std()),
+            "best_params": best_params,
+            "n_samples": len(y),
+            "n_features": X.shape[1],
+            "n_trials": n_trials,
+            "seasons": seasons,
+        }
+
+        # Save model with _xgb suffix
+        save_model(model, position="WR", target=f"{target}_xgb", metadata=metrics)
+
+        results[target] = (model, metrics)
+        logger.info(
+            f"WR {target} XGBoost: CV RMSE = {metrics['cv_rmse_mean']:.2f} +/- {metrics['cv_rmse_std']:.2f}"
+        )
+
+    logger.info(f"Completed training {len(results)} WR XGBoost models")
+    return results
+
+
+def train_te_models_xgboost(
+    seasons: list[int] | None = None,
+    n_trials: int = 30,
+) -> dict[str, tuple[Any, dict[str, Any]]]:
+    """Train XGBoost models for all TE receiving targets.
+
+    Trains XGBoost models (level-wise tree growth) to complement existing
+    LightGBM models (leaf-wise tree growth) for ensemble methods. Uses same
+    Optuna tuning and validation approach as train_te_models().
+
+    TEs typically have lower stat distributions than WRs (fewer targets, shorter
+    routes, more blocking assignments), so separate models provide better accuracy.
+
+    Models saved with _xgb.joblib suffix for distinction from LightGBM models.
+
+    Args:
+        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
+        n_trials: Number of Optuna trials per target (default: 30).
+
+    Returns:
+        Dict mapping target name to (model, metrics) tuple.
+        Metrics include cv_rmse_mean, cv_rmse_std, best_params, n_samples, model_type.
+
+    Example:
+        >>> results = train_te_models_xgboost([2023, 2024], n_trials=10)
+        >>> "receiving_yards" in results
+        True
+        >>> model, metrics = results["receiving_yards"]
+        >>> metrics["model_type"]
+        'xgboost'
+    """
+    if seasons is None:
+        seasons = [2021, 2022, 2023, 2024]
+
+    logger.info(f"Training TE XGBoost models for seasons {seasons}")
+
+    # Load features
+    df = build_features(seasons)
+
+    # Prepare TE data
+    X, y_dict = prepare_receiver_data(df, "TE")
+
+    results: dict[str, tuple[Any, dict[str, Any]]] = {}
+
+    for target in RECEIVER_TARGETS:
+        logger.info(f"Training TE {target} XGBoost model...")
+        y = y_dict[target]
+
+        # Tune hyperparameters with XGBoost
+        best_params, study = tune_hyperparameters(
+            X, y, n_trials=n_trials, model_type="xgboost"
+        )
+
+        # Train final model with best params
+        model, cv_scores = train_model(X, y, params=best_params, model_type="xgboost")
+
+        # Calculate metrics (scores are negative RMSE, so negate)
+        cv_rmse = -cv_scores
+        metrics = {
+            "position": "TE",
+            "target": target,
+            "model_type": "xgboost",
+            "cv_rmse_mean": float(cv_rmse.mean()),
+            "cv_rmse_std": float(cv_rmse.std()),
+            "best_params": best_params,
+            "n_samples": len(y),
+            "n_features": X.shape[1],
+            "n_trials": n_trials,
+            "seasons": seasons,
+        }
+
+        # Save model with _xgb suffix
+        save_model(model, position="TE", target=f"{target}_xgb", metadata=metrics)
+
+        results[target] = (model, metrics)
+        logger.info(
+            f"TE {target} XGBoost: CV RMSE = {metrics['cv_rmse_mean']:.2f} +/- {metrics['cv_rmse_std']:.2f}"
+        )
+
+    logger.info(f"Completed training {len(results)} TE XGBoost models")
+    return results
