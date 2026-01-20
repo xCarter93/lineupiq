@@ -205,3 +205,92 @@ def train_qb_models(
 
     logger.info(f"Completed training {len(results)} QB models")
     return results
+
+
+def train_qb_models_xgboost(
+    seasons: list[int] | None = None,
+    n_trials: int = 30,
+) -> dict[str, tuple[Any, dict[str, Any]]]:
+    """Train XGBoost models for all QB target stats.
+
+    Trains XGBoost models (level-wise tree growth) to complement existing
+    LightGBM models (leaf-wise tree growth) for ensemble methods. Uses same
+    Optuna tuning and validation approach as train_qb_models().
+
+    Models saved with _xgb.joblib suffix for distinction from LightGBM models.
+
+    Args:
+        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
+        n_trials: Number of Optuna trials for hyperparameter tuning (default: 30).
+
+    Returns:
+        Dict mapping target name to (model, metrics) tuple where metrics contains:
+        - cv_rmse_mean: Mean cross-validation RMSE
+        - cv_rmse_std: Standard deviation of CV RMSE
+        - best_params: Best hyperparameters from Optuna
+        - n_samples: Number of training samples
+        - model_type: "xgboost"
+
+    Example:
+        >>> results = train_qb_models_xgboost([2023, 2024], n_trials=10)
+        >>> "passing_yards" in results
+        True
+        >>> model, metrics = results["passing_yards"]
+        >>> metrics["model_type"]
+        'xgboost'
+    """
+    if seasons is None:
+        seasons = [2021, 2022, 2023, 2024]
+
+    logger.info(
+        f"Training QB XGBoost models for seasons {seasons} with {n_trials} trials"
+    )
+
+    # Load features
+    df = build_features(seasons)
+
+    # Prepare QB-specific data
+    X, y_dict = prepare_qb_data(df)
+
+    results: dict[str, tuple[Any, dict[str, Any]]] = {}
+
+    for target in QB_TARGETS:
+        logger.info(f"Training XGBoost model for QB {target}...")
+        y = y_dict[target]
+
+        # Run hyperparameter tuning with XGBoost
+        best_params, study = tune_hyperparameters(
+            X, y, n_trials=n_trials, model_type="xgboost"
+        )
+
+        # Train final model with best parameters
+        model, cv_scores = train_model(X, y, params=best_params, model_type="xgboost")
+
+        # Calculate metrics (scores are negative RMSE, so negate)
+        cv_rmse = -cv_scores
+        metrics = {
+            "position": "QB",
+            "target": target,
+            "model_type": "xgboost",
+            "cv_rmse_mean": float(cv_rmse.mean()),
+            "cv_rmse_std": float(cv_rmse.std()),
+            "best_params": best_params,
+            "n_samples": len(y),
+            "n_features": X.shape[1],
+            "n_trials": n_trials,
+            "seasons": seasons,
+        }
+
+        # Save model with _xgb suffix
+        # Note: save_model uses {position}_{target}.joblib pattern
+        # We need to modify the target name to include _xgb
+        save_model(model, "QB", f"{target}_xgb", metadata=metrics)
+
+        results[target] = (model, metrics)
+        logger.info(
+            f"QB {target} XGBoost: CV RMSE = {metrics['cv_rmse_mean']:.2f} "
+            f"+/- {metrics['cv_rmse_std']:.2f}"
+        )
+
+    logger.info(f"Completed training {len(results)} QB XGBoost models")
+    return results
