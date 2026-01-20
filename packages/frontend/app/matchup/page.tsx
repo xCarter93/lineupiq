@@ -30,11 +30,11 @@ import { useModelMetrics } from "@/hooks/useModelMetrics";
 import { ModelConfidence } from "@/components/matchup/ModelConfidence";
 import { PlayerHistory } from "@/components/matchup/PlayerHistory";
 
-// Default scoring config (Standard) as fallback while Convex loads
+// Default scoring config (PPR) as fallback while Convex loads
 const DEFAULT_SCORING_CONFIG: ScoringConfig = {
   passing: { yardsPerPoint: 25, tdPoints: 4, intPoints: -2 },
   rushing: { yardsPerPoint: 10, tdPoints: 6 },
-  receiving: { yardsPerPoint: 10, tdPoints: 6, receptionPoints: 0 },
+  receiving: { yardsPerPoint: 10, tdPoints: 6, receptionPoints: 1 }, // Full PPR
 };
 
 export default function MatchupPage() {
@@ -59,8 +59,9 @@ export default function MatchupPage() {
     isLoading: metricsLoading,
   } = useModelMetrics();
 
-  // Use Convex config if available, otherwise use default
-  const scoringConfig: ScoringConfig = convexConfig
+  // Use Convex config if available and has PPR, otherwise use PPR default
+  // This ensures receptions count toward fantasy points
+  const scoringConfig: ScoringConfig = convexConfig && convexConfig.receiving.receptionPoints > 0
     ? {
         passing: convexConfig.passing,
         rushing: convexConfig.rushing,
@@ -68,7 +69,10 @@ export default function MatchupPage() {
       }
     : DEFAULT_SCORING_CONFIG;
 
-  const scoringConfigName = convexConfig?.name || "Standard";
+  // Show PPR if using default config (with receptions), otherwise show Convex config name
+  const scoringConfigName = convexConfig && convexConfig.receiving.receptionPoints > 0
+    ? convexConfig.name
+    : "PPR";
 
   // Clear projections when player changes
   const handlePlayerChange = () => {
