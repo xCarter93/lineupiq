@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 17 (Model Explainability UI) - IN PROGRESS
-Plan: 2 of 4 in current phase
-Status: Plan 02 complete, 2 plans remaining
-Last activity: 2026-01-19 — Completed 17-02-PLAN.md (Foundational UI Components)
+Plan: 3 of 4 in current phase
+Status: Plan 03 complete, 1 plan remaining
+Last activity: 2026-01-19 — Completed 17-03-PLAN.md (Dashboard Integration)
 
-Progress: ██████████████░░░░ 75% (Phase 17 in progress)
+Progress: █████████████████░ 88% (Phase 17 nearly complete)
 
 ## Performance Metrics
 
@@ -114,6 +114,10 @@ Progress: ██████████████░░░░ 75% (Phase 17 i
 | 17-02 | Plain img tag over Next/Image for NFL CDN | Simpler, no domain config needed |
 | 17-02 | Top 5 contributions shown by default | Most impactful factors first, expandable for full list |
 | 17-02 | Emerald/red for positive/negative SHAP | Consistent with ModelConfidence coloring |
+| 17-03 | API client returns null on error | Graceful degradation for explainability panel |
+| 17-03 | getPrimaryTarget maps position to stat | QB->passing_yards, RB->rushing_yards, WR/TE->receiving_yards |
+| 17-03 | Dashboard 5-4-3 column split on lg | Fantasy hero (5), stats+history (4), explainability (3) |
+| 17-03 | playerHeadshotUrl through MatchupData | Simplest data flow - form has selected player data |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -134,6 +138,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-19
-Stopped at: Completed 17-02-PLAN.md (Foundational UI Components)
+Stopped at: Completed 17-03-PLAN.md (Dashboard Integration)
 Resume file: None
-Next action: Execute 17-03-PLAN.md (Dashboard Integration)
+Next action: Execute 17-04-PLAN.md (Polish and Testing)
