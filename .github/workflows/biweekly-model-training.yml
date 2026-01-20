@@ -1,0 +1,262 @@
+name: Bi-Weekly Model Training
+
+on:
+  # Run every other Tuesday at 6 AM UTC (1 AM EST / 10 PM PST)
+  # This gives time for Monday Night Football data to be processed
+  schedule:
+    - cron: '0 6 * * 2'  # Every Tuesday at 6 AM UTC
+
+  # Allow manual triggering from GitHub UI
+  workflow_dispatch:
+    inputs:
+      seasons:
+        description: 'Seasons to train on (space-separated, e.g., "2023 2024 2025 2026")'
+        required: false
+        default: 'auto'
+      trials:
+        description: 'Number of Optuna trials per model'
+        required: false
+        default: '30'
+      positions:
+        description: 'Positions to train (space-separated, e.g., "QB RB WR TE")'
+        required: false
+        default: 'all'
+
+jobs:
+  check-schedule:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+    steps:
+      - name: Check if training should run this week
+        id: check
+        run: |
+          # Get current date
+          CURRENT_DATE=$(date +%Y-%m-%d)
+          WEEK_OF_YEAR=$(date +%U)
+
+          # Only run on even weeks during NFL season (Sep-Dec)
+          MONTH=$(date +%m)
+          IS_SEASON=false
+
+          if [ "$MONTH" -ge 9 ] || [ "$MONTH" -le 1 ]; then
+            IS_SEASON=true
+          fi
+
+          # Run on even weeks during season, or if manually triggered
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Manual trigger - will run"
+          elif [ "$IS_SEASON" == "true" ] && [ $((WEEK_OF_YEAR % 2)) -eq 0 ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Bi-weekly schedule - will run (week $WEEK_OF_YEAR)"
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "Skipping - not scheduled week (week $WEEK_OF_YEAR) or off-season"
+          fi
+
+  train-models:
+    needs: check-schedule
+    if: needs.check-schedule.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 180  # 3 hours max
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        working-directory: packages/backend
+        run: uv sync
+
+      - name: Determine training seasons
+        id: seasons
+        run: |
+          if [ "${{ github.event.inputs.seasons }}" != "" ] && [ "${{ github.event.inputs.seasons }}" != "auto" ]; then
+            SEASONS="${{ github.event.inputs.seasons }}"
+            echo "Using manual seasons: $SEASONS"
+          else
+            CURRENT_YEAR=$(date +%Y)
+            CURRENT_MONTH=$(date +%m)
+
+            # Use sliding 3-season window during season (Sep-Jan)
+            if [ "$CURRENT_MONTH" -ge 9 ] || [ "$CURRENT_MONTH" -le 1 ]; then
+              # During season: use last 2 complete seasons + current partial season
+              SEASONS="$((CURRENT_YEAR-2)) $((CURRENT_YEAR-1)) $CURRENT_YEAR"
+              echo "In-season training: $SEASONS"
+            else
+              # Off-season: use last 3 complete seasons
+              SEASONS="$((CURRENT_YEAR-3)) $((CURRENT_YEAR-2)) $((CURRENT_YEAR-1))"
+              echo "Off-season training: $SEASONS"
+            fi
+          fi
+
+          echo "seasons=$SEASONS" >> $GITHUB_OUTPUT
+          echo "Training on seasons: $SEASONS"
+
+      - name: Determine positions
+        id: positions
+        run: |
+          if [ "${{ github.event.inputs.positions }}" != "" ] && [ "${{ github.event.inputs.positions }}" != "all" ]; then
+            POSITIONS="${{ github.event.inputs.positions }}"
+          else
+            POSITIONS="QB RB WR TE K DEF"
+          fi
+
+          echo "positions=$POSITIONS" >> $GITHUB_OUTPUT
+          echo "Training positions: $POSITIONS"
+
+      - name: Determine trial count
+        id: trials
+        run: |
+          if [ "${{ github.event.inputs.trials }}" != "" ]; then
+            TRIALS="${{ github.event.inputs.trials }}"
+          else
+            TRIALS="30"
+          fi
+
+          echo "trials=$TRIALS" >> $GITHUB_OUTPUT
+          echo "Using $TRIALS Optuna trials per model"
+
+      - name: Train models
+        working-directory: packages/backend
+        run: |
+          echo "=========================================="
+          echo "LINEUPIQ MODEL TRAINING"
+          echo "=========================================="
+          echo "Seasons: ${{ steps.seasons.outputs.seasons }}"
+          echo "Positions: ${{ steps.positions.outputs.positions }}"
+          echo "Trials: ${{ steps.trials.outputs.trials }}"
+          echo "Started: $(date)"
+          echo "=========================================="
+
+          uv run python scripts/train_all.py \
+            --seasons ${{ steps.seasons.outputs.seasons }} \
+            --positions ${{ steps.positions.outputs.positions }} \
+            --trials ${{ steps.trials.outputs.trials }} \
+            2>&1 | tee training.log
+
+          EXIT_CODE=${PIPESTATUS[0]}
+
+          echo "=========================================="
+          echo "Training completed with exit code: $EXIT_CODE"
+          echo "Finished: $(date)"
+          echo "=========================================="
+
+          exit $EXIT_CODE
+
+      - name: Verify models created
+        working-directory: packages/backend
+        run: |
+          MODEL_COUNT=$(ls -1 models/*.joblib 2>/dev/null | wc -l | tr -d ' ')
+          echo "Models created: $MODEL_COUNT"
+
+          if [ "$MODEL_COUNT" -eq 0 ]; then
+            echo "ERROR: No models were created!"
+            exit 1
+          fi
+
+          echo "✓ Successfully created $MODEL_COUNT models"
+          ls -lh models/*.joblib
+
+      - name: Upload trained models
+        uses: actions/upload-artifact@v4
+        with:
+          name: models-${{ github.run_number }}-${{ github.run_attempt }}
+          path: packages/backend/models/*.joblib
+          retention-days: 90
+
+      - name: Upload training log
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: training-log-${{ github.run_number }}-${{ github.run_attempt }}
+          path: packages/backend/training.log
+          retention-days: 30
+
+      - name: Create training summary
+        if: success()
+        working-directory: packages/backend
+        run: |
+          echo "# Training Summary" > training-summary.md
+          echo "" >> training-summary.md
+          echo "**Date:** $(date)" >> training-summary.md
+          echo "**Seasons:** ${{ steps.seasons.outputs.seasons }}" >> training-summary.md
+          echo "**Positions:** ${{ steps.positions.outputs.positions }}" >> training-summary.md
+          echo "**Trials:** ${{ steps.trials.outputs.trials }}" >> training-summary.md
+          echo "" >> training-summary.md
+          echo "## Models Created" >> training-summary.md
+          echo "" >> training-summary.md
+          echo "\`\`\`" >> training-summary.md
+          ls -lh models/*.joblib >> training-summary.md
+          echo "\`\`\`" >> training-summary.md
+          echo "" >> training-summary.md
+          echo "## Performance Summary" >> training-summary.md
+          echo "" >> training-summary.md
+          echo "\`\`\`" >> training-summary.md
+          tail -50 training.log | grep -A 30 "MODEL PERFORMANCE SUMMARY" >> training-summary.md || echo "Summary not found in log" >> training-summary.md
+          echo "\`\`\`" >> training-summary.md
+
+      - name: Upload training summary
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: training-summary-${{ github.run_number }}
+          path: packages/backend/training-summary.md
+          retention-days: 90
+
+      # Optional: Add your deployment step here
+      # - name: Deploy models to production
+      #   if: success()
+      #   run: |
+      #     # Example: Upload to S3
+      #     # aws s3 sync packages/backend/models/ s3://your-bucket/models/
+      #     #
+      #     # Example: Copy to server via SCP
+      #     # scp packages/backend/models/*.joblib user@server:/path/to/models/
+      #     echo "Add your deployment logic here"
+
+      - name: Create GitHub issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const date = new Date().toISOString().split('T')[0];
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const body = `## Training Failure Report
+
+            **Date:** ${date}
+            **Workflow Run:** ${runUrl}
+            **Seasons:** ${{ steps.seasons.outputs.seasons }}
+            **Positions:** ${{ steps.positions.outputs.positions }}
+
+            ### Action Required
+            1. Check the workflow logs for error details
+            2. Download the training log artifact for full context
+            3. Re-run manually if this was a transient failure
+
+            ### Common Issues
+            - API rate limits from nflreadpy
+            - Out of memory during training
+            - Missing data for current season
+
+            ### Manual Retraining
+            If the issue is resolved, trigger manual training:
+            1. Go to Actions tab
+            2. Select "Bi-Weekly Model Training"
+            3. Click "Run workflow"`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Model Training Failed - ${date}`,
+              body: body,
+              labels: ['training', 'automated', 'bug']
+            });

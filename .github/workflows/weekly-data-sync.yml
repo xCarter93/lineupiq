@@ -1,0 +1,94 @@
+name: Weekly Data Sync
+
+on:
+  # Run every Wednesday at 8 AM UTC (after Tuesday night games)
+  schedule:
+    - cron: '0 8 * * 3'  # Wednesday 8 AM UTC = 3 AM EST
+
+  # Manual trigger
+  workflow_dispatch:
+
+jobs:
+  sync-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies
+        working-directory: packages/backend
+        run: uv sync
+
+      - name: Fetch latest NFL data
+        working-directory: packages/backend
+        run: |
+          echo "Fetching latest NFL data..."
+          CURRENT_YEAR=$(date +%Y)
+
+          uv run python -c "
+          from lineupiq.data.fetchers import fetch_player_stats, fetch_schedules
+          from lineupiq.data.storage import save_player_stats, save_schedules
+
+          # Fetch current season data (will update cache)
+          print(f'Fetching {$CURRENT_YEAR} player stats...')
+          player_stats = fetch_player_stats($CURRENT_YEAR)
+          save_player_stats(player_stats, $CURRENT_YEAR)
+          print(f'✓ Cached {len(player_stats)} player stat rows')
+
+          # Fetch schedules
+          print(f'Fetching {$CURRENT_YEAR} schedules...')
+          schedules = fetch_schedules([$CURRENT_YEAR])
+          save_schedules(schedules, str($CURRENT_YEAR))
+          print(f'✓ Cached {len(schedules)} games')
+
+          print('Data sync complete!')
+          "
+
+      - name: Verify cache updated
+        working-directory: packages/backend
+        run: |
+          CURRENT_YEAR=$(date +%Y)
+          CACHE_FILE="data/raw/player_stats/${CURRENT_YEAR}.parquet"
+
+          if [ -f "$CACHE_FILE" ]; then
+            echo "✓ Cache file exists: $CACHE_FILE"
+            ls -lh "$CACHE_FILE"
+
+            # Check if updated in last hour
+            if [ $(find "$CACHE_FILE" -mmin -60) ]; then
+              echo "✓ Cache was updated within last hour"
+            else
+              echo "⚠ Cache exists but wasn't updated recently"
+            fi
+          else
+            echo "✗ Cache file not found: $CACHE_FILE"
+            exit 1
+          fi
+
+      - name: Upload cache artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nfl-data-cache-${{ github.run_number }}
+          path: packages/backend/data/raw/
+          retention-days: 7
+
+      - name: Create summary
+        run: |
+          CURRENT_YEAR=$(date +%Y)
+          echo "# Data Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Season:** $CURRENT_YEAR" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Files Updated" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          ls -lh packages/backend/data/raw/*/${CURRENT_YEAR}.parquet 2>/dev/null || echo "No files found"
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

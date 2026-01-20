@@ -40,6 +40,30 @@ uv run mypy src/  # Type checking
 uv run ruff check src/  # Linting
 ```
 
+### Model Training
+
+**Automated (Production):**
+- GitHub Actions runs bi-weekly training automatically during NFL season
+- See `.github/workflows/README.md` for schedule and configuration
+
+**Manual (Development):**
+```bash
+# Train all models (default: 2022-2025 data, 30 trials, all positions)
+cd packages/backend
+uv run python scripts/train_all.py
+
+# Quick training for testing (10 trials)
+uv run python scripts/train_all.py --quick
+
+# Train specific positions
+uv run python scripts/train_all.py --positions QB RB WR TE
+
+# Custom seasons and trials
+uv run python scripts/train_all.py --seasons 2020 2021 2022 2023 2024 2025 --trials 50
+```
+
+**See also:** `packages/backend/TRAINING.md`, `packages/backend/SEASON_STRATEGY.md`
+
 ## Backend Architecture
 
 The Python ML backend (`packages/backend/src/lineupiq/`) has three main modules:
@@ -54,30 +78,34 @@ Data pipeline from nflreadpy to processed training data:
 
 ### features/
 Feature engineering for ML models:
-- `rolling_stats.py` - 3-week lookback window calculations
+- `rolling_stats.py` - 5-game rolling window calculations (mean, std, CV)
 - `opponent_features.py` - Opponent defensive strength metrics
 - `pipeline.py` - Feature pipeline orchestrator
 
 ### models/
 ML training and inference:
 - `training.py` - Base training pipeline infrastructure
-- `qb.py` - QB passing stat models (yards, TDs)
-- `rb.py` - RB rushing/receiving stat models
-- `receiver.py` - WR/TE receiving stat models
+- `qb.py` - QB passing/rushing stat models (6 targets)
+- `rb.py` - RB rushing/receiving stat models (7 targets)
+- `receiver.py` - WR/TE receiving stat models (4 targets each)
+- `kicker.py` - K field goal models (5 targets)
+- `defense.py` - DEF team defense models (5 targets)
 - `persistence.py` - Model save/load with joblib
 - `evaluation.py` - Performance metrics, holdout validation
 - `importance.py` - SHAP-based feature importance
 - `diagnostics.py` - Overfitting detection
 
-Trained models are stored in `packages/backend/models/` as `.joblib` files.
+Trained models are stored in `packages/backend/models/` as `.joblib` files (32 total models).
 
 ## Key Technical Decisions
 
 - **Predict individual stats, not fantasy points** - More accurate, allows custom scoring
 - **nflreadpy for NFL data** - nfl_data_py is deprecated
-- **XGBoost with Optuna** - Hyperparameter tuning for each position model
-- **Minimal features first** - Avoid overfitting from previous attempts
-- **Skill positions only (QB/RB/WR/TE)** - K/DEF deferred to later
+- **LightGBM with Optuna** - Fast training (7x faster than XGBoost), good performance
+- **Single models (not ensembles)** - Simpler architecture, ensembles showed minimal improvement
+- **5-game rolling window** - Captures recent trends without over-weighting distant games
+- **2022-2025 training data** - 4 recent years, excludes COVID-era noise (2020-2021)
+- **All fantasy positions** - QB, RB, WR, TE, K, DEF (32 models total)
 
 ## Project Planning
 
