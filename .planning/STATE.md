@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 18 of 25 (Performance Fixes & Optimization)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-01-20 - Milestone v1.2 created
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-01-20 - Completed 18-01-PLAN.md
 
-Progress: ░░░░░░░░░░ 0%
+Progress: █░░░░░░░░░ 4%
 
 ## Performance Metrics
 
@@ -118,6 +118,9 @@ Progress: ░░░░░░░░░░ 0%
 | 17-03 | getPrimaryTarget maps position to stat | QB->passing_yards, RB->rushing_yards, WR/TE->receiving_yards |
 | 17-03 | Dashboard 5-4-3 column split on lg | Fantasy hero (5), stats+history (4), explainability (3) |
 | 17-03 | playerHeadshotUrl through MatchupData | Simplest data flow - form has selected player data |
+| 18-01 | react-window for player dropdown virtualization | Industry standard, 6KB bundle, renders only visible items |
+| 18-01 | 48px item height for player dropdown | Matches existing avatar design, renders ~6 items in 300px dropdown |
+| 18-01 | Filter before virtualization | Preserves existing useMemo search logic, clean separation of concerns |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -139,6 +142,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Milestone v1.2 initialization
+Stopped at: Completed 18-01-PLAN.md
 Resume file: None
-Next action: Plan Phase 18 (Performance Fixes & Optimization)
+Next action: Plan Phase 19 (Ensemble Models)
