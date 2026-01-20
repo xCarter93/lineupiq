@@ -191,3 +191,59 @@ All 21 stats flipped except TE_fumbles_lost:
 ---
 
 **Final Decision:** Keep single models. Trust the 2024 benchmark as it matches our production training approach and demonstrates superior absolute performance. The 2025 benchmark revealed the need for rolling training windows, not ensemble adoption.
+
+## User Decision (Phase 19.1)
+
+**Date:** 2026-01-20
+**Decision:** Keep single models (not ensembles) but expand training data to 2022-2025 (4 years)
+
+### Rationale
+
+The user chose a hybrid approach that addresses both benchmark findings:
+
+1. **Architecture:** Keep single models (simpler, proven effective in 2024 benchmark)
+2. **Training data:** Use 2022-2025 (4 years) instead of 2022-2023 (2 years)
+3. **Key insight:** Avoid COVID-era data (2020-2021) while maximizing recency for 2026 predictions
+
+### Why This Decision?
+
+**Avoids COVID-era noise:**
+- 2020-2021 seasons had unique characteristics (reduced crowds, protocol impacts)
+- Benchmark analysis showed 5-year window (2020-2024) performed worse than 2-year window (2022-2023)
+- 2022+ represents "normal" NFL operations with established 17-game schedule
+
+**Maximizes recency:**
+- 2025 season is the most recent complete data available
+- 4 years (2022-2025) provides more training data than original 2 years (2022-2023)
+- Predicting 2026 games benefits from including 2025 patterns
+
+**Keeps simplicity:**
+- No ensemble complexity to maintain
+- LightGBM remains default (7x speedup over XGBoost)
+- Production API unchanged, same single-model loading paths
+
+### Impact on Phase 19.1 Plans
+
+**Plan 19.1-02 (Model Retraining):**
+- Change training window from `2022-2023` to `2022-2025`
+- Update all training scripts to use 4-year window
+- Retrain all skill position models with expanded data
+
+**Plan 19.1-03 (Benchmark Validation):**
+- Re-benchmark single models (LightGBM/XGBoost) on 2024 holdout
+- Verify that 2022-2025 training data maintains or improves 2024 benchmark performance
+- Document final metrics for production model release
+
+**No changes needed:**
+- `ensemble.py` infrastructure remains in codebase (no removal needed)
+- API continues using single model loading from `models_loader.py`
+- No frontend changes required
+
+### Success Criteria
+
+Phase 19.1 succeeds when:
+1. All models retrained on 2022-2025 data
+2. 2024 holdout benchmark shows performance ≥ original 2022-2023 benchmark
+3. Models ready for 2026 week predictions with most recent data
+
+**Decision logged in STATE.md as Phase 19.1 architectural decision.**

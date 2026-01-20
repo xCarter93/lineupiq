@@ -141,6 +141,9 @@ Progress: ██░░░░░░░░ 13%
 | 19-03 | Keep LightGBM as production default | Wins 17/21 stats (81%), already performing well without ensemble overhead |
 | 19-04 | keep-single integration strategy | API continues using LightGBM/XGBoost single models, no ensemble complexity |
 | 19-04 | Document architectural decisions in code | Added NOTE in models_loader.py explaining ensemble rejection with benchmark reference |
+| 19.1 | Keep single models with 2022-2025 training data | Avoid COVID-era noise (2020-2021) while maximizing recency for 2026 predictions |
+| 19.1 | Reject ensemble models despite 2025 benchmark | 2024 benchmark more reliable; matches production setup; simpler architecture |
+| 19.1 | 4-year training window (2022-2025) | Balance between volume and recency; includes most recent 2025 season data |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -150,6 +153,7 @@ Progress: ██░░░░░░░░ 13%
 - Milestone v1.1 created: Model Confidence, 7 phases (Phase 11-17)
 - Phase 16.1 inserted after Phase 16: Re-evaluate models and data visualization (URGENT)
 - Milestone v1.2 created: Platform Maturity, 8 phases (Phase 18-25)
+- Phase 19.1 inserted after Phase 19: Re-evaluate recent performance metrics (URGENT)
 
 ### Pending Todos
 
