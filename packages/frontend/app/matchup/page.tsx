@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import dynamic from "next/dynamic";
 import { SectionLabel } from "@/components/ui/section-label";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { MatchupForm, MatchupData } from "@/components/matchup/MatchupForm";
@@ -28,7 +29,15 @@ import {
 import { useDefaultScoringConfig } from "@/hooks/useScoringConfigs";
 import { useModelMetrics } from "@/hooks/useModelMetrics";
 import { ModelConfidence } from "@/components/matchup/ModelConfidence";
-import { PlayerHistory } from "@/components/matchup/PlayerHistory";
+
+// Lazy load heavy chart components to reduce initial bundle size
+const PlayerHistory = dynamic(
+  () => import("@/components/matchup/PlayerHistory").then((mod) => ({ default: mod.PlayerHistory })),
+  {
+    loading: () => <div className="h-48 rounded-lg bg-muted animate-pulse" />,
+    ssr: false, // Chart rendering uses browser APIs
+  }
+);
 
 // Default scoring config (PPR) as fallback while Convex loads
 const DEFAULT_SCORING_CONFIG: ScoringConfig = {
