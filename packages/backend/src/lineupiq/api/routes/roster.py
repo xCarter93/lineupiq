@@ -1,8 +1,12 @@
 """Roster and player history API routes."""
 
+import logging
+
 import nflreadpy as nfl
+import polars as pl
 from fastapi import APIRouter, HTTPException, Query
 
+from lineupiq.api.schemas.prediction import PlayerFeaturesResponse
 from lineupiq.api.schemas.roster import (
     PlayerHistoryResponse,
     PlayerRoster,
@@ -10,6 +14,8 @@ from lineupiq.api.schemas.roster import (
     WeeklyStats,
 )
 from lineupiq.data.fetchers import fetch_player_history, fetch_rosters
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -110,4 +116,351 @@ async def get_player_history(
         seasons=season_list,
         games=games,
         total_games=len(games),
+    )
+
+
+def _compute_rolling_stats_for_player(
+    history_df: pl.DataFrame,
+    window: int = 3,
+) -> dict[str, float]:
+    """Compute rolling stats from player's recent games.
+
+    Args:
+        history_df: Player history DataFrame with stats columns.
+        window: Rolling window size (default 3).
+
+    Returns:
+        Dict with rolling stat values.
+    """
+    # Sort by season/week descending to get most recent games first
+    df = history_df.sort(["season", "week"], descending=True)
+
+    # Get the most recent `window` games
+    recent = df.head(window)
+
+    if recent.is_empty():
+        return {}
+
+    # Compute means for each stat
+    stats = {}
+    stat_mappings = {
+        f"passing_yards_roll{window}": "passing_yards",
+        f"passing_tds_roll{window}": "passing_tds",
+        f"rushing_yards_roll{window}": "rushing_yards",
+        f"rushing_tds_roll{window}": "rushing_tds",
+        f"carries_roll{window}": "carries",
+        f"receiving_yards_roll{window}": "receiving_yards",
+        f"receiving_tds_roll{window}": "receiving_tds",
+        f"receptions_roll{window}": "receptions",
+    }
+
+    for roll_name, stat_col in stat_mappings.items():
+        if stat_col in recent.columns:
+            values = recent[stat_col].drop_nulls()
+            if len(values) > 0:
+                stats[roll_name] = round(float(values.mean()), 2)
+            else:
+                stats[roll_name] = 0.0
+        else:
+            stats[roll_name] = 0.0
+
+    return stats
+
+
+def _compute_volatility_for_player(
+    history_df: pl.DataFrame,
+    window: int = 3,
+) -> dict[str, float]:
+    """Compute volatility features (std, CV) from player's recent games.
+
+    Args:
+        history_df: Player history DataFrame with stats columns.
+        window: Rolling window size (default 3).
+
+    Returns:
+        Dict with volatility feature values.
+    """
+    # Sort by season/week descending to get most recent games first
+    df = history_df.sort(["season", "week"], descending=True)
+
+    # Get the most recent `window` games
+    recent = df.head(window)
+
+    if len(recent) < 2:
+        # Need at least 2 games for std calculation
+        return {
+            f"passing_yards_std{window}": 0.0,
+            f"passing_yards_cv{window}": 0.0,
+            f"rushing_yards_std{window}": 0.0,
+            f"rushing_yards_cv{window}": 0.0,
+            f"receiving_yards_std{window}": 0.0,
+            f"receiving_yards_cv{window}": 0.0,
+            f"receptions_std{window}": 0.0,
+            f"receptions_cv{window}": 0.0,
+        }
+
+    volatility = {}
+    stat_cols = ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]
+
+    for col in stat_cols:
+        if col in recent.columns:
+            values = recent[col].drop_nulls()
+            if len(values) >= 2:
+                std_val = float(values.std())
+                mean_val = float(values.mean())
+                cv_val = std_val / mean_val if mean_val > 0 else 0.0
+            else:
+                std_val = 0.0
+                cv_val = 0.0
+        else:
+            std_val = 0.0
+            cv_val = 0.0
+
+        volatility[f"{col}_std{window}"] = round(std_val, 2)
+        volatility[f"{col}_cv{window}"] = round(cv_val, 2)
+
+    return volatility
+
+
+def _get_default_features(position: str, is_home: bool) -> dict[str, float | bool]:
+    """Get default position-typical features for players with no data.
+
+    Args:
+        position: Player position (QB, RB, WR, TE).
+        is_home: Whether the player is playing at home.
+
+    Returns:
+        Dict with default feature values.
+    """
+    base = {
+        # Opponent features (neutral/average values)
+        "opp_pass_defense_strength": 0.5,
+        "opp_rush_defense_strength": 0.5,
+        "opp_pass_yards_allowed_rank": 16.0,
+        "opp_rush_yards_allowed_rank": 16.0,
+        "opp_total_yards_allowed_rank": 16.0,
+        # Team strength (league average)
+        "team_points_roll3": 22.0,
+        "team_yards_roll3": 340.0,
+        "team_plays_roll3": 65.0,
+        # Weather
+        "temp_normalized": 0.5,
+        "wind_normalized": 0.2,
+        # Context
+        "is_home": is_home,
+        "is_dome": False,
+    }
+
+    # Position-typical rolling stats and volatility
+    if position == "QB":
+        return {
+            **base,
+            "passing_yards_roll3": 250.0,
+            "passing_tds_roll3": 1.8,
+            "rushing_yards_roll3": 15.0,
+            "rushing_tds_roll3": 0.1,
+            "carries_roll3": 3.0,
+            "receiving_yards_roll3": 0.0,
+            "receiving_tds_roll3": 0.0,
+            "receptions_roll3": 0.0,
+            # QB volatility
+            "passing_yards_std3": 50.0,
+            "passing_yards_cv3": 0.2,
+            "rushing_yards_std3": 10.0,
+            "rushing_yards_cv3": 0.5,
+            "receiving_yards_std3": 0.0,
+            "receiving_yards_cv3": 0.0,
+            "receptions_std3": 0.0,
+            "receptions_cv3": 0.0,
+        }
+
+    if position == "RB":
+        return {
+            **base,
+            "passing_yards_roll3": 0.0,
+            "passing_tds_roll3": 0.0,
+            "rushing_yards_roll3": 65.0,
+            "rushing_tds_roll3": 0.5,
+            "carries_roll3": 15.0,
+            "receiving_yards_roll3": 20.0,
+            "receiving_tds_roll3": 0.1,
+            "receptions_roll3": 2.5,
+            # RB volatility
+            "passing_yards_std3": 0.0,
+            "passing_yards_cv3": 0.0,
+            "rushing_yards_std3": 25.0,
+            "rushing_yards_cv3": 0.4,
+            "receiving_yards_std3": 15.0,
+            "receiving_yards_cv3": 0.6,
+            "receptions_std3": 1.5,
+            "receptions_cv3": 0.5,
+        }
+
+    # WR/TE default
+    return {
+        **base,
+        "passing_yards_roll3": 0.0,
+        "passing_tds_roll3": 0.0,
+        "rushing_yards_roll3": 2.0,
+        "rushing_tds_roll3": 0.0,
+        "carries_roll3": 0.3,
+        "receiving_yards_roll3": 55.0,
+        "receiving_tds_roll3": 0.4,
+        "receptions_roll3": 4.0,
+        # WR/TE volatility
+        "passing_yards_std3": 0.0,
+        "passing_yards_cv3": 0.0,
+        "rushing_yards_std3": 5.0,
+        "rushing_yards_cv3": 0.5,
+        "receiving_yards_std3": 30.0,
+        "receiving_yards_cv3": 0.5,
+        "receptions_std3": 2.0,
+        "receptions_cv3": 0.4,
+    }
+
+
+def _get_opponent_strength(opponent_team: str | None) -> dict[str, float]:
+    """Get opponent defensive strength features.
+
+    For now, returns neutral/average values. In the future, could look up
+    actual defensive rankings from cached data.
+
+    Args:
+        opponent_team: Opponent team abbreviation (or None).
+
+    Returns:
+        Dict with opponent strength features.
+    """
+    # TODO: Look up actual opponent rankings from cached defensive stats
+    # For now, return neutral/average values
+    return {
+        "opp_pass_defense_strength": 0.5,
+        "opp_rush_defense_strength": 0.5,
+        "opp_pass_yards_allowed_rank": 16.0,
+        "opp_rush_yards_allowed_rank": 16.0,
+        "opp_total_yards_allowed_rank": 16.0,
+    }
+
+
+def _get_team_strength(team: str) -> dict[str, float]:
+    """Get team offensive strength features.
+
+    For now, returns neutral/average values. In the future, could look up
+    actual team strength from cached data.
+
+    Args:
+        team: Team abbreviation.
+
+    Returns:
+        Dict with team strength features.
+    """
+    # TODO: Look up actual team strength from cached offensive stats
+    # For now, return neutral/average values
+    return {
+        "team_points_roll3": 22.0,
+        "team_yards_roll3": 340.0,
+        "team_plays_roll3": 65.0,
+    }
+
+
+@router.get("/player/{player_id}/features", response_model=PlayerFeaturesResponse)
+async def get_player_features(
+    player_id: str,
+    opponent_team: str | None = Query(
+        default=None, description="Opponent team abbreviation (e.g., DAL)"
+    ),
+    is_home: bool = Query(default=True, description="Whether player is at home"),
+) -> PlayerFeaturesResponse:
+    """Get player-specific features for prediction.
+
+    Computes feature values based on the player's historical performance,
+    ready to be used as input to the prediction models. This allows for
+    differentiated predictions based on actual player stats rather than
+    position-typical defaults.
+
+    Args:
+        player_id: Player's gsis_id (e.g., "00-0036389" for Jalen Hurts).
+        opponent_team: Optional opponent team for opponent strength features.
+        is_home: Whether the player is playing at home (default True).
+
+    Returns:
+        PlayerFeaturesResponse with computed feature values.
+
+    Raises:
+        HTTPException: 404 if player not found.
+    """
+    logger.info(f"Computing features for player {player_id}, opponent={opponent_team}")
+
+    # Fetch player history (last 2 seasons for sufficient data)
+    current = nfl.get_current_season()
+    season_list = [current - 1, current]
+
+    history_df = fetch_player_history(player_id, season_list)
+
+    if history_df.is_empty():
+        raise HTTPException(
+            status_code=404,
+            detail=f"No stats found for player {player_id}",
+        )
+
+    # Get player metadata
+    first = history_df.row(0, named=True)
+    player_name = first.get("player_display_name") or first.get("player_name") or "Unknown"
+    position = first.get("position") or "Unknown"
+
+    # Try to get team from most recent game
+    team = "UNK"
+    roster_df = fetch_rosters([current])
+    player_roster = roster_df.filter(pl.col("gsis_id") == player_id)
+    if not player_roster.is_empty():
+        team = player_roster.row(0, named=True).get("team", "UNK")
+
+    # Compute number of games available
+    games_available = len(history_df)
+    has_sufficient_data = games_available >= 3
+
+    if has_sufficient_data:
+        # Compute player-specific features from history
+        rolling_stats = _compute_rolling_stats_for_player(history_df)
+        volatility = _compute_volatility_for_player(history_df)
+
+        # Get context features
+        opponent_features = _get_opponent_strength(opponent_team)
+        team_features = _get_team_strength(team)
+
+        # Combine all features
+        features: dict[str, float | bool] = {
+            **rolling_stats,
+            **volatility,
+            **opponent_features,
+            **team_features,
+            "temp_normalized": 0.5,  # Neutral weather
+            "wind_normalized": 0.2,
+            "is_home": is_home,
+            "is_dome": False,
+        }
+    else:
+        # Not enough data - use position defaults but merge any available stats
+        features = _get_default_features(position, is_home)
+
+        # Override with actual stats if we have any games
+        if games_available > 0:
+            rolling_stats = _compute_rolling_stats_for_player(history_df)
+            volatility = _compute_volatility_for_player(history_df)
+            features.update(rolling_stats)
+            features.update(volatility)
+
+    logger.info(
+        f"Computed features for {player_name}: {games_available} games, "
+        f"sufficient_data={has_sufficient_data}"
+    )
+
+    return PlayerFeaturesResponse(
+        player_id=player_id,
+        player_name=player_name,
+        position=position,
+        team=team,
+        games_available=games_available,
+        features=features,
+        has_sufficient_data=has_sufficient_data,
     )

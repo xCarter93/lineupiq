@@ -397,3 +397,70 @@ class DefensePredictionResponse(BaseModel):
             ]
         }
     }
+
+
+class PlayerFeaturesResponse(BaseModel):
+    """Player-specific features for prediction.
+
+    Returns computed feature values based on a player's historical performance,
+    ready to be used as input to the prediction models.
+    """
+
+    player_id: str = Field(..., description="Player's gsis_id")
+    player_name: str = Field(..., description="Player's full name")
+    position: str = Field(..., description="Player position (QB, RB, WR, TE)")
+    team: str = Field(..., description="Player's current team abbreviation")
+    games_available: int = Field(
+        ..., description="Number of recent games used for rolling stats"
+    )
+    features: dict[str, float | bool] = Field(
+        ..., description="The 28 feature values for model input"
+    )
+    has_sufficient_data: bool = Field(
+        ..., description="True if player has >= 3 games for reliable rolling stats"
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "player_id": "00-0036389",
+                    "player_name": "Jalen Hurts",
+                    "position": "QB",
+                    "team": "PHI",
+                    "games_available": 17,
+                    "has_sufficient_data": True,
+                    "features": {
+                        "passing_yards_roll3": 245.7,
+                        "passing_tds_roll3": 1.7,
+                        "rushing_yards_roll3": 42.3,
+                        "rushing_tds_roll3": 0.7,
+                        "carries_roll3": 8.3,
+                        "receiving_yards_roll3": 0.0,
+                        "receiving_tds_roll3": 0.0,
+                        "receptions_roll3": 0.0,
+                        "opp_pass_defense_strength": 0.5,
+                        "opp_rush_defense_strength": 0.6,
+                        "opp_pass_yards_allowed_rank": 16.0,
+                        "opp_rush_yards_allowed_rank": 18.0,
+                        "opp_total_yards_allowed_rank": 17.0,
+                        "team_points_roll3": 28.5,
+                        "team_yards_roll3": 365.0,
+                        "team_plays_roll3": 68.0,
+                        "passing_yards_std3": 45.2,
+                        "passing_yards_cv3": 0.18,
+                        "rushing_yards_std3": 22.1,
+                        "rushing_yards_cv3": 0.52,
+                        "receiving_yards_std3": 0.0,
+                        "receiving_yards_cv3": 0.0,
+                        "receptions_std3": 0.0,
+                        "receptions_cv3": 0.0,
+                        "temp_normalized": 0.5,
+                        "wind_normalized": 0.2,
+                        "is_home": True,
+                        "is_dome": False,
+                    },
+                }
+            ]
+        }
+    }
