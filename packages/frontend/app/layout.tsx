@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { ConvexClientProvider } from "./providers/ConvexClientProvider";
 import { Header } from "@/components/layout/Header";
+import { WebVitals } from "@/components/web-vitals";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -25,6 +27,9 @@ export default function RootLayout({
         <ConvexClientProvider>
           <Header />
           {children}
+          <Suspense fallback={null}>
+            <WebVitals />
+          </Suspense>
         </ConvexClientProvider>
       </body>
     </html>
