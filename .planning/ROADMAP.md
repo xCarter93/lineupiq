@@ -55,12 +55,12 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 **Goal**: Fix player selection lag and optimize frontend/API performance through code splitting, lazy loading, and smarter caching
 **Depends on**: Previous milestone complete
 **Research**: Complete (18-RESEARCH.md)
-**Plans**: 1/3 complete
+**Plans**: 3/3 complete
 
 Plans:
 - [x] 18-01: Virtualize player dropdown with react-window — completed 2026-01-20
-- [ ] 18-02: Lazy load heavy components with next/dynamic
-- [ ] 18-03: Implement smart caching strategies
+- [x] 18-02: Lazy load heavy components with next/dynamic — completed 2026-01-20
+- [x] 18-03: Loading UX polish + Web Vitals monitoring — completed 2026-01-20
 
 #### Phase 19: Ensemble Models
 
@@ -158,7 +158,7 @@ Plans:
 | 16. UI Data Visualization | v1.1 | 1/1 | Complete | 2026-01-15 |
 | 16.1. Re-evaluate Models & Viz | v1.1 | 3/3 | Complete | 2026-01-20 |
 | 17. Model Explainability UI | v1.1 | 4/4 | Complete | 2026-01-19 |
-| 18. Performance Fixes | v1.2 | 1/3 | In progress | - |
+| 18. Performance Fixes | v1.2 | 3/3 | Complete | 2026-01-20 |
 | 19. Ensemble Models | v1.2 | 0/? | Not started | - |
 | 20. Advanced Features | v1.2 | 0/? | Not started | - |
 | 21. Position Tuning | v1.2 | 0/? | Not started | - |
@@ -169,4 +169,4 @@ Plans:
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 18 in progress (1/3 plans complete)
+**Project Status:** v1.2 Platform Maturity — Phase 18 complete, Phase 19 ready to plan
