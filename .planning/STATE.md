@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 18 of 25 (Performance Fixes & Optimization)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-20 - Completed 18-01-PLAN.md
+Last activity: 2026-01-20 - Completed 18-02-PLAN.md
 
-Progress: █░░░░░░░░░ 4%
+Progress: █░░░░░░░░░ 8%
 
 ## Performance Metrics
 
@@ -121,6 +121,10 @@ Progress: █░░░░░░░░░ 4%
 | 18-01 | react-window for player dropdown virtualization | Industry standard, 6KB bundle, renders only visible items |
 | 18-01 | 48px item height for player dropdown | Matches existing avatar design, renders ~6 items in 300px dropdown |
 | 18-01 | Filter before virtualization | Preserves existing useMemo search logic, clean separation of concerns |
+| 18-02 | next/dynamic for PlayerHistory and ExplainabilityPanel | Largest components (~150KB combined), only needed after prediction |
+| 18-02 | ssr: false for PlayerHistory (chart component) | Recharts uses browser APIs, prevents hydration mismatches |
+| 18-02 | ssr: true for ExplainabilityPanel | No browser-only APIs, can SSR safely |
+| 18-02 | Loading skeletons match component heights | Prevents layout shift when code-split chunks load |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -142,6 +146,6 @@ None — ready to begin planning.
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 18-01-PLAN.md
+Stopped at: Completed 18-02-PLAN.md
 Resume file: None
-Next action: Execute 18-02-PLAN.md (lazy loading and code splitting)
+Next action: Execute 18-03-PLAN.md (final plan in Phase 18)
