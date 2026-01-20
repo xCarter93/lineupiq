@@ -1,13 +1,26 @@
 "use client";
 
 import { SectionLabel } from "@/components/ui/section-label";
+import { Avatar } from "@/components/ui/avatar";
 import type { PointsBreakdown } from "@/lib/fantasy-points";
+
+// Get initials from player name (e.g., "Patrick Mahomes" -> "PM")
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 interface FantasyPointsCardProps {
   points: number;
   breakdown: PointsBreakdown;
   scoringConfigName: string;
   isLoading?: boolean;
+  playerHeadshotUrl?: string;
+  playerName?: string;
 }
 
 export function FantasyPointsCard({
@@ -15,6 +28,8 @@ export function FantasyPointsCard({
   breakdown,
   scoringConfigName,
   isLoading = false,
+  playerHeadshotUrl,
+  playerName,
 }: FantasyPointsCardProps) {
   // Render loading skeleton
   if (isLoading) {
@@ -59,11 +74,24 @@ export function FantasyPointsCard({
 
       {/* Hero Points Display */}
       <div className="text-center mb-8">
-        <div className="text-6xl md:text-7xl font-bold text-primary tabular-nums">
-          {points.toFixed(1)}
-        </div>
-        <div className="text-lg text-muted-foreground mt-2">
-          projected points
+        {/* Player Avatar and Points */}
+        <div className="flex items-center justify-center gap-4 mb-2">
+          {playerName && (
+            <Avatar
+              src={playerHeadshotUrl}
+              alt={playerName}
+              fallback={getInitials(playerName)}
+              size="lg"
+            />
+          )}
+          <div className="text-left">
+            <div className="text-6xl md:text-7xl font-bold text-primary tabular-nums">
+              {points.toFixed(1)}
+            </div>
+            <div className="text-lg text-muted-foreground">
+              projected points
+            </div>
+          </div>
         </div>
         <div className="inline-flex items-center mt-4 px-4 py-1.5 bg-muted/30 rounded-full">
           <span className="text-sm font-medium text-muted-foreground">

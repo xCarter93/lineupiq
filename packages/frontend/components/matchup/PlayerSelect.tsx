@@ -13,8 +13,19 @@ import {
   ComboboxEmpty,
 } from "@/components/ui/combobox";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
+
+// Get initials from player name (e.g., "Patrick Mahomes" -> "PM")
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
 
 export interface Player {
   _id: string;
@@ -22,6 +33,7 @@ export interface Player {
   name: string;
   position: string;
   team: string;
+  headshotUrl?: string;
 }
 
 interface PlayerSelectProps {
@@ -144,13 +156,19 @@ export function PlayerSelect({
               key={player.playerId}
               value={player.playerId}
               className={cn(
-                "hover:bg-muted/50",
+                "hover:bg-muted/50 flex items-center gap-2",
                 value === player.playerId && "bg-primary/10 text-primary"
               )}
             >
+              <Avatar
+                src={player.headshotUrl}
+                alt={player.name}
+                fallback={getInitials(player.name)}
+                size="sm"
+              />
               <span>{player.name}</span>
-              <span className="text-muted-foreground ml-1">
-                {"\u00B7"} {player.team}
+              <span className="text-muted-foreground ml-auto text-xs px-2 py-0.5 bg-muted/50 rounded">
+                {player.team}
               </span>
             </ComboboxItem>
           ))}
