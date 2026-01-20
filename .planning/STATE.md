@@ -108,6 +108,9 @@ Progress: ██████████████░░░░ 75% (Phase 17 i
 | 16.1-02 | User must sync roster for real player IDs | Admin -> "Sync 2025 Roster" fetches real gsis_ids |
 | 16.1-FIX | Explicit hex colors for Recharts | CSS variables use OKLCH which doesn't work with Recharts HSL wrapper |
 | 16.1-FIX | AreaChart with gradient over LineChart | Better visual prominence for data trends |
+| 17-01 | 28 FEATURE_DISPLAY_NAMES for human-readable explanations | Maps raw feature names to user-friendly display names |
+| 17-01 | Contributions sorted by absolute SHAP value | Most impactful features shown first for decision support |
+| 17-01 | Natural language summary with 2-3 positive, 1-2 negative factors | Concise explanation without overwhelming users |
 | 17-02 | Plain img tag over Next/Image for NFL CDN | Simpler, no domain config needed |
 | 17-02 | Top 5 contributions shown by default | Most impactful factors first, expandable for full list |
 | 17-02 | Emerald/red for positive/negative SHAP | Consistent with ModelConfidence coloring |

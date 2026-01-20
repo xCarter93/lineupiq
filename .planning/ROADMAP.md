@@ -123,7 +123,7 @@ Plans:
 **Research**: Unlikely (implementing known pattern)
 
 Plans:
-- [ ] 17-01: Backend SHAP API
+- [x] 17-01: Backend SHAP API — completed 2026-01-19
 - [x] 17-02: Foundational UI Components — completed 2026-01-19
 - [ ] 17-03: Dashboard Integration
 - [ ] 17-04: Polish & Testing
@@ -140,7 +140,7 @@ Plans:
 | 15. Full Roster + Historical | v1.1 | 4/4 | ✅ Complete | 2026-01-16 |
 | 16. UI Data Visualization | v1.1 | 1/1 | ✅ Complete | 2026-01-15 |
 | 16.1 Re-evaluate Models & Viz | v1.1 | 2/2 | ✅ Complete | 2026-01-20 |
-| 17. Model Explainability UI | v1.1 | 1/4 | In progress | - |
+| 17. Model Explainability UI | v1.1 | 2/4 | In progress | - |
 
 ---
 
