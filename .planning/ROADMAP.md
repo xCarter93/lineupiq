@@ -105,10 +105,23 @@ Plans:
 
 **Outcome**: R²-based accuracy (100*R²) replaces MAE/mean formula. Confidence tiers simplified to R²-only thresholds (High: >0.5, Medium: 0.3-0.5, Low: <0.3). Fixes "49% accuracy for R² 0.545" problem. UI tooltip explains "variance explained by the model".
 
+#### Phase 19.2.1: Different Players Showing Same Stats (INSERTED)
+
+**Goal**: Fix bug where different players in the same position show identical predicted stats instead of player-specific predictions
+**Depends on**: Phase 19.2
+**Research**: Complete (19.2.1-CONTEXT.md - window parameter mismatch investigation)
+**Plans**: 2/2 complete
+
+Plans:
+- [x] 19.2.1-01: Diagnose window parameter mismatch in player feature computation — completed 2026-01-20
+- [x] 19.2.1-02: Fix window parameter (3→5) in roster.py and verify player-specific predictions — completed 2026-01-20
+
+**Outcome**: Fixed window parameter mismatch. Models trained with window=5 (Phase 19.1-02) but API computed window=3 features, causing key mismatch (roll3 vs roll5). When dict.update() merged player features with defaults, roll3 keys didn't overwrite roll5 defaults → all players received identical position-typical predictions. Fix: Updated _compute_rolling_stats_for_player and _compute_volatility_for_player to window=5. Different players now produce different predictions based on individual performance history.
+
 #### Phase 20: Advanced Features
 
 **Goal**: Expand feature engineering with weather data, injury reports, and matchup-specific signals
-**Depends on**: Phase 19.2
+**Depends on**: Phase 19.2.1
 **Research**: Likely (new API integrations)
 **Research topics**: Weather data APIs, injury report sources, integration patterns with nflreadpy pipeline
 **Plans**: TBD
@@ -194,6 +207,7 @@ Plans:
 | 19. Ensemble Models | v1.2 | 4/4 | Complete | 2026-01-20 |
 | 19.1. Re-evaluate Performance | v1.2 | 3/3 | Complete | 2026-01-20 |
 | 19.2. Improve Model Confidence | v1.2 | 3/3 | Complete | 2026-01-20 |
+| 19.2.1. Different Players Same Stats | v1.2 | 0/? | Not started | - |
 | 20. Advanced Features | v1.2 | 0/? | Not started | - |
 | 21. Position Tuning | v1.2 | 0/? | Not started | - |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
@@ -203,4 +217,4 @@ Plans:
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 19.2 in progress (2/? plans complete)
+**Project Status:** v1.2 Platform Maturity — Phase 19.2 complete, Phase 19.2.1 (URGENT) ready to plan
