@@ -79,20 +79,36 @@ Plans:
 
 #### Phase 19.1: Re-evaluate Recent Performance Metrics (INSERTED)
 
-**Goal**: [Urgent work - to be planned]
+**Goal**: Improve model accuracy by fixing data leakage, expanding training data window to 2022-2025, and increasing rolling window from 3 to 5 games
 **Depends on**: Phase 19
-**Plans**: 0 plans
+**Research**: Complete (19.1-CONTEXT.md)
+**Plans**: 3/3 complete
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 19.1 to break down)
+- [x] 19.1-01: Expand training data window from 2-year to 4-year (2022-2025) and re-benchmark ensembles — completed 2026-01-20
+- [x] 19.1-02: Expand rolling window from 3 to 5 games with shift(1) data leakage fix — completed 2026-01-20
+- [x] 19.1-03: Validate 5-game rolling window improvements with comprehensive benchmarking — completed 2026-01-20
 
-**Details**:
-[To be added during planning]
+**Outcome**: 5-game rolling window adopted as new standard. Data leakage fixed with shift(1). Models trained on 2022-2025 data excluding COVID-era noise.
+
+#### Phase 19.2: Improve Model Confidence & Accuracy (INSERTED)
+
+**Goal**: Fix scale-dependent accuracy formula (100*(1-MAE/mean)) with R²-based calculation to properly reflect model quality
+**Depends on**: Phase 19.1
+**Research**: Complete (19.2-CONTEXT.md - accuracy audit)
+**Plans**: 2/? complete
+
+Plans:
+- [x] 19.2-01: Audit current accuracy formula and evaluate alternatives (R²-based, MAPE, skill score) — completed 2026-01-20
+- [x] 19.2-02: Implement R²-based accuracy calculation and simplified confidence tiers — completed 2026-01-20
+- [ ] TBD (additional accuracy metrics or UI updates as needed)
+
+**Outcome**: R²-based accuracy (100*R²) replaces MAE/mean formula. Confidence tiers simplified to R²-only thresholds (High: >0.5, Medium: 0.3-0.5, Low: <0.3). Fixes "49% accuracy for R² 0.545" problem.
 
 #### Phase 20: Advanced Features
 
 **Goal**: Expand feature engineering with weather data, injury reports, and matchup-specific signals
-**Depends on**: Phase 19.1
+**Depends on**: Phase 19.2
 **Research**: Likely (new API integrations)
 **Research topics**: Weather data APIs, injury report sources, integration patterns with nflreadpy pipeline
 **Plans**: TBD
@@ -176,6 +192,8 @@ Plans:
 | 17. Model Explainability UI | v1.1 | 4/4 | Complete | 2026-01-19 |
 | 18. Performance Fixes | v1.2 | 3/3 | Complete | 2026-01-20 |
 | 19. Ensemble Models | v1.2 | 4/4 | Complete | 2026-01-20 |
+| 19.1. Re-evaluate Performance | v1.2 | 3/3 | Complete | 2026-01-20 |
+| 19.2. Improve Model Confidence | v1.2 | 2/? | In progress | 2026-01-20 |
 | 20. Advanced Features | v1.2 | 0/? | Not started | - |
 | 21. Position Tuning | v1.2 | 0/? | Not started | - |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
@@ -185,4 +203,4 @@ Plans:
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 19 complete, Phase 20 ready to plan
+**Project Status:** v1.2 Platform Maturity — Phase 19.2 in progress (2/? plans complete)
