@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 19.1 of 25 (Re-evaluate Recent Performance Metrics)
-Plan: 3 of 3 in current phase
-Status: Phase complete
-Last activity: 2026-01-20 - Completed 19.1-03-PLAN.md (Rolling Window Validation)
+Phase: 19.2 of 25 (Improve Model Confidence & Accuracy)
+Plan: 1 of ? in current phase
+Status: In progress
+Last activity: 2026-01-20 - Completed Plan 19.2-01 (accuracy audit), ready for implementation
 
-Progress: ██░░░░░░░░ 14%
+Progress: ██░░░░░░░░ 15%
 
 ## Performance Metrics
 
@@ -148,6 +148,8 @@ Progress: ██░░░░░░░░ 14%
 | 19.1-02 | Add shift(1) to all rolling stats | Prevents data leakage by excluding current game from rolling averages |
 | 19.1-03 | Adopt 5-game rolling window as standard | Benchmarked 21 stats with avg R² 0.332; TD models avg R² 0.261; acceptable performance |
 | 19.1-03 | Rolling features consistently top predictors | SHAP analysis shows rolling stats appear in top 5 for majority of models |
+| 19.2-01 | Replace accuracy_pct with R²-based formula | Current formula 100*(1-MAE/mean) is scale-dependent; R²-based (100*R²) correlates with model quality |
+| 19.2-01 | Confidence tiers based on R² thresholds | High (R²>0.5), Medium (R²0.3-0.5), Low (R²<0.3); fixes 10 models showing 0% accuracy |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -158,6 +160,7 @@ Progress: ██░░░░░░░░ 14%
 - Phase 16.1 inserted after Phase 16: Re-evaluate models and data visualization (URGENT)
 - Milestone v1.2 created: Platform Maturity, 8 phases (Phase 18-25)
 - Phase 19.1 inserted after Phase 19: Re-evaluate recent performance metrics (URGENT)
+- Phase 19.2 inserted after Phase 19.1: Improve model confidence & accuracy - address 49% accuracy issue (URGENT)
 
 ### Pending Todos
 
@@ -170,6 +173,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 19.1-03-PLAN.md (Rolling Window Validation)
+Stopped at: Phase 19.2 insertion (address 49% accuracy issue)
 Resume file: None
-Next action: Phase 19.1 complete, ready to transition to Phase 20
+Next action: Research and plan Phase 19.2 to diagnose and improve model confidence/accuracy
