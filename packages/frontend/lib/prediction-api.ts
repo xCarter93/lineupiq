@@ -8,34 +8,34 @@ const API_BASE_URL =
 
 // Feature types required by the prediction models (28 features)
 export interface PredictionFeatures {
-  // Rolling stats (8 features)
-  passing_yards_roll3: number;
-  passing_tds_roll3: number;
-  rushing_yards_roll3: number;
-  rushing_tds_roll3: number;
-  carries_roll3: number;
-  receiving_yards_roll3: number;
-  receiving_tds_roll3: number;
-  receptions_roll3: number;
+  // Rolling stats (8 features) - 5-game windows
+  passing_yards_roll5: number;
+  passing_tds_roll5: number;
+  rushing_yards_roll5: number;
+  rushing_tds_roll5: number;
+  carries_roll5: number;
+  receiving_yards_roll5: number;
+  receiving_tds_roll5: number;
+  receptions_roll5: number;
   // Opponent features (5 features)
   opp_pass_defense_strength: number;
   opp_rush_defense_strength: number;
   opp_pass_yards_allowed_rank: number;
   opp_rush_yards_allowed_rank: number;
   opp_total_yards_allowed_rank: number;
-  // Team strength features (3 features)
-  team_points_roll3: number;
-  team_yards_roll3: number;
-  team_plays_roll3: number;
-  // Volatility features (8 features)
-  passing_yards_std3: number;
-  passing_yards_cv3: number;
-  rushing_yards_std3: number;
-  rushing_yards_cv3: number;
-  receiving_yards_std3: number;
-  receiving_yards_cv3: number;
-  receptions_std3: number;
-  receptions_cv3: number;
+  // Team strength features (3 features) - 5-game windows
+  team_points_roll5: number;
+  team_yards_roll5: number;
+  team_plays_roll5: number;
+  // Volatility features (8 features) - 5-game windows
+  passing_yards_std5: number;
+  passing_yards_cv5: number;
+  rushing_yards_std5: number;
+  rushing_yards_cv5: number;
+  receiving_yards_std5: number;
+  receiving_yards_cv5: number;
+  receptions_std5: number;
+  receptions_cv5: number;
   // Weather features (2 features)
   temp_normalized: number;
   wind_normalized: number;
@@ -88,10 +88,10 @@ export function createDefaultFeatures(
     opp_pass_yards_allowed_rank: 16,
     opp_rush_yards_allowed_rank: 16,
     opp_total_yards_allowed_rank: 16,
-    // Team strength (league average)
-    team_points_roll3: 22.0,
-    team_yards_roll3: 340.0,
-    team_plays_roll3: 65.0,
+    // Team strength (league average) - 5-game windows
+    team_points_roll5: 22.0,
+    team_yards_roll5: 340.0,
+    team_plays_roll5: 65.0,
     // Weather
     temp_normalized: 0.6,
     wind_normalized: 0.2,
@@ -104,69 +104,69 @@ export function createDefaultFeatures(
   if (position === "QB") {
     return {
       ...base,
-      passing_yards_roll3: 250,
-      passing_tds_roll3: 1.8,
-      rushing_yards_roll3: 15,
-      rushing_tds_roll3: 0.1,
-      carries_roll3: 3,
-      receiving_yards_roll3: 0,
-      receiving_tds_roll3: 0,
-      receptions_roll3: 0,
+      passing_yards_roll5: 250,
+      passing_tds_roll5: 1.8,
+      rushing_yards_roll5: 15,
+      rushing_tds_roll5: 0.1,
+      carries_roll5: 3,
+      receiving_yards_roll5: 0,
+      receiving_tds_roll5: 0,
+      receptions_roll5: 0,
       // QB volatility (moderate passing, low rushing)
-      passing_yards_std3: 50,
-      passing_yards_cv3: 0.2,
-      rushing_yards_std3: 10,
-      rushing_yards_cv3: 0.5,
-      receiving_yards_std3: 0,
-      receiving_yards_cv3: 0,
-      receptions_std3: 0,
-      receptions_cv3: 0,
+      passing_yards_std5: 50,
+      passing_yards_cv5: 0.2,
+      rushing_yards_std5: 10,
+      rushing_yards_cv5: 0.5,
+      receiving_yards_std5: 0,
+      receiving_yards_cv5: 0,
+      receptions_std5: 0,
+      receptions_cv5: 0,
     };
   }
 
   if (position === "RB") {
     return {
       ...base,
-      passing_yards_roll3: 0,
-      passing_tds_roll3: 0,
-      rushing_yards_roll3: 65,
-      rushing_tds_roll3: 0.5,
-      carries_roll3: 15,
-      receiving_yards_roll3: 20,
-      receiving_tds_roll3: 0.1,
-      receptions_roll3: 2.5,
+      passing_yards_roll5: 0,
+      passing_tds_roll5: 0,
+      rushing_yards_roll5: 65,
+      rushing_tds_roll5: 0.5,
+      carries_roll5: 15,
+      receiving_yards_roll5: 20,
+      receiving_tds_roll5: 0.1,
+      receptions_roll5: 2.5,
       // RB volatility (moderate rushing, low receiving)
-      passing_yards_std3: 0,
-      passing_yards_cv3: 0,
-      rushing_yards_std3: 25,
-      rushing_yards_cv3: 0.4,
-      receiving_yards_std3: 15,
-      receiving_yards_cv3: 0.6,
-      receptions_std3: 1.5,
-      receptions_cv3: 0.5,
+      passing_yards_std5: 0,
+      passing_yards_cv5: 0,
+      rushing_yards_std5: 25,
+      rushing_yards_cv5: 0.4,
+      receiving_yards_std5: 15,
+      receiving_yards_cv5: 0.6,
+      receptions_std5: 1.5,
+      receptions_cv5: 0.5,
     };
   }
 
   // WR/TE default
   return {
     ...base,
-    passing_yards_roll3: 0,
-    passing_tds_roll3: 0,
-    rushing_yards_roll3: 2,
-    rushing_tds_roll3: 0,
-    carries_roll3: 0.3,
-    receiving_yards_roll3: 55,
-    receiving_tds_roll3: 0.4,
-    receptions_roll3: 4,
+    passing_yards_roll5: 0,
+    passing_tds_roll5: 0,
+    rushing_yards_roll5: 2,
+    rushing_tds_roll5: 0,
+    carries_roll5: 0.3,
+    receiving_yards_roll5: 55,
+    receiving_tds_roll5: 0.4,
+    receptions_roll5: 4,
     // WR/TE volatility (high receiving variance)
-    passing_yards_std3: 0,
-    passing_yards_cv3: 0,
-    rushing_yards_std3: 5,
-    rushing_yards_cv3: 0.5,
-    receiving_yards_std3: 30,
-    receiving_yards_cv3: 0.5,
-    receptions_std3: 2,
-    receptions_cv3: 0.4,
+    passing_yards_std5: 0,
+    passing_yards_cv5: 0,
+    rushing_yards_std5: 5,
+    rushing_yards_cv5: 0.5,
+    receiving_yards_std5: 30,
+    receiving_yards_cv5: 0.5,
+    receptions_std5: 2,
+    receptions_cv5: 0.4,
   };
 }
 

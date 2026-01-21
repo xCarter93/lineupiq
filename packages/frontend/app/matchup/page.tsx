@@ -129,55 +129,55 @@ export default function MatchupPage() {
         features = {
           ...defaults,
           // Override with player's actual stats for the fields that exist
-          passing_yards_roll3:
-            (playerFeatures.features.passing_yards_roll3 as number) ??
-            defaults.passing_yards_roll3,
-          passing_tds_roll3:
-            (playerFeatures.features.passing_tds_roll3 as number) ??
-            defaults.passing_tds_roll3,
-          rushing_yards_roll3:
-            (playerFeatures.features.rushing_yards_roll3 as number) ??
-            defaults.rushing_yards_roll3,
-          rushing_tds_roll3:
-            (playerFeatures.features.rushing_tds_roll3 as number) ??
-            defaults.rushing_tds_roll3,
-          carries_roll3:
-            (playerFeatures.features.carries_roll3 as number) ??
-            defaults.carries_roll3,
-          receiving_yards_roll3:
-            (playerFeatures.features.receiving_yards_roll3 as number) ??
-            defaults.receiving_yards_roll3,
-          receiving_tds_roll3:
-            (playerFeatures.features.receiving_tds_roll3 as number) ??
-            defaults.receiving_tds_roll3,
-          receptions_roll3:
-            (playerFeatures.features.receptions_roll3 as number) ??
-            defaults.receptions_roll3,
+          passing_yards_roll5:
+            (playerFeatures.features.passing_yards_roll5 as number) ??
+            defaults.passing_yards_roll5,
+          passing_tds_roll5:
+            (playerFeatures.features.passing_tds_roll5 as number) ??
+            defaults.passing_tds_roll5,
+          rushing_yards_roll5:
+            (playerFeatures.features.rushing_yards_roll5 as number) ??
+            defaults.rushing_yards_roll5,
+          rushing_tds_roll5:
+            (playerFeatures.features.rushing_tds_roll5 as number) ??
+            defaults.rushing_tds_roll5,
+          carries_roll5:
+            (playerFeatures.features.carries_roll5 as number) ??
+            defaults.carries_roll5,
+          receiving_yards_roll5:
+            (playerFeatures.features.receiving_yards_roll5 as number) ??
+            defaults.receiving_yards_roll5,
+          receiving_tds_roll5:
+            (playerFeatures.features.receiving_tds_roll5 as number) ??
+            defaults.receiving_tds_roll5,
+          receptions_roll5:
+            (playerFeatures.features.receptions_roll5 as number) ??
+            defaults.receptions_roll5,
           // Volatility features
-          passing_yards_std3:
-            (playerFeatures.features.passing_yards_std3 as number) ??
-            defaults.passing_yards_std3,
-          passing_yards_cv3:
-            (playerFeatures.features.passing_yards_cv3 as number) ??
-            defaults.passing_yards_cv3,
-          rushing_yards_std3:
-            (playerFeatures.features.rushing_yards_std3 as number) ??
-            defaults.rushing_yards_std3,
-          rushing_yards_cv3:
-            (playerFeatures.features.rushing_yards_cv3 as number) ??
-            defaults.rushing_yards_cv3,
-          receiving_yards_std3:
-            (playerFeatures.features.receiving_yards_std3 as number) ??
-            defaults.receiving_yards_std3,
-          receiving_yards_cv3:
-            (playerFeatures.features.receiving_yards_cv3 as number) ??
-            defaults.receiving_yards_cv3,
-          receptions_std3:
-            (playerFeatures.features.receptions_std3 as number) ??
-            defaults.receptions_std3,
-          receptions_cv3:
-            (playerFeatures.features.receptions_cv3 as number) ??
-            defaults.receptions_cv3,
+          passing_yards_std5:
+            (playerFeatures.features.passing_yards_std5 as number) ??
+            defaults.passing_yards_std5,
+          passing_yards_cv5:
+            (playerFeatures.features.passing_yards_cv5 as number) ??
+            defaults.passing_yards_cv5,
+          rushing_yards_std5:
+            (playerFeatures.features.rushing_yards_std5 as number) ??
+            defaults.rushing_yards_std5,
+          rushing_yards_cv5:
+            (playerFeatures.features.rushing_yards_cv5 as number) ??
+            defaults.rushing_yards_cv5,
+          receiving_yards_std5:
+            (playerFeatures.features.receiving_yards_std5 as number) ??
+            defaults.receiving_yards_std5,
+          receiving_yards_cv5:
+            (playerFeatures.features.receiving_yards_cv5 as number) ??
+            defaults.receiving_yards_cv5,
+          receptions_std5:
+            (playerFeatures.features.receptions_std5 as number) ??
+            defaults.receptions_std5,
+          receptions_cv5:
+            (playerFeatures.features.receptions_cv5 as number) ??
+            defaults.receptions_cv5,
           // Keep home/away from matchup
           is_home: matchup.isHome,
         };
