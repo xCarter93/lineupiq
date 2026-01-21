@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 19.1 of 25 (Re-evaluate Recent Performance Metrics)
-Plan: 1 of 3 in current phase
-Status: In progress - Plan 19.1-01 complete
-Last activity: 2026-01-20 - Completed 19.1-01-PLAN.md (Benchmark Analysis & Decision)
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-01-20 - Completed 19.1-03-PLAN.md (Rolling Window Validation)
 
-Progress: ██░░░░░░░░ 13%
+Progress: ██░░░░░░░░ 14%
 
 ## Performance Metrics
 
@@ -141,9 +141,13 @@ Progress: ██░░░░░░░░ 13%
 | 19-03 | Keep LightGBM as production default | Wins 17/21 stats (81%), already performing well without ensemble overhead |
 | 19-04 | keep-single integration strategy | API continues using LightGBM/XGBoost single models, no ensemble complexity |
 | 19-04 | Document architectural decisions in code | Added NOTE in models_loader.py explaining ensemble rejection with benchmark reference |
-| 19.1 | Keep single models with 2022-2025 training data | Avoid COVID-era noise (2020-2021) while maximizing recency for 2026 predictions |
-| 19.1 | Reject ensemble models despite 2025 benchmark | 2024 benchmark more reliable; matches production setup; simpler architecture |
-| 19.1 | 4-year training window (2022-2025) | Balance between volume and recency; includes most recent 2025 season data |
+| 19.1-01 | Keep single models with 2022-2025 training data | Avoid COVID-era noise (2020-2021) while maximizing recency for 2026 predictions |
+| 19.1-01 | Reject ensemble models despite 2025 benchmark | 2024 benchmark more reliable; matches production setup; simpler architecture |
+| 19.1-01 | 4-year training window (2022-2025) | Balance between volume and recency; includes most recent 2025 season data |
+| 19.1-02 | Expand rolling window from 3 to 5 games | Captures recent trends better; TD prediction focus; includes shift(1) for leakage prevention |
+| 19.1-02 | Add shift(1) to all rolling stats | Prevents data leakage by excluding current game from rolling averages |
+| 19.1-03 | Adopt 5-game rolling window as standard | Benchmarked 21 stats with avg R² 0.332; TD models avg R² 0.261; acceptable performance |
+| 19.1-03 | Rolling features consistently top predictors | SHAP analysis shows rolling stats appear in top 5 for majority of models |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -166,6 +170,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Completed 19.1-01-PLAN.md (Benchmark Analysis & Decision)
+Stopped at: Completed 19.1-03-PLAN.md (Rolling Window Validation)
 Resume file: None
-Next action: Execute Plan 19.1-02 (Model Retraining with 2022-2025 data)
+Next action: Phase 19.1 complete, ready to transition to Phase 20
