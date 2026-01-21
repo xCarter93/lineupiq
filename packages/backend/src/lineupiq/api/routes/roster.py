@@ -121,13 +121,13 @@ async def get_player_history(
 
 def _compute_rolling_stats_for_player(
     history_df: pl.DataFrame,
-    window: int = 3,
+    window: int = 5,
 ) -> dict[str, float]:
     """Compute rolling stats from player's recent games.
 
     Args:
         history_df: Player history DataFrame with stats columns.
-        window: Rolling window size (default 3).
+        window: Rolling window size (default 5, matches model training).
 
     Returns:
         Dict with rolling stat values.
@@ -169,13 +169,13 @@ def _compute_rolling_stats_for_player(
 
 def _compute_volatility_for_player(
     history_df: pl.DataFrame,
-    window: int = 3,
+    window: int = 5,
 ) -> dict[str, float]:
     """Compute volatility features (std, CV) from player's recent games.
 
     Args:
         history_df: Player history DataFrame with stats columns.
-        window: Rolling window size (default 3).
+        window: Rolling window size (default 5, matches model training).
 
     Returns:
         Dict with volatility feature values.
