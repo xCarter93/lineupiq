@@ -11,6 +11,7 @@ Trains models to predict team-level defensive stats:
 
 import logging
 from pathlib import Path
+from typing import Any, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -25,8 +26,8 @@ from lineupiq.models.training import ModelType, train_model, tune_hyperparameter
 
 logger = logging.getLogger(__name__)
 
-# Training seasons (excluding 2025 holdout)
-TRAINING_SEASONS = [2021, 2022, 2023, 2024]
+# Default training seasons (excluding 2025 holdout)
+DEFAULT_TRAINING_SEASONS = [2022, 2023, 2024, 2025]
 
 # Target columns for defense models
 DEF_TARGETS = [
@@ -39,22 +40,27 @@ DEF_TARGETS = [
 
 
 def train_defense_models(
+    seasons: list[int] | None = None,
     n_trials: int = 30,
     model_type: ModelType = "lightgbm",
-) -> dict[str, Path]:
+) -> dict[str, Tuple[Any, dict[str, Any]]]:
     """Train all team defense prediction models.
 
     Args:
+        seasons: List of seasons to train on (default: 2022-2025).
         n_trials: Number of Optuna trials per model.
         model_type: "lightgbm" or "xgboost".
 
     Returns:
-        Dict mapping target names to saved model paths.
+        Dict mapping target names to (model, metrics) tuples.
     """
+    if seasons is None:
+        seasons = DEFAULT_TRAINING_SEASONS
+
     logger.info("Training defense models")
 
     # Load and process defense data
-    df = process_defense_data(TRAINING_SEASONS)
+    df = process_defense_data(seasons)
 
     feature_cols = get_defense_feature_columns()
     target_cols = get_defense_target_columns()
@@ -67,7 +73,7 @@ def train_defense_models(
     # Prepare feature matrix
     X: NDArray[np.floating] = df.select(feature_cols).to_numpy()
 
-    saved_models: dict[str, Path] = {}
+    trained_models: dict[str, Tuple[Any, dict[str, Any]]] = {}
 
     for target in target_cols:
         if target not in df.columns:
@@ -103,22 +109,27 @@ def train_defense_models(
             model_type=model_type,
         )
 
+        # Calculate metrics (scores are negative RMSE, so negate)
+        cv_rmse = -scores
+
         # Save model
         metadata = {
             "position": "DEF",
             "target": target,
             "model_type": model_type,
             "n_samples": len(y_valid),
-            "cv_score": float(scores.mean()),
+            "cv_rmse_mean": float(cv_rmse.mean()),
+            "cv_rmse_std": float(cv_rmse.std()),
             "feature_columns": feature_cols,
+            "seasons": seasons,
         }
 
         model_path = save_model(model, "DEF", target, metadata)
-        saved_models[target] = model_path
+        trained_models[target] = (model, metadata)
 
-        logger.info(f"Saved DEF_{target} model: CV score = {scores.mean():.4f}")
+        logger.info(f"Saved DEF_{target} model: CV RMSE = {cv_rmse.mean():.4f}")
 
-    return saved_models
+    return trained_models
 
 
 if __name__ == "__main__":

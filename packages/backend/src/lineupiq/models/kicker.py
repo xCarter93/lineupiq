@@ -11,7 +11,7 @@ Trains models to predict:
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Tuple
 
 import numpy as np
 from lightgbm import LGBMRegressor
@@ -27,30 +27,35 @@ from lineupiq.models.training import ModelType, train_model, tune_hyperparameter
 
 logger = logging.getLogger(__name__)
 
-# Training seasons (excluding 2025 holdout)
-TRAINING_SEASONS = [2021, 2022, 2023, 2024]
+# Default training seasons (excluding 2025 holdout)
+DEFAULT_TRAINING_SEASONS = [2022, 2023, 2024, 2025]
 
 # Target columns for kicker models
 KICKER_TARGETS = get_kicker_target_columns()
 
 
 def train_kicker_models(
+    seasons: list[int] | None = None,
     n_trials: int = 30,
     model_type: ModelType = "lightgbm",
-) -> dict[str, Path]:
+) -> dict[str, Tuple[Any, dict[str, Any]]]:
     """Train all kicker prediction models.
 
     Args:
+        seasons: List of seasons to train on (default: 2022-2025).
         n_trials: Number of Optuna trials per model.
         model_type: "lightgbm" or "xgboost".
 
     Returns:
-        Dict mapping target names to saved model paths.
+        Dict mapping target names to (model, metrics) tuples.
     """
+    if seasons is None:
+        seasons = DEFAULT_TRAINING_SEASONS
+
     logger.info("Training kicker models")
 
     # Load and process kicker data
-    df = process_kicker_data(TRAINING_SEASONS)
+    df = process_kicker_data(seasons)
 
     feature_cols = get_kicker_feature_columns()
     target_cols = get_kicker_target_columns()
@@ -63,7 +68,7 @@ def train_kicker_models(
     # Prepare feature matrix
     X: NDArray[np.floating[Any]] = df.select(feature_cols).to_numpy().astype(np.float64)
 
-    saved_models: dict[str, Path] = {}
+    trained_models: dict[str, Tuple[Any, dict[str, Any]]] = {}
 
     for target in target_cols:
         if target not in df.columns:
@@ -112,17 +117,17 @@ def train_kicker_models(
             "cv_rmse_std": float(cv_rmse.std()),
             "best_params": best_params,
             "feature_columns": feature_cols,
-            "seasons": TRAINING_SEASONS,
+            "seasons": seasons,
         }
 
         # save_model expects XGBRegressor but we're passing LGBMRegressor
         # The persistence module handles both since they have compatible interfaces
         model_path = save_model(model, "K", target, metadata)  # type: ignore[arg-type]
-        saved_models[target] = model_path
+        trained_models[target] = (model, metadata)
 
         logger.info(f"Saved K_{target} model: CV RMSE = {cv_rmse.mean():.4f}")
 
-    return saved_models
+    return trained_models
 
 
 if __name__ == "__main__":

@@ -109,7 +109,7 @@ def prepare_rb_data(
 def train_rb_models(
     seasons: list[int] | None = None,
     n_trials: int = 50,
-    rolling_window: int = 3,
+    rolling_window: int = 5,
     model_type: ModelType = "lightgbm",
 ) -> dict[str, tuple[Any, dict[str, Any]]]:
     """Train ML models for all 7 RB targets.
