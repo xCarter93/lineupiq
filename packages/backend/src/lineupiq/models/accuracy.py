@@ -75,38 +75,40 @@ def calculate_model_accuracy(
     }
 
 
-def calculate_confidence_rating(r2: float, accuracy_pct: float) -> str:
-    """Convert metrics to user-friendly confidence tier.
+def calculate_confidence_rating(r2: float) -> str:
+    """Convert R² metric to user-friendly confidence tier.
 
-    Provides a simple High/Medium/Low rating based on model performance.
+    Provides a simple High/Medium/Low rating based on variance explained.
     This helps users understand how much to trust predictions without
     needing to interpret statistical metrics.
 
+    Confidence tiers:
+    - High: R² > 0.5 (explains >50% variance)
+    - Medium: R² 0.3-0.5 (explains 30-50% variance)
+    - Low: R² < 0.3 (explains <30% variance)
+
     Args:
         r2: R-squared score from model evaluation.
-        accuracy_pct: Accuracy percentage from calculate_model_accuracy.
 
     Returns:
         Confidence tier: "High", "Medium", or "Low".
 
     Example:
-        >>> calculate_confidence_rating(0.6, 85.0)
+        >>> calculate_confidence_rating(0.6)
         'High'
-        >>> calculate_confidence_rating(0.4, 70.0)
+        >>> calculate_confidence_rating(0.4)
         'Medium'
-        >>> calculate_confidence_rating(0.1, 50.0)
+        >>> calculate_confidence_rating(0.2)
         'Low'
     """
-    # High confidence: Strong R2 and good accuracy
-    if r2 > 0.5 and accuracy_pct > 80.0:
-        return "High"
-
-    # Medium confidence: Reasonable R2 or reasonable accuracy
-    if r2 > 0.3 or accuracy_pct > 70.0:
-        return "Medium"
-
-    # Low confidence: Poor metrics
-    return "Low"
+    # Confidence tiers based on R² (variance explained)
+    # Since accuracy_pct now equals 100*R², we can use R² directly
+    if r2 > 0.5:
+        return "High"      # Explains >50% variance
+    elif r2 > 0.3:
+        return "Medium"    # Explains 30-50% variance
+    else:
+        return "Low"       # Explains <30% variance
 
 
 def summarize_backtest_results(backtest_results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -174,7 +176,7 @@ def summarize_backtest_results(backtest_results: list[dict[str, Any]]) -> dict[s
 
         # Calculate model-specific metrics
         metrics = calculate_model_accuracy(predictions, actuals)
-        confidence = calculate_confidence_rating(metrics["r2"], metrics["accuracy_pct"])
+        confidence = calculate_confidence_rating(metrics["r2"])
 
         model_summary = {
             "position": result["position"],
@@ -194,9 +196,7 @@ def summarize_backtest_results(backtest_results: list[dict[str, Any]]) -> dict[s
     all_actuals_arr = np.array(all_actuals)
 
     overall_metrics = calculate_model_accuracy(all_predictions_arr, all_actuals_arr)
-    overall_confidence = calculate_confidence_rating(
-        overall_metrics["r2"], overall_metrics["accuracy_pct"]
-    )
+    overall_confidence = calculate_confidence_rating(overall_metrics["r2"])
 
     return {
         "overall_accuracy_pct": round(overall_metrics["accuracy_pct"], 1),
