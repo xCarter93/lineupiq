@@ -96,14 +96,14 @@ Plans:
 **Goal**: Fix scale-dependent accuracy formula (100*(1-MAE/mean)) with R²-based calculation to properly reflect model quality
 **Depends on**: Phase 19.1
 **Research**: Complete (19.2-CONTEXT.md - accuracy audit)
-**Plans**: 2/? complete
+**Plans**: 3/3 complete
 
 Plans:
 - [x] 19.2-01: Audit current accuracy formula and evaluate alternatives (R²-based, MAPE, skill score) — completed 2026-01-20
 - [x] 19.2-02: Implement R²-based accuracy calculation and simplified confidence tiers — completed 2026-01-20
-- [ ] TBD (additional accuracy metrics or UI updates as needed)
+- [x] 19.2-03: Update UI to reflect R²-based accuracy and verify display — completed 2026-01-20
 
-**Outcome**: R²-based accuracy (100*R²) replaces MAE/mean formula. Confidence tiers simplified to R²-only thresholds (High: >0.5, Medium: 0.3-0.5, Low: <0.3). Fixes "49% accuracy for R² 0.545" problem.
+**Outcome**: R²-based accuracy (100*R²) replaces MAE/mean formula. Confidence tiers simplified to R²-only thresholds (High: >0.5, Medium: 0.3-0.5, Low: <0.3). Fixes "49% accuracy for R² 0.545" problem. UI tooltip explains "variance explained by the model".
 
 #### Phase 20: Advanced Features
 
@@ -193,7 +193,7 @@ Plans:
 | 18. Performance Fixes | v1.2 | 3/3 | Complete | 2026-01-20 |
 | 19. Ensemble Models | v1.2 | 4/4 | Complete | 2026-01-20 |
 | 19.1. Re-evaluate Performance | v1.2 | 3/3 | Complete | 2026-01-20 |
-| 19.2. Improve Model Confidence | v1.2 | 2/? | In progress | 2026-01-20 |
+| 19.2. Improve Model Confidence | v1.2 | 3/3 | Complete | 2026-01-20 |
 | 20. Advanced Features | v1.2 | 0/? | Not started | - |
 | 21. Position Tuning | v1.2 | 0/? | Not started | - |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
