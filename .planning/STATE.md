@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 19.2 of 25 (Improve Model Confidence & Accuracy)
-Plan: 1 of ? in current phase
+Plan: 2 of ? in current phase
 Status: In progress
-Last activity: 2026-01-20 - Completed Plan 19.2-01 (accuracy audit), ready for implementation
+Last activity: 2026-01-20 - Completed Plan 19.2-02 (R²-based accuracy implementation)
 
 Progress: ██░░░░░░░░ 15%
 
@@ -150,6 +150,8 @@ Progress: ██░░░░░░░░ 15%
 | 19.1-03 | Rolling features consistently top predictors | SHAP analysis shows rolling stats appear in top 5 for majority of models |
 | 19.2-01 | Replace accuracy_pct with R²-based formula | Current formula 100*(1-MAE/mean) is scale-dependent; R²-based (100*R²) correlates with model quality |
 | 19.2-01 | Confidence tiers based on R² thresholds | High (R²>0.5), Medium (R²0.3-0.5), Low (R²<0.3); fixes 10 models showing 0% accuracy |
+| 19.2-02 | Implemented accuracy_pct = max(0, min(100, 100*R²)) | Fixes scale-dependent accuracy; clamped to [0,100] for negative R² edge cases |
+| 19.2-02 | Simplified confidence_rating to R²-only | Removed accuracy_pct parameter; single metric aligns with ML standards |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
