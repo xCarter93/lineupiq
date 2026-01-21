@@ -52,7 +52,7 @@ export function ModelConfidence({
   return (
     <div
       className={cn("flex items-center gap-2 text-sm", className)}
-      title={`Model accuracy: ${accuracyPct.toFixed(1)}%`}
+      title={`Model accuracy: ${accuracyPct.toFixed(1)}% (variance explained by the model)`}
     >
       <span className={cn("font-medium tabular-nums", textColor)}>
         {accuracyPct.toFixed(0)}% accurate
