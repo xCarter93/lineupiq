@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 20 of 25 (Advanced Features)
-Plan: Ready to plan
-Status: Ready for next phase
-Last activity: 2026-01-20 - Phase 19.2 complete (R²-based accuracy metric fix)
+Phase: 19.2.1 of 25 (Different Players Showing Same Stats)
+Plan: 1 of ? in current phase
+Status: In Progress
+Last activity: 2026-01-20 - Plan 19.2.1-01 complete (root cause diagnosed)
 
 Progress: ██░░░░░░░░ 15%
 
@@ -153,6 +153,7 @@ Progress: ██░░░░░░░░ 15%
 | 19.2-02 | Implemented accuracy_pct = max(0, min(100, 100*R²)) | Fixes scale-dependent accuracy; clamped to [0,100] for negative R² edge cases |
 | 19.2-02 | Simplified confidence_rating to R²-only | Removed accuracy_pct parameter; single metric aligns with ML standards |
 | 19.2-03 | Updated ModelConfidence tooltip to explain R²-based accuracy | Tooltip shows "variance explained by the model" to help users understand R²-based metric |
+| 19.2.1-01 | Root cause: window parameter mismatch (3 vs 5) | Models trained with roll5 features, API computes roll3; dict.update() doesn't overwrite → all players use defaults |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -164,6 +165,7 @@ Progress: ██░░░░░░░░ 15%
 - Milestone v1.2 created: Platform Maturity, 8 phases (Phase 18-25)
 - Phase 19.1 inserted after Phase 19: Re-evaluate recent performance metrics (URGENT)
 - Phase 19.2 inserted after Phase 19.1: Improve model confidence & accuracy - address 49% accuracy issue (URGENT)
+- Phase 19.2.1 inserted after Phase 19.2: Different players showing same predicted stats - fix player-specific feature computation (URGENT)
 
 ### Pending Todos
 
@@ -176,6 +178,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-20
-Stopped at: Phase 19.2 insertion (address 49% accuracy issue)
+Stopped at: Plan 19.2.1-01 complete (diagnostic work)
 Resume file: None
-Next action: Research and plan Phase 19.2 to diagnose and improve model confidence/accuracy
+Next action: Plan 19.2.1-02 (implement window parameter fix in roster.py)
