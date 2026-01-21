@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 19.2 of 25 (Improve Model Confidence & Accuracy)
-Plan: 2 of ? in current phase
-Status: In progress
-Last activity: 2026-01-20 - Completed Plan 19.2-02 (R²-based accuracy implementation)
+Phase: 20 of 25 (Advanced Features)
+Plan: Ready to plan
+Status: Ready for next phase
+Last activity: 2026-01-20 - Phase 19.2 complete (R²-based accuracy metric fix)
 
 Progress: ██░░░░░░░░ 15%
 
@@ -52,7 +52,7 @@ Progress: ██░░░░░░░░ 15%
 | 12 | Separate modelMetrics/overallMetrics tables | Efficient queries for different access patterns |
 | 12 | Split conformal over MAPIE wrapper | Works with existing trained models without retraining |
 | 12 | 90% confidence intervals (alpha=0.1) | Informative bounds without excessive uncertainty |
-| 12 | Accuracy % formula: 100*(1-MAE/mean) | Intuitive 0-100% scale for user trust |
+| 12 | Accuracy % formula: 100*(1-MAE/mean) | ~~Intuitive 0-100% scale for user trust~~ → SUPERSEDED by 19.2-02 |
 | 12 | Three-tier confidence (High/Med/Low) | Simple user-facing metric based on R2 + accuracy |
 | 12 | Convex-first with API fallback | Hook checks Convex cache first, fetches from API if null |
 | 12 | ModelConfidence in page.tsx not form | MatchupForm is input-only, results render in page |
@@ -152,6 +152,7 @@ Progress: ██░░░░░░░░ 15%
 | 19.2-01 | Confidence tiers based on R² thresholds | High (R²>0.5), Medium (R²0.3-0.5), Low (R²<0.3); fixes 10 models showing 0% accuracy |
 | 19.2-02 | Implemented accuracy_pct = max(0, min(100, 100*R²)) | Fixes scale-dependent accuracy; clamped to [0,100] for negative R² edge cases |
 | 19.2-02 | Simplified confidence_rating to R²-only | Removed accuracy_pct parameter; single metric aligns with ML standards |
+| 19.2-03 | Updated ModelConfidence tooltip to explain R²-based accuracy | Tooltip shows "variance explained by the model" to help users understand R²-based metric |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
