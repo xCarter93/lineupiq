@@ -30,7 +30,7 @@ def calculate_model_accuracy(
     - MAE: Mean Absolute Error
     - RMSE: Root Mean Squared Error
     - R2: R-squared coefficient
-    - accuracy_pct: 100 * (1 - MAE / mean(actuals)) - a 0-100% score
+    - accuracy_pct: 100 * R² (variance explained) - a 0-100% score
     - directional_accuracy: % of predictions with correct above/below mean direction
 
     Args:
@@ -46,7 +46,7 @@ def calculate_model_accuracy(
         >>> metrics = calculate_model_accuracy(preds, acts)
         >>> "accuracy_pct" in metrics
         True
-        >>> 0 <= metrics["directional_accuracy"] <= 100
+        >>> 0 <= metrics["accuracy_pct"] <= 100
         True
     """
     # Standard regression metrics
@@ -54,17 +54,13 @@ def calculate_model_accuracy(
     rmse = root_mean_squared_error(actuals, predictions)
     r2 = r2_score(actuals, predictions)
 
-    # Accuracy percentage: based on MAE relative to mean
-    # Higher is better, 100% = perfect predictions
-    mean_actual = np.mean(actuals)
-    if mean_actual != 0:
-        accuracy_pct = max(0.0, 100.0 * (1.0 - mae / abs(mean_actual)))
-    else:
-        # If mean is zero, accuracy is undefined - use R2-based fallback
-        accuracy_pct = max(0.0, 100.0 * r2) if r2 > 0 else 0.0
+    # R²-based accuracy: Directly represents variance explained (0-100%)
+    # Clamped to [0, 100] range (R² can be negative for very poor models)
+    accuracy_pct = max(0.0, min(100.0, 100.0 * r2))
 
     # Directional accuracy: % of predictions where direction matches actual
     # Direction = above or below the mean
+    mean_actual = np.mean(actuals)
     pred_direction = predictions >= mean_actual
     actual_direction = actuals >= mean_actual
     directional_matches = pred_direction == actual_direction
