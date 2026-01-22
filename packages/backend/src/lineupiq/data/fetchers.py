@@ -453,3 +453,53 @@ def fetch_player_history(
     except Exception as e:
         logger.error(f"Failed to fetch player history: {e}")
         raise RuntimeError(f"Failed to fetch player history: {e}") from e
+
+
+def fetch_injuries(seasons: list[int]) -> pl.DataFrame:
+    """Fetch NFL injury reports from nflreadpy.
+
+    Returns official NFL injury designations from injury reports since 2009.
+    Data includes injury status (Out, Doubtful, Questionable, Probable), primary
+    injury type, and practice participation tracking.
+
+    Args:
+        seasons: Year(s) to fetch (e.g., [2022, 2023, 2024, 2025]).
+
+    Returns:
+        Polars DataFrame with columns:
+        - gsis_id: Player unique identifier
+        - full_name: Player's full name
+        - week: Week number
+        - team: NFL team abbreviation
+        - report_status: Injury designation (Out, Doubtful, Questionable, Probable)
+        - report_primary_injury: Primary injury location/type
+        - practice_status: Practice participation (Full, Limited, DNP)
+        - date_modified: Last update timestamp
+        - season: Season year
+
+    Raises:
+        ImportError: If nflreadpy is not installed.
+        RuntimeError: If data fetch fails.
+
+    Example:
+        >>> df = fetch_injuries([2024])
+        >>> "report_status" in df.columns
+        True
+        >>> df.filter(pl.col("report_status") == "Out").shape[0]
+        1234
+    """
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    logger.info(f"Fetching injury data: seasons={seasons}")
+
+    try:
+        df = nfl.load_injuries(seasons=seasons)
+        logger.info(f"Fetched {df.shape[0]} injury records, {df.shape[1]} columns")
+        return df
+    except Exception as e:
+        logger.error(f"Failed to fetch injuries: {e}")
+        raise RuntimeError(f"Failed to fetch injuries: {e}") from e
