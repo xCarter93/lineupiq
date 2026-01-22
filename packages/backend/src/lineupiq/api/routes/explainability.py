@@ -30,10 +30,10 @@ def prepare_features(request: ExplainabilityRequest) -> np.ndarray:
     converting boolean fields to floats.
 
     Args:
-        request: ExplainabilityRequest with all feature fields.
+        request: ExplainabilityRequest with all 40 feature fields (Phase 20+21).
 
     Returns:
-        2D numpy array of shape (1, 28) for single prediction.
+        2D numpy array of shape (1, 40) for single prediction.
     """
     feature_columns = get_feature_columns()
     feature_values = []
@@ -111,7 +111,7 @@ async def explain_prediction(
     Args:
         position: Player position (QB, RB, WR, TE).
         target: Target stat (e.g., passing_yards, rushing_yards).
-        request: ExplainabilityRequest with all 28 feature fields.
+        request: ExplainabilityRequest with all 40 feature fields (Phase 20+21).
         req: FastAPI Request object for accessing app state.
 
     Returns:
