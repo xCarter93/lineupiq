@@ -159,6 +159,11 @@ Progress: ████░░░░░░ 22%
 | 20-01 | Research-backed weather thresholds | <25°F extreme cold, <32°F freezing, >85°F extreme heat, >=15mph high wind based on NFL performance research |
 | 20-01 | Dome games set to neutral weather values | 72°F, 0 wind, no precip prevents noise from irrelevant outdoor weather |
 | 20-01 | Graceful degradation without API key | Feature pipeline skips detailed weather if VISUAL_CROSSING_API_KEY missing |
+| 20-02 | Use player_id for joins (rename gsis_id) | Player stats use player_id column; injuries use gsis_id; renamed in injury module for consistency |
+| 20-02 | Injury severity encoding Out=1.0, Doubtful=0.75, Questionable=0.5, Probable=0.25 | Research shows 8-10% production drop; encoded as severity gradient for model training |
+| 20-02 | Most recent report per player-week | Injury status updates during week; final status before game most predictive |
+| 20-02 | Left join with zero fill for injuries | Not all players have injury reports; zeros indicate no injury designation |
+| 20-02 | 2 injury features (severity + flag) | injury_severity captures impact gradient; on_injury_report indicates any injury presence |
 | 20-03 | The Odds API with free tier (500 requests/month) | Sufficient for prototyping; historical data back to mid-2020 |
 | 20-03 | 7-day cache expiration for Vegas lines | Betting lines can shift during week; balances freshness with API efficiency |
 | 20-03 | Neutral fills for pre-2020 games | home_spread=0.0 (neutral), total_points=45.0 (NFL average) when odds unavailable |
