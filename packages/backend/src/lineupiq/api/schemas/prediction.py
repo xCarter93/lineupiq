@@ -11,9 +11,9 @@ from pydantic import BaseModel, Field
 class PredictionRequest(BaseModel):
     """Base request schema for all position predictions.
 
-    Contains all 17 feature fields required for model inference.
+    Contains all 40 feature fields required for model inference (Phase 20+21).
     Features are organized into rolling stats, opponent strength,
-    weather, and context categories.
+    team strength, volatility, weather, matchup, and context categories.
     """
 
     # Rolling stats (8 features)
@@ -59,14 +59,6 @@ class PredictionRequest(BaseModel):
         ..., description="Opponent rank in total yards allowed (1-32)"
     )
 
-    # Weather features (2 features)
-    temp_normalized: float = Field(
-        ..., description="Normalized temperature (0-1 scale)"
-    )
-    wind_normalized: float = Field(
-        ..., description="Normalized wind speed (0-1 scale)"
-    )
-
     # Team strength features (3 features)
     team_points_roll5: float = Field(
         ..., description="5-week rolling average of team points scored"
@@ -104,6 +96,52 @@ class PredictionRequest(BaseModel):
         ..., description="5-week coefficient of variation of receptions"
     )
 
+    # Weather features (9 features - Phase 20)
+    temp_normalized: float = Field(
+        ..., description="Normalized temperature (0-1 scale)"
+    )
+    wind_normalized: float = Field(
+        ..., description="Normalized wind speed (0-1 scale)"
+    )
+    extreme_cold: bool = Field(
+        ..., description="Temperature below 25°F"
+    )
+    freezing: bool = Field(
+        ..., description="Temperature below 32°F"
+    )
+    extreme_heat: bool = Field(
+        ..., description="Temperature above 85°F"
+    )
+    high_wind: bool = Field(
+        ..., description="Wind speed >= 15 mph"
+    )
+    very_high_wind: bool = Field(
+        ..., description="Wind speed >= 20 mph"
+    )
+    has_precip: bool = Field(
+        ..., description="Precipitation present"
+    )
+    precip_amount: float = Field(
+        ..., description="Precipitation amount in inches"
+    )
+
+    # Matchup features (5 features - Phase 20)
+    home_spread: float = Field(
+        ..., description="Vegas spread (positive = home favored)"
+    )
+    total_points: float = Field(
+        ..., description="Vegas over/under total"
+    )
+    vegas_strength_diff: float = Field(
+        ..., description="Home implied total - opponent implied total"
+    )
+    home_favored: bool = Field(
+        ..., description="Home team favored by Vegas"
+    )
+    is_divisional: bool = Field(
+        ..., description="Divisional matchup"
+    )
+
     # Context features (2 features)
     is_home: bool = Field(
         ..., description="Whether the player is playing at home"
@@ -129,8 +167,6 @@ class PredictionRequest(BaseModel):
                     "opp_pass_yards_allowed_rank": 15.0,
                     "opp_rush_yards_allowed_rank": 20.0,
                     "opp_total_yards_allowed_rank": 18.0,
-                    "temp_normalized": 0.6,
-                    "wind_normalized": 0.2,
                     "team_points_roll5": 24.5,
                     "team_yards_roll5": 350.0,
                     "team_plays_roll5": 65.0,
@@ -142,6 +178,20 @@ class PredictionRequest(BaseModel):
                     "receiving_yards_cv5": 0.0,
                     "receptions_std5": 0.0,
                     "receptions_cv5": 0.0,
+                    "temp_normalized": 0.6,
+                    "wind_normalized": 0.2,
+                    "extreme_cold": False,
+                    "freezing": False,
+                    "extreme_heat": False,
+                    "high_wind": False,
+                    "very_high_wind": False,
+                    "has_precip": False,
+                    "precip_amount": 0.0,
+                    "home_spread": 3.5,
+                    "total_points": 47.5,
+                    "vegas_strength_diff": 3.5,
+                    "home_favored": True,
+                    "is_divisional": False,
                     "is_home": True,
                     "is_dome": False,
                 }

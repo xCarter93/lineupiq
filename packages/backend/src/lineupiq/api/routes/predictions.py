@@ -37,10 +37,10 @@ def prepare_features(request: PredictionRequest) -> np.ndarray:
     converting boolean fields to floats.
 
     Args:
-        request: PredictionRequest with all feature fields.
+        request: PredictionRequest with all 40 feature fields.
 
     Returns:
-        2D numpy array of shape (1, 28) for single prediction.
+        2D numpy array of shape (1, 40) for single prediction.
     """
     feature_columns = get_feature_columns()
     feature_values = []
@@ -63,7 +63,7 @@ async def predict_qb(request: PredictionRequest, req: Request) -> JSONResponse:
     rushing yards, rushing TDs, and fumbles lost. Responses are cached.
 
     Args:
-        request: PredictionRequest with all 28 feature fields.
+        request: PredictionRequest with all 40 feature fields (Phase 20+21).
         req: FastAPI Request object for accessing app state.
 
     Returns:
