@@ -17,6 +17,12 @@ export function Header() {
         {/* Navigation */}
         <nav className="flex items-center gap-6">
           <Link
+            href="/players"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Players
+          </Link>
+          <Link
             href="/matchup"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
