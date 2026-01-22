@@ -24,7 +24,7 @@ Total: 21 .joblib files
 
 ## Rollback
 
-If Phase 21 retraining shows degraded performance with the expanded 42-feature set, restore these models with:
+If Phase 21 retraining shows degraded performance with the expanded 40-feature set (injury excluded), restore these models with:
 
 ```bash
 cp models_archive/phase20_pre_tuning/*.joblib models/

@@ -49,9 +49,10 @@ This prioritization means if we discover issues or need to adjust the approach, 
 Not looking for perfection, but we should understand what the new features did for each position before calling it done.
 
 **14 new features to evaluate:**
-- 7 weather features: extreme_cold, freezing, extreme_heat, high_wind, precipitation, dome_game, temperature
-- 5 matchup features: home_spread, total_points, is_divisional (+ any other Vegas/context features from Phase 20)
-- 2 context features: game context or situational features
+- 7 weather features: extreme_cold, freezing, extreme_heat, high_wind, very_high_wind, has_precip, precip_amount
+- 5 matchup features: home_spread, total_points, vegas_strength_diff, home_favored, is_divisional
+- 2 team updates: team_points_roll5, team_yards_roll5 (updated to 5-game window)
+- **Injury features excluded:** injury_severity, on_injury_report (prediction-time only, not used in training)
 
 Combined with existing rolling stats from Phase 19.1 (5-game window, 2022-2025 training data).
 
