@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 21 of 25 (Position-Specific Tuning)
-Plan: 4 of 4 in current phase
-Status: In progress (awaiting WR/TE completion)
-Last activity: 2026-01-22 - Completed 21-04-PLAN.md (K/DEF models with 40-feature set)
+Plan: 3 of 4 in current phase
+Status: Complete
+Last activity: 2026-01-22 - Completed 21-03-PLAN.md (WR/TE models with 40-feature set)
 
 Progress: █████░░░░░ 25%
 
@@ -176,6 +176,10 @@ Progress: █████░░░░░ 25%
 | 21-02 | Proceed to WR/TE after RB baseline | RB avg R² 0.362 similar to QB 0.355; workload metrics strong (carries 0.633); primary fantasy stats performing well |
 | 21-02 | RB workload more predictable than production | carries (R² 0.633) significantly outperforms yards/TDs; game script features (Vegas lines) likely driving prediction |
 | 21-02 | Accept TD model performance for now | rushing_tds (0.291) and receiving_tds (0.209) reasonable given low-frequency nature; red zone features needed for improvement (future phase) |
+| 21-03 | TE significantly more predictable than WR | TE avg R² 0.367 vs WR 0.274; TE usage more consistent, fewer boom/bust patterns; validates fantasy conventional wisdom |
+| 21-03 | Receptions most predictable receiver stat | TE receptions R² 0.614 (elite), WR receptions 0.489 (strong); PPR leagues benefit from volume prediction |
+| 21-03 | WR is least predictable position | WR avg R² 0.274 < QB 0.355 < RB 0.362 < TE 0.367; requires coverage-specific features (slot rate, aDOT, target share) in future phase |
+| 21-03 | Proceed to K/DEF despite WR volatility | WR volatility inherent to position (coverage schemes, game script); receptions model strong for PPR; feature engineering is leverage point |
 | 21-04 | K models outperform skill positions | K avg R² ~0.47 surpasses QB (0.355) and RB (0.362) - opposite of Phase 13-08 expectation "K/DEF lower accuracy"; weather features likely provide asymmetric value |
 | 21-04 | Weather feature asymmetry across positions | High value for K (wind/cold directly affect kicking), moderate for QB/RB (shifts pass-run balance), low for DEF (affects both sides equally) |
 | 21-04 | DEF models perform as expected | DEF avg R² ~0.30 confirms inherent unpredictability of opponent-dependent, high-variance defensive stats |
@@ -204,6 +208,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Phase 21-04 complete (K/DEF models trained with 40-feature set)
+Stopped at: Phase 21-03 complete (WR/TE models trained with 40-feature set)
 Resume file: None
-Next action: Awaiting Phase 21-03 completion (WR/TE models in parallel execution), then Phase 21 closure
+Next action: Phase 21 complete - all positions trained with 40-feature set; ready for Phase 22 or holistic analysis
