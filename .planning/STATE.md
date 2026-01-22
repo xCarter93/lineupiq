@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 21 of 25 (Position-Specific Tuning)
-Plan: 2 of 6 in current phase
-Status: Complete
-Last activity: 2026-01-22 - Completed 21-02-PLAN.md (RB models with 40-feature set)
+Plan: 4 of 4 in current phase
+Status: In progress (awaiting WR/TE completion)
+Last activity: 2026-01-22 - Completed 21-04-PLAN.md (K/DEF models with 40-feature set)
 
-Progress: ████░░░░░░ 23%
+Progress: █████░░░░░ 25%
 
 ## Performance Metrics
 
@@ -176,6 +176,10 @@ Progress: ████░░░░░░ 23%
 | 21-02 | Proceed to WR/TE after RB baseline | RB avg R² 0.362 similar to QB 0.355; workload metrics strong (carries 0.633); primary fantasy stats performing well |
 | 21-02 | RB workload more predictable than production | carries (R² 0.633) significantly outperforms yards/TDs; game script features (Vegas lines) likely driving prediction |
 | 21-02 | Accept TD model performance for now | rushing_tds (0.291) and receiving_tds (0.209) reasonable given low-frequency nature; red zone features needed for improvement (future phase) |
+| 21-04 | K models outperform skill positions | K avg R² ~0.47 surpasses QB (0.355) and RB (0.362) - opposite of Phase 13-08 expectation "K/DEF lower accuracy"; weather features likely provide asymmetric value |
+| 21-04 | Weather feature asymmetry across positions | High value for K (wind/cold directly affect kicking), moderate for QB/RB (shifts pass-run balance), low for DEF (affects both sides equally) |
+| 21-04 | DEF models perform as expected | DEF avg R² ~0.30 confirms inherent unpredictability of opponent-dependent, high-variance defensive stats |
+| 21-04 | K more predictable than DEF | K workload (fg_att) driven by team offense vs DEF production depends on opponent mistakes (0.47 vs 0.30 avg R²) |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -200,6 +204,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Phase 21-02 complete (RB models trained with 40-feature set)
+Stopped at: Phase 21-04 complete (K/DEF models trained with 40-feature set)
 Resume file: None
-Next action: Ready for Phase 21-03 (WR/TE model retraining with expanded feature set)
+Next action: Awaiting Phase 21-03 completion (WR/TE models in parallel execution), then Phase 21 closure
