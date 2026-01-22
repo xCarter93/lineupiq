@@ -134,13 +134,18 @@ Plans:
 
 #### Phase 21: Position-Specific Tuning
 
-**Goal**: Deep hyperparameter optimization for each position (QB, RB, WR, TE, K, DEF) with position-specific feature sets
+**Goal**: Retrain all ML models with Phase 20 expanded feature set (40 features) - position-by-position analysis and comparison
 **Depends on**: Phase 20
-**Research**: Unlikely (extends existing Optuna tuning patterns)
-**Plans**: TBD
+**Research**: Complete (21-CONTEXT.md)
+**Plans**: 3/4 complete
 
 Plans:
-- [ ] 21-01: TBD
+- [x] 21-01: QB models with 40-feature set — completed 2026-01-22
+- [x] 21-02: RB models with 40-feature set — completed 2026-01-22
+- [ ] 21-03: WR/TE models with 40-feature set — in progress
+- [x] 21-04: K/DEF models with 40-feature set — completed 2026-01-22
+
+**Outcome (partial)**: QB (avg R² 0.355), RB (avg R² 0.362), K (avg R² ~0.47), DEF (avg R² ~0.30) models retrained with expanded features. K models surprisingly outperform skill positions (likely due to weather features). DEF models struggle as expected (opponent-dependent stats). Awaiting WR/TE completion for final comparison.
 
 #### Phase 22: Multi-Player Comparison UI
 
@@ -212,7 +217,7 @@ Plans:
 | 19.2. Improve Model Confidence | v1.2 | 3/3 | Complete | 2026-01-20 |
 | 19.2.1. Different Players Same Stats | v1.2 | 2/2 | Complete | 2026-01-20 |
 | 20. Advanced Features | v1.2 | 3/3 | Complete | 2026-01-21 |
-| 21. Position Tuning | v1.2 | 0/? | Not started | - |
+| 21. Position Tuning | v1.2 | 3/4 | In progress | - |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
 | 23. Season-Long View | v1.2 | 0/? | Not started | - |
 | 24. Real-Time Updates | v1.2 | 0/? | Not started | - |
@@ -220,4 +225,4 @@ Plans:
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 20 complete, Phase 21 (Position-Specific Tuning) ready to plan
+**Project Status:** v1.2 Platform Maturity — Phase 21 (Position-Specific Tuning) in progress - 3/4 plans complete (awaiting WR/TE)
