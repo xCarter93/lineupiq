@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 20 of 25 (Performance Optimization)
-Plan: Ready to plan
-Status: Ready
-Last activity: 2026-01-20 - Phase 19.2.1 complete (player-specific prediction bug fixed)
+Phase: 20 of 25 (Advanced Features)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-21 - Completed 20-01-PLAN.md (detailed weather features)
 
-Progress: ███░░░░░░░ 20%
+Progress: ███░░░░░░░ 21%
 
 ## Performance Metrics
 
@@ -155,6 +155,10 @@ Progress: ███░░░░░░░ 20%
 | 19.2-03 | Updated ModelConfidence tooltip to explain R²-based accuracy | Tooltip shows "variance explained by the model" to help users understand R²-based metric |
 | 19.2.1-01 | Root cause: window parameter mismatch (3 vs 5) | Models trained with roll5 features, API computes roll3; dict.update() doesn't overwrite → all players use defaults |
 | 19.2.1-02 | Fixed window parameter in roster.py (3→5) | Updated _compute_rolling_stats_for_player and _compute_volatility_for_player to window=5; enables player-specific predictions |
+| 20-01 | Visual Crossing Weather API with free tier | 1,000 records/day sufficient for training data; 50+ years historical data |
+| 20-01 | Research-backed weather thresholds | <25°F extreme cold, <32°F freezing, >85°F extreme heat, >=15mph high wind based on NFL performance research |
+| 20-01 | Dome games set to neutral weather values | 72°F, 0 wind, no precip prevents noise from irrelevant outdoor weather |
+| 20-01 | Graceful degradation without API key | Feature pipeline skips detailed weather if VISUAL_CROSSING_API_KEY missing |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -178,7 +182,7 @@ None
 
 ## Session Continuity
 
-Last session: 2026-01-20
-Stopped at: Phase 19.2.1 complete (player-specific prediction bug fixed)
+Last session: 2026-01-21
+Stopped at: Completed 20-01-PLAN.md (detailed weather features)
 Resume file: None
-Next action: Ready for Phase 20 (Performance Optimization)
+Next action: Ready for 20-02-PLAN.md (injury features)
