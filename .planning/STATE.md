@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 20 of 25 (Advanced Features)
-Plan: 3 of 3 in current phase
+Phase: 21 of 25 (Position-Specific Tuning)
+Plan: 1 of 6 in current phase
 Status: Complete
-Last activity: 2026-01-21 - Completed 20-03-PLAN.md (matchup features with Vegas lines)
+Last activity: 2026-01-22 - Completed 21-01-PLAN.md (QB models with 40-feature set)
 
-Progress: ████░░░░░░ 22%
+Progress: ████░░░░░░ 23%
 
 ## Performance Metrics
 
@@ -169,6 +169,10 @@ Progress: ████░░░░░░ 22%
 | 20-03 | Neutral fills for pre-2020 games | home_spread=0.0 (neutral), total_points=45.0 (NFL average) when odds unavailable |
 | 20-03 | Average spreads/totals across bookmakers | Market consensus approach reduces single-source bias |
 | 20-03 | Divisional flag independent of API key | Uses nflreadpy teams data; works without ODDS_API_KEY |
+| 21-01 | Position-by-position tuning approach | Train QB first (highest fantasy impact), analyze before proceeding; enables understanding feature impact per position |
+| 21-01 | Archive models before major retraining | Created models_archive/phase20_pre_tuning/ with 31 models for rollback if Phase 21 degrades performance |
+| 21-01 | Proceed to RB after QB baseline | QB R² range 0.186-0.485 acceptable for NFL prediction; key fantasy stats performing well (passing_yards 0.485, rushing_yards 0.447) |
+| 21-01 | Document Phase 21 baselines | First training with 40 features; current metrics serve as baseline for future position comparisons |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -192,7 +196,7 @@ None
 
 ## Session Continuity
 
-Last session: 2026-01-21
-Stopped at: Phase 20 complete (advanced features: weather, injury, matchup)
+Last session: 2026-01-22
+Stopped at: Phase 21-01 complete (QB models trained with 40-feature set)
 Resume file: None
-Next action: Ready for Phase 21 (model retraining with expanded feature set)
+Next action: Ready for Phase 21-02 (RB model retraining with expanded feature set)
