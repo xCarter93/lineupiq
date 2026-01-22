@@ -137,15 +137,15 @@ Plans:
 **Goal**: Retrain all ML models with Phase 20 expanded feature set (40 features) - position-by-position analysis and comparison
 **Depends on**: Phase 20
 **Research**: Complete (21-CONTEXT.md)
-**Plans**: 3/4 complete
+**Plans**: 4/4 complete
 
 Plans:
 - [x] 21-01: QB models with 40-feature set — completed 2026-01-22
 - [x] 21-02: RB models with 40-feature set — completed 2026-01-22
-- [ ] 21-03: WR/TE models with 40-feature set — in progress
+- [x] 21-03: WR/TE models with 40-feature set — completed 2026-01-22
 - [x] 21-04: K/DEF models with 40-feature set — completed 2026-01-22
 
-**Outcome (partial)**: QB (avg R² 0.355), RB (avg R² 0.362), K (avg R² ~0.47), DEF (avg R² ~0.30) models retrained with expanded features. K models surprisingly outperform skill positions (likely due to weather features). DEF models struggle as expected (opponent-dependent stats). Awaiting WR/TE completion for final comparison.
+**Outcome**: All 32 models retrained with 40-feature set. Cross-position comparison reveals predictability hierarchy: K (~0.47) > TE (0.367) > RB (0.362) > QB (0.355) > DEF (~0.30) > WR (0.274). K models surprisingly outperform all skill positions (weather features directly affect kicking). TE more predictable than WR (usage consistency vs coverage variance). Volume metrics (receptions, carries, fg_att) consistently outperform production metrics (yards, TDs) across all positions.
 
 #### Phase 22: Multi-Player Comparison UI
 
@@ -217,7 +217,7 @@ Plans:
 | 19.2. Improve Model Confidence | v1.2 | 3/3 | Complete | 2026-01-20 |
 | 19.2.1. Different Players Same Stats | v1.2 | 2/2 | Complete | 2026-01-20 |
 | 20. Advanced Features | v1.2 | 3/3 | Complete | 2026-01-21 |
-| 21. Position Tuning | v1.2 | 3/4 | In progress | - |
+| 21. Position Tuning | v1.2 | 4/4 | Complete | 2026-01-22 |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
 | 23. Season-Long View | v1.2 | 0/? | Not started | - |
 | 24. Real-Time Updates | v1.2 | 0/? | Not started | - |
@@ -225,4 +225,4 @@ Plans:
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 21 (Position-Specific Tuning) in progress - 3/4 plans complete (awaiting WR/TE)
+**Project Status:** v1.2 Platform Maturity — Phase 21 complete, Phase 22 (Multi-Player Comparison UI) ready to plan
