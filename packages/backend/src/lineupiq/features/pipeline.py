@@ -45,10 +45,14 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     4. Add team strength features (offensive points, yards, plays)
     5. Add volatility features (std, CV for key stats)
     6. Add detailed weather features (temp bins, wind thresholds, precipitation)
-    7. Add matchup features (Vegas spreads/totals, divisional games)
+    7. Add injury features (severity, on_injury_report) - Phase 20
+    8. Add matchup features (Vegas spreads/totals, divisional games)
 
     Rolling window expanded from 3 to 5 games (Phase 19.1) to better capture
     recent performance trends, especially for volatile stats like touchdowns.
+
+    Injury features (Phase 20-02) capture 8-10% production impact from injury
+    designations (Out, Doubtful, Questionable, Probable).
 
     Vegas lines (Phase 20-03) provide market efficiency signal - spreads/totals
     capture expected team performance. Research shows home field advantage
@@ -66,6 +70,7 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
         - Team strength (team_points_roll5, team_yards_roll5, team_plays_roll5)
         - Volatility metrics (passing_yards_std5, rushing_yards_cv5, etc.)
         - Weather features (extreme_cold, freezing, high_wind, has_precip, etc.)
+        - Injury features (injury_severity 0.0-1.0, on_injury_report 0/1)
         - Matchup features (home_spread, total_points, vegas_strength_diff, home_favored, is_divisional)
         - Game context (is_home, opponent, week, season)
 
@@ -74,6 +79,8 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
         >>> "passing_yards_roll5" in df.columns
         True
         >>> "opp_pass_defense_strength" in df.columns
+        True
+        >>> "injury_severity" in df.columns
         True
     """
     logger.info(f"Building features for seasons {seasons} with rolling_window={rolling_window}")
@@ -159,8 +166,15 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     # Count total weather features (existing + detailed)
     total_weather_cols = len(existing_weather_cols) + len(detailed_weather_cols)
 
-    # Step 7: Add matchup features (Vegas lines, divisional games)
-    logger.info("Step 7: Adding matchup features...")
+    # Step 7: Add injury features (Phase 20-02)
+    logger.info("Step 7: Adding injury features...")
+    injuries_df = fetch_injuries(seasons)
+    df = engineer_injury_features(df, injuries_df)
+    injury_cols = ["injury_severity", "on_injury_report"]
+    logger.info(f"Added {len(injury_cols)} injury columns")
+
+    # Step 8: Add matchup features (Vegas lines, divisional games)
+    logger.info("Step 8: Adding matchup features...")
     # Check if ODDS_API_KEY exists
     odds_api_key = os.getenv("ODDS_API_KEY")
     if odds_api_key:
@@ -238,7 +252,7 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
         f"Feature types: {len(rolling_cols)} rolling, {len(opp_cols)} opponent, "
         f"{len(team_cols)} team, {len(vol_cols)} volatility, "
         f"{total_weather_cols} weather ({len(detailed_weather_cols)} detailed), "
-        f"{len(matchup_cols)} matchup"
+        f"{len(injury_cols)} injury, {len(matchup_cols)} matchup"
     )
 
     return df
@@ -304,6 +318,12 @@ def get_feature_columns() -> list[str]:
         "precip_amount",
     ]
 
+    # Injury features (Phase 20-02: injury designation impact)
+    injury_features = [
+        "injury_severity",
+        "on_injury_report",
+    ]
+
     # Matchup features (Phase 20-03: Vegas lines and divisional games)
     matchup_features = [
         "home_spread",
@@ -325,6 +345,7 @@ def get_feature_columns() -> list[str]:
         + team_features
         + volatility_features
         + weather_features
+        + injury_features
         + matchup_features
         + context_features
     )

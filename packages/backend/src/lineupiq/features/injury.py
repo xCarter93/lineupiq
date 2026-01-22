@@ -34,7 +34,7 @@ def engineer_injury_features(
 
     Args:
         player_stats: Player statistics DataFrame with columns:
-            - gsis_id: Player identifier
+            - player_id: Player identifier (gsis_id from nflreadpy)
             - season: Season year
             - week: Week number
         injuries: Injury reports DataFrame with columns:
@@ -62,12 +62,15 @@ def engineer_injury_features(
         f"Engineering injury features for {len(player_stats)} player-week records"
     )
 
+    # Rename gsis_id to player_id in injuries to match player_stats schema
+    injuries = injuries.rename({"gsis_id": "player_id"})
+
     # For multiple injury reports per player-week (updated during week),
     # take most recent by date_modified
     if "date_modified" in injuries.columns:
         injuries_final = (
             injuries.sort("date_modified")
-            .group_by(["gsis_id", "season", "week"])
+            .group_by(["player_id", "season", "week"])
             .last()
         )
         logger.info(
@@ -76,7 +79,7 @@ def engineer_injury_features(
         )
     else:
         # Fallback if date_modified not available
-        injuries_final = injuries.unique(["gsis_id", "season", "week"])
+        injuries_final = injuries.unique(["player_id", "season", "week"])
         logger.info(
             f"Using {len(injuries_final)} unique injury records "
             f"(no date_modified available)"
@@ -99,7 +102,7 @@ def engineer_injury_features(
 
     # Select only needed columns for join
     injury_features = injuries_with_severity.select([
-        "gsis_id",
+        "player_id",
         "season",
         "week",
         "injury_severity",
@@ -108,7 +111,7 @@ def engineer_injury_features(
 
     # Left join to player stats - players without injuries get nulls
     df = player_stats.join(
-        injury_features, on=["gsis_id", "season", "week"], how="left"
+        injury_features, on=["player_id", "season", "week"], how="left"
     )
 
     # Fill nulls with zeros (no injury report = 0.0 severity, 0 flag)
