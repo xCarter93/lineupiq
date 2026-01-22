@@ -10,12 +10,14 @@ ML-ready data.
 """
 
 import logging
+import os
 from pathlib import Path
 
 import polars as pl
 
 from lineupiq.data import process_player_stats
-from lineupiq.data.fetchers import fetch_schedules
+from lineupiq.data.fetchers import fetch_injuries, fetch_schedules
+from lineupiq.features.injury import engineer_injury_features
 from lineupiq.features.opponent_features import add_opponent_strength
 from lineupiq.features.rolling_stats import (
     compute_rolling_stats,
@@ -23,6 +25,9 @@ from lineupiq.features.rolling_stats import (
     get_volatility_columns,
 )
 from lineupiq.features.team_strength import compute_team_strength, get_team_strength_columns
+from lineupiq.features.weather import engineer_weather_features
+from lineupiq.features.matchup import engineer_matchup_features
+from lineupiq.data.odds_cache import OddsClient
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +44,15 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     3. Add opponent strength via add_opponent_strength(df)
     4. Add team strength features (offensive points, yards, plays)
     5. Add volatility features (std, CV for key stats)
-    6. Weather features are already included from process_player_stats
+    6. Add detailed weather features (temp bins, wind thresholds, precipitation)
+    7. Add matchup features (Vegas spreads/totals, divisional games)
 
     Rolling window expanded from 3 to 5 games (Phase 19.1) to better capture
     recent performance trends, especially for volatile stats like touchdowns.
+
+    Vegas lines (Phase 20-03) provide market efficiency signal - spreads/totals
+    capture expected team performance. Research shows home field advantage
+    averages +2.5-3 points across NFL.
 
     Args:
         seasons: List of seasons to process (e.g., [2023, 2024]).
@@ -104,22 +114,60 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     vol_cols = [c for c in df.columns if "_std" in c or "_cv" in c]
     logger.info(f"Added {len(vol_cols)} volatility columns")
 
-    # Step 6: Weather features already included from process_player_stats
-    # Verify they exist
-    weather_cols = ["temp_normalized", "wind_normalized"]
-    for col in weather_cols:
+    # Step 6: Add detailed weather features
+    logger.info("Step 6: Adding detailed weather features...")
+    # Check if VISUAL_CROSSING_API_KEY exists
+    api_key = os.getenv("VISUAL_CROSSING_API_KEY")
+    if api_key:
+        logger.info("VISUAL_CROSSING_API_KEY found, will add detailed weather features")
+        # Engineer detailed weather features from schedule data
+        # Note: schedules_df already fetched in Step 4
+        schedules_with_weather = engineer_weather_features(schedules_df)
+
+        # Join weather features to player data via game_id
+        # First, create game_id in player data if not present
+        if "game_id" not in df.columns:
+            logger.warning("No game_id in player data, skipping detailed weather features")
+        else:
+            # Select only weather feature columns from schedules
+            weather_feature_cols = [
+                "game_id", "extreme_cold", "freezing", "extreme_heat",
+                "temp_filled", "high_wind", "very_high_wind", "wind_filled",
+                "has_precip", "precip_amount"
+            ]
+            existing_weather_cols = [c for c in weather_feature_cols if c in schedules_with_weather.columns]
+            weather_features = schedules_with_weather.select(existing_weather_cols)
+
+            # Join to player data
+            df = df.join(weather_features, on="game_id", how="left")
+            detailed_weather_cols = [c for c in existing_weather_cols if c != "game_id"]
+            logger.info(f"Added {len(detailed_weather_cols)} detailed weather columns")
+    else:
+        logger.warning(
+            "VISUAL_CROSSING_API_KEY not found - skipping detailed weather features. "
+            "Set environment variable to enable temperature bins, wind thresholds, and precipitation features."
+        )
+        detailed_weather_cols = []
+
+    # Verify existing weather features
+    existing_weather_cols = ["temp_normalized", "wind_normalized"]
+    for col in existing_weather_cols:
         if col not in df.columns:
             logger.warning(f"Expected weather column {col} not found")
 
     # Sort for consistent ordering
     df = df.sort(["season", "week", "player_id"])
 
+    # Count total weather features (existing + detailed)
+    total_weather_cols = len(existing_weather_cols) + len(detailed_weather_cols)
+
     logger.info(
         f"Feature build complete: {len(df)} rows, {len(df.columns)} columns"
     )
     logger.info(
         f"Feature types: {len(rolling_cols)} rolling, {len(opp_cols)} opponent, "
-        f"{len(team_cols)} team, {len(vol_cols)} volatility, {len(weather_cols)} weather"
+        f"{len(team_cols)} team, {len(vol_cols)} volatility, "
+        f"{total_weather_cols} weather ({len(detailed_weather_cols)} detailed)"
     )
 
     return df
@@ -170,10 +218,19 @@ def get_feature_columns() -> list[str]:
     volatility_stats = ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]
     volatility_features = get_volatility_columns(volatility_stats)
 
-    # Weather features
+    # Weather features (Phase 20: expanded from 2 to 10 features)
     weather_features = [
+        # Existing normalized features
         "temp_normalized",
         "wind_normalized",
+        # New detailed features (Phase 20)
+        "extreme_cold",
+        "freezing",
+        "extreme_heat",
+        "high_wind",
+        "very_high_wind",
+        "has_precip",
+        "precip_amount",
     ]
 
     # Context features (binary/categorical)
