@@ -243,9 +243,22 @@ def _get_default_features(position: str, is_home: bool) -> dict[str, float | boo
         "team_points_roll5": 22.0,
         "team_yards_roll5": 340.0,
         "team_plays_roll5": 65.0,
-        # Weather
+        # Weather features (Phase 20) - neutral defaults
         "temp_normalized": 0.5,
         "wind_normalized": 0.2,
+        "extreme_cold": False,
+        "freezing": False,
+        "extreme_heat": False,
+        "high_wind": False,
+        "very_high_wind": False,
+        "has_precip": False,
+        "precip_amount": 0.0,
+        # Matchup features (Phase 20) - neutral defaults
+        "home_spread": 0.0,
+        "total_points": 45.0,
+        "vegas_strength_diff": 0.0,
+        "home_favored": False,
+        "is_divisional": False,
         # Context
         "is_home": is_home,
         "is_dome": False,
@@ -428,14 +441,29 @@ async def get_player_features(
         opponent_features = _get_opponent_strength(opponent_team)
         team_features = _get_team_strength(team)
 
-        # Combine all features
+        # Combine all features (40 features total - Phase 20+21)
         features: dict[str, float | bool] = {
             **rolling_stats,
             **volatility,
             **opponent_features,
             **team_features,
-            "temp_normalized": 0.5,  # Neutral weather
+            # Weather features (Phase 20) - neutral defaults for real-time predictions
+            "temp_normalized": 0.5,
             "wind_normalized": 0.2,
+            "extreme_cold": False,
+            "freezing": False,
+            "extreme_heat": False,
+            "high_wind": False,
+            "very_high_wind": False,
+            "has_precip": False,
+            "precip_amount": 0.0,
+            # Matchup features (Phase 20) - neutral defaults for real-time predictions
+            "home_spread": 0.0,  # Pick'em
+            "total_points": 45.0,  # NFL average
+            "vegas_strength_diff": 0.0,  # Even matchup
+            "home_favored": False,
+            "is_divisional": False,
+            # Context features
             "is_home": is_home,
             "is_dome": False,
         }
