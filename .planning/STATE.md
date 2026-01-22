@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 20 of 25 (Advanced Features)
-Plan: 1 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-21 - Completed 20-01-PLAN.md (detailed weather features)
+Plan: 3 of 3 in current phase
+Status: Complete
+Last activity: 2026-01-21 - Completed 20-03-PLAN.md (matchup features with Vegas lines)
 
-Progress: ███░░░░░░░ 21%
+Progress: ████░░░░░░ 22%
 
 ## Performance Metrics
 
@@ -159,6 +159,11 @@ Progress: ███░░░░░░░ 21%
 | 20-01 | Research-backed weather thresholds | <25°F extreme cold, <32°F freezing, >85°F extreme heat, >=15mph high wind based on NFL performance research |
 | 20-01 | Dome games set to neutral weather values | 72°F, 0 wind, no precip prevents noise from irrelevant outdoor weather |
 | 20-01 | Graceful degradation without API key | Feature pipeline skips detailed weather if VISUAL_CROSSING_API_KEY missing |
+| 20-03 | The Odds API with free tier (500 requests/month) | Sufficient for prototyping; historical data back to mid-2020 |
+| 20-03 | 7-day cache expiration for Vegas lines | Betting lines can shift during week; balances freshness with API efficiency |
+| 20-03 | Neutral fills for pre-2020 games | home_spread=0.0 (neutral), total_points=45.0 (NFL average) when odds unavailable |
+| 20-03 | Average spreads/totals across bookmakers | Market consensus approach reduces single-source bias |
+| 20-03 | Divisional flag independent of API key | Uses nflreadpy teams data; works without ODDS_API_KEY |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -183,6 +188,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-21
-Stopped at: Completed 20-01-PLAN.md (detailed weather features)
+Stopped at: Phase 20 complete (advanced features: weather, injury, matchup)
 Resume file: None
-Next action: Ready for 20-02-PLAN.md (injury features)
+Next action: Ready for Phase 21 (model retraining with expanded feature set)
