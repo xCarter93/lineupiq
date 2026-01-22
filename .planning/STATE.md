@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 
 ## Current Position
 
-Phase: 21 of 25 (Position-Specific Tuning)
+Phase: 21.1 of 25 (Revamp Prediction Visualizations)
 Plan: 3 of 4 in current phase
 Status: Complete
-Last activity: 2026-01-22 - Completed 21-03-PLAN.md (WR/TE models with 40-feature set)
+Last activity: 2026-01-22 - Completed 21.1-03-PLAN.md (Player repository UI with position filtering and search)
 
 Progress: █████░░░░░ 25%
 
@@ -184,6 +184,11 @@ Progress: █████░░░░░ 25%
 | 21-04 | Weather feature asymmetry across positions | High value for K (wind/cold directly affect kicking), moderate for QB/RB (shifts pass-run balance), low for DEF (affects both sides equally) |
 | 21-04 | DEF models perform as expected | DEF avg R² ~0.30 confirms inherent unpredictability of opponent-dependent, high-variance defensive stats |
 | 21-04 | K more predictable than DEF | K workload (fg_att) driven by team offense vs DEF production depends on opponent mistakes (0.47 vs 0.30 avg R²) |
+| 21.1-03 | Used api.players.list for player data | Convex query returns all players with playerId, name, position, team fields; adapted plan code from non-existent listPlayers |
+| 21.1-03 | Plain img tag for ESPN headshots | Matches existing pattern (ExplainabilityPanel); simpler than Next/Image, no domain config needed |
+| 21.1-03 | Client-side filtering with useMemo | Position and search filters computed efficiently; all filtering happens in browser for instant response |
+| 21.1-03 | Responsive 1/2/3/4 column grid | Mobile-first design: 1 col mobile, 2 tablet, 3 desktop, 4 wide screens; scales to all players in database |
+| 21.1-03 | Console logging for player clicks | Prepared for Plan 04 Sheet drawer integration; onClick handlers ready to trigger drawer |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
