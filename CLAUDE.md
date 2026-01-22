@@ -62,7 +62,7 @@ uv run python scripts/train_all.py --positions QB RB WR TE
 uv run python scripts/train_all.py --seasons 2020 2021 2022 2023 2024 2025 --trials 50
 ```
 
-**See also:** `packages/backend/TRAINING.md`, `packages/backend/SEASON_STRATEGY.md`
+**See also:** `packages/backend/TRAINING.md`, `packages/backend/SEASON_STRATEGY.md`, `packages/backend/FEATURE_SCHEMA_SYNC.md`
 
 ## Backend Architecture
 
@@ -106,6 +106,7 @@ Trained models are stored in `packages/backend/models/` as `.joblib` files (32 t
 - **5-game rolling window** - Captures recent trends without over-weighting distant games
 - **2022-2025 training data** - 4 recent years, excludes COVID-era noise (2020-2021)
 - **All fantasy positions** - QB, RB, WR, TE, K, DEF (32 models total)
+- **⚠️ Feature schema synchronization** - When adding/removing features, update 4 files (backend prediction schema, backend explainability schema, backend roster endpoint, frontend TypeScript). See `packages/backend/FEATURE_SCHEMA_SYNC.md` for details.
 
 ## Project Planning
 
