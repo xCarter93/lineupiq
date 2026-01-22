@@ -207,14 +207,10 @@ def _train_position_models(
         from lineupiq.models.rb import prepare_rb_data
 
         X, y_dict = prepare_rb_data(df)
-    elif position == "WR":
-        from lineupiq.models.receiver import prepare_wr_data
+    elif position in ["WR", "TE"]:
+        from lineupiq.models.receiver import prepare_receiver_data
 
-        X, y_dict = prepare_wr_data(df)
-    elif position == "TE":
-        from lineupiq.models.receiver import prepare_te_data
-
-        X, y_dict = prepare_te_data(df)
+        X, y_dict = prepare_receiver_data(df, position)
     else:
         raise ValueError(f"Unknown position: {position}")
 
