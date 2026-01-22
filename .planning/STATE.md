@@ -196,6 +196,7 @@ Progress: █████░░░░░ 25%
 - Phase 19.1 inserted after Phase 19: Re-evaluate recent performance metrics (URGENT)
 - Phase 19.2 inserted after Phase 19.1: Improve model confidence & accuracy - address 49% accuracy issue (URGENT)
 - Phase 19.2.1 inserted after Phase 19.2: Different players showing same predicted stats - fix player-specific feature computation (URGENT)
+- Phase 21.1 inserted after Phase 21: Revamp Prediction Visualizations - improve prediction display and user experience (URGENT)
 
 ### Pending Todos
 

@@ -28,20 +28,19 @@ export function useModelMetrics(): UseModelMetricsResult {
   // API fallback state
   const [apiData, setApiData] = useState<ValidationResponse | null>(null);
   const [apiError, setApiError] = useState<Error | null>(null);
-  const [apiLoading, setApiLoading] = useState(false);
 
   // Fetch from API if Convex has no data
+  // The async operation manages state transitions via promise callbacks
   useEffect(() => {
     if (convexMetrics === undefined) return; // Still loading from Convex
+    if (convexMetrics !== null) return; // Have Convex data
+    if (apiData || apiError) return; // Already have API result
 
-    if (convexMetrics === null && !apiData && !apiLoading) {
-      setApiLoading(true);
-      fetchValidationMetrics(2025)
-        .then(setApiData)
-        .catch(setApiError)
-        .finally(() => setApiLoading(false));
-    }
-  }, [convexMetrics, apiData, apiLoading]);
+    // Start fetch - state updates happen in callbacks
+    void fetchValidationMetrics(2025)
+      .then(setApiData)
+      .catch(setApiError);
+  }, [convexMetrics, apiData, apiError]);
 
   // Determine overall metrics source
   const overallAccuracy =
@@ -70,10 +69,15 @@ export function useModelMetrics(): UseModelMetricsResult {
     return null;
   };
 
+  // Derive loading state: waiting for Convex, or Convex is null but no API response yet
+  const isLoading =
+    convexMetrics === undefined ||
+    (convexMetrics === null && !apiData && !apiError);
+
   return {
     overallAccuracy,
     overallConfidence,
-    isLoading: convexMetrics === undefined || apiLoading,
+    isLoading,
     error: apiError,
     getModelAccuracy,
   };

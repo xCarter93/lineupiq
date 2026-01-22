@@ -147,6 +147,19 @@ Plans:
 
 **Outcome**: All 32 models retrained with 40-feature set. Cross-position comparison reveals predictability hierarchy: K (~0.47) > TE (0.367) > RB (0.362) > QB (0.355) > DEF (~0.30) > WR (0.274). K models surprisingly outperform all skill positions (weather features directly affect kicking). TE more predictable than WR (usage consistency vs coverage variance). Volume metrics (receptions, carries, fg_att) consistently outperform production metrics (yards, TDs) across all positions.
 
+#### Phase 21.1: Revamp Prediction Visualizations (INSERTED)
+
+**Goal**: [Urgent work - to be planned]
+**Depends on**: Phase 21
+**Research**: Unlikely (UI improvements)
+**Plans**: 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 21.1 to break down)
+
+**Details**:
+[To be added during planning]
+
 #### Phase 22: Multi-Player Comparison UI
 
 **Goal**: Build side-by-side player comparison interface for lineup decision support
@@ -218,6 +231,7 @@ Plans:
 | 19.2.1. Different Players Same Stats | v1.2 | 2/2 | Complete | 2026-01-20 |
 | 20. Advanced Features | v1.2 | 3/3 | Complete | 2026-01-21 |
 | 21. Position Tuning | v1.2 | 4/4 | Complete | 2026-01-22 |
+| 21.1. Revamp Prediction Viz | v1.2 | 0/? | Not started | - |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
 | 23. Season-Long View | v1.2 | 0/? | Not started | - |
 | 24. Real-Time Updates | v1.2 | 0/? | Not started | - |
@@ -225,4 +239,4 @@ Plans:
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 21 complete, Phase 22 (Multi-Player Comparison UI) ready to plan
+**Project Status:** v1.2 Platform Maturity — Phase 21 complete, Phase 21.1 (Revamp Prediction Visualizations) ready to plan
