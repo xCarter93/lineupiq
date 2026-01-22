@@ -122,12 +122,15 @@ Plans:
 
 **Goal**: Expand feature engineering with weather data, injury reports, and matchup-specific signals
 **Depends on**: Phase 19.2.1
-**Research**: Likely (new API integrations)
-**Research topics**: Weather data APIs, injury report sources, integration patterns with nflreadpy pipeline
-**Plans**: TBD
+**Research**: Complete (20-RESEARCH.md)
+**Plans**: 3/3 complete
 
 Plans:
-- [ ] 20-01: TBD
+- [x] 20-01: Enhanced Weather Features (Visual Crossing API) — completed 2026-01-21
+- [x] 20-02: Injury Status Features (nflreadpy injury reports) — completed 2026-01-21
+- [x] 20-03: Vegas Lines & Matchup Features (The Odds API) — completed 2026-01-21
+
+**Outcome**: Added 16 new ML features (7 weather, 2 injury, 5 matchup). Visual Crossing and The Odds API integrated with caching/graceful degradation. Models ready for retraining with expanded feature set.
 
 #### Phase 21: Position-Specific Tuning
 
@@ -207,8 +210,8 @@ Plans:
 | 19. Ensemble Models | v1.2 | 4/4 | Complete | 2026-01-20 |
 | 19.1. Re-evaluate Performance | v1.2 | 3/3 | Complete | 2026-01-20 |
 | 19.2. Improve Model Confidence | v1.2 | 3/3 | Complete | 2026-01-20 |
-| 19.2.1. Different Players Same Stats | v1.2 | 0/? | Not started | - |
-| 20. Advanced Features | v1.2 | 0/? | Not started | - |
+| 19.2.1. Different Players Same Stats | v1.2 | 2/2 | Complete | 2026-01-20 |
+| 20. Advanced Features | v1.2 | 3/3 | Complete | 2026-01-21 |
 | 21. Position Tuning | v1.2 | 0/? | Not started | - |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
 | 23. Season-Long View | v1.2 | 0/? | Not started | - |
@@ -217,4 +220,4 @@ Plans:
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 19.2 complete, Phase 19.2.1 (URGENT) ready to plan
+**Project Status:** v1.2 Platform Maturity — Phase 20 complete, Phase 21 (Position-Specific Tuning) ready to plan
