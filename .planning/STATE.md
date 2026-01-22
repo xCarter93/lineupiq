@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 21 of 25 (Position-Specific Tuning)
-Plan: 1 of 6 in current phase
+Plan: 2 of 6 in current phase
 Status: Complete
-Last activity: 2026-01-22 - Completed 21-01-PLAN.md (QB models with 40-feature set)
+Last activity: 2026-01-22 - Completed 21-02-PLAN.md (RB models with 40-feature set)
 
 Progress: ████░░░░░░ 23%
 
@@ -173,6 +173,9 @@ Progress: ████░░░░░░ 23%
 | 21-01 | Archive models before major retraining | Created models_archive/phase20_pre_tuning/ with 31 models for rollback if Phase 21 degrades performance |
 | 21-01 | Proceed to RB after QB baseline | QB R² range 0.186-0.485 acceptable for NFL prediction; key fantasy stats performing well (passing_yards 0.485, rushing_yards 0.447) |
 | 21-01 | Document Phase 21 baselines | First training with 40 features; current metrics serve as baseline for future position comparisons |
+| 21-02 | Proceed to WR/TE after RB baseline | RB avg R² 0.362 similar to QB 0.355; workload metrics strong (carries 0.633); primary fantasy stats performing well |
+| 21-02 | RB workload more predictable than production | carries (R² 0.633) significantly outperforms yards/TDs; game script features (Vegas lines) likely driving prediction |
+| 21-02 | Accept TD model performance for now | rushing_tds (0.291) and receiving_tds (0.209) reasonable given low-frequency nature; red zone features needed for improvement (future phase) |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -197,6 +200,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Phase 21-01 complete (QB models trained with 40-feature set)
+Stopped at: Phase 21-02 complete (RB models trained with 40-feature set)
 Resume file: None
-Next action: Ready for Phase 21-02 (RB model retraining with expanded feature set)
+Next action: Ready for Phase 21-03 (WR/TE model retraining with expanded feature set)
