@@ -65,7 +65,8 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
         - Opponent strength (opp_pass_defense_strength, opp_rush_defense_strength)
         - Team strength (team_points_roll5, team_yards_roll5, team_plays_roll5)
         - Volatility metrics (passing_yards_std5, rushing_yards_cv5, etc.)
-        - Weather features (temp_normalized, wind_normalized, is_dome)
+        - Weather features (extreme_cold, freezing, high_wind, has_precip, etc.)
+        - Matchup features (home_spread, total_points, vegas_strength_diff, home_favored, is_divisional)
         - Game context (is_home, opponent, week, season)
 
     Example:
@@ -155,11 +156,80 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
         if col not in df.columns:
             logger.warning(f"Expected weather column {col} not found")
 
-    # Sort for consistent ordering
-    df = df.sort(["season", "week", "player_id"])
-
     # Count total weather features (existing + detailed)
     total_weather_cols = len(existing_weather_cols) + len(detailed_weather_cols)
+
+    # Step 7: Add matchup features (Vegas lines, divisional games)
+    logger.info("Step 7: Adding matchup features...")
+    # Check if ODDS_API_KEY exists
+    odds_api_key = os.getenv("ODDS_API_KEY")
+    if odds_api_key:
+        logger.info("ODDS_API_KEY found, will fetch Vegas spreads and totals")
+        try:
+            # Initialize Odds API client
+            odds_client = OddsClient(api_key=odds_api_key)
+
+            # Get unique game dates from schedules (already fetched in Step 4)
+            # The Odds API requires date format YYYY-MM-DD
+            if "gameday" in schedules_df.columns:
+                unique_dates = schedules_df.select("gameday").unique().sort("gameday")
+
+                # Fetch odds for each date
+                all_odds = []
+                for row in unique_dates.iter_rows(named=True):
+                    date_str = row["gameday"].strftime("%Y-%m-%d")
+                    try:
+                        games = odds_client.get_historical_odds(date_str)
+                        all_odds.extend(games)
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch odds for {date_str}: {e}")
+
+                # Parse odds into DataFrame
+                if all_odds:
+                    odds_df = odds_client.parse_odds(all_odds)
+                    logger.info(f"Fetched odds for {len(odds_df)} games")
+
+                    # Engineer matchup features with odds
+                    schedules_with_matchup = engineer_matchup_features(schedules_df, odds_df)
+                else:
+                    logger.warning("No odds data fetched, adding matchup features without Vegas lines")
+                    schedules_with_matchup = engineer_matchup_features(schedules_df, odds_df=None)
+            else:
+                logger.warning("No gameday column in schedules, skipping matchup features")
+                schedules_with_matchup = schedules_df
+        except Exception as e:
+            logger.error(f"Error fetching odds: {e}. Adding matchup features without Vegas lines.")
+            schedules_with_matchup = engineer_matchup_features(schedules_df, odds_df=None)
+    else:
+        logger.warning(
+            "ODDS_API_KEY not found - skipping Vegas features. "
+            "Set in .env for spreads/totals. Divisional flag will still be added."
+        )
+        # Still add divisional flag even without API key
+        schedules_with_matchup = engineer_matchup_features(schedules_df, odds_df=None)
+
+    # Join matchup features to player data via game_id
+    if "game_id" in df.columns and "game_id" in schedules_with_matchup.columns:
+        # Select matchup feature columns from schedules
+        matchup_feature_cols = ["game_id"]
+        if "home_spread" in schedules_with_matchup.columns:
+            matchup_feature_cols.extend(["home_spread", "total_points", "vegas_strength_diff", "home_favored"])
+        if "is_divisional" in schedules_with_matchup.columns:
+            matchup_feature_cols.append("is_divisional")
+
+        existing_matchup_cols = [c for c in matchup_feature_cols if c in schedules_with_matchup.columns]
+        matchup_features = schedules_with_matchup.select(existing_matchup_cols)
+
+        # Join to player data
+        df = df.join(matchup_features, on="game_id", how="left")
+        matchup_cols = [c for c in existing_matchup_cols if c != "game_id"]
+        logger.info(f"Added {len(matchup_cols)} matchup columns")
+    else:
+        logger.warning("No game_id in player data or schedules, skipping matchup features")
+        matchup_cols = []
+
+    # Sort for consistent ordering
+    df = df.sort(["season", "week", "player_id"])
 
     logger.info(
         f"Feature build complete: {len(df)} rows, {len(df.columns)} columns"
@@ -167,7 +237,8 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     logger.info(
         f"Feature types: {len(rolling_cols)} rolling, {len(opp_cols)} opponent, "
         f"{len(team_cols)} team, {len(vol_cols)} volatility, "
-        f"{total_weather_cols} weather ({len(detailed_weather_cols)} detailed)"
+        f"{total_weather_cols} weather ({len(detailed_weather_cols)} detailed), "
+        f"{len(matchup_cols)} matchup"
     )
 
     return df
@@ -233,6 +304,15 @@ def get_feature_columns() -> list[str]:
         "precip_amount",
     ]
 
+    # Matchup features (Phase 20-03: Vegas lines and divisional games)
+    matchup_features = [
+        "home_spread",
+        "total_points",
+        "vegas_strength_diff",
+        "home_favored",
+        "is_divisional",
+    ]
+
     # Context features (binary/categorical)
     context_features = [
         "is_home",
@@ -245,6 +325,7 @@ def get_feature_columns() -> list[str]:
         + team_features
         + volatility_features
         + weather_features
+        + matchup_features
         + context_features
     )
 

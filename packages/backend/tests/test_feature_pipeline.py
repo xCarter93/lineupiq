@@ -169,9 +169,9 @@ class TestBuildFeaturesWithWindow:
         roll5_cols = [c for c in df.columns if "_roll5" in c]
         assert len(roll5_cols) >= 6, f"Expected _roll5 columns, got {roll5_cols}"
 
-        # Should NOT have _roll5 columns
-        roll5_cols = [c for c in df.columns if "_roll5" in c]
-        assert len(roll5_cols) == 0, f"Should not have _roll5 columns with window=5: {roll5_cols}"
+        # Should NOT have _roll3 columns (old default)
+        roll3_cols = [c for c in df.columns if "_roll3" in c]
+        assert len(roll3_cols) == 0, f"Should not have _roll3 columns with window=5: {roll3_cols}"
 
 
 class TestSaveAndLoadFeatures:
