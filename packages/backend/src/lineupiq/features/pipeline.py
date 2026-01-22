@@ -192,11 +192,15 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
                 all_odds = []
                 for row in unique_dates.iter_rows(named=True):
                     gameday = row["gameday"]
-                    # Handle both datetime objects and string dates
+                    # Convert to string format YYYY-MM-DD
+                    # Handle: str, datetime.datetime, datetime.date, or polars date types
                     if isinstance(gameday, str):
                         date_str = gameday  # Already in string format
-                    else:
+                    elif hasattr(gameday, "strftime"):
                         date_str = gameday.strftime("%Y-%m-%d")  # Convert datetime to string
+                    else:
+                        date_str = str(gameday)  # Fallback: convert to string
+
                     try:
                         games = odds_client.get_historical_odds(date_str)
                         all_odds.extend(games)
