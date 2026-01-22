@@ -6,7 +6,7 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_PREDICTION_API_URL || "http://localhost:8000";
 
-// Feature types required by the prediction models (28 features)
+// Feature types required by the prediction models (40 features - Phase 20+21)
 export interface PredictionFeatures {
   // Rolling stats (8 features) - 5-game windows
   passing_yards_roll5: number;
@@ -36,9 +36,22 @@ export interface PredictionFeatures {
   receiving_yards_cv5: number;
   receptions_std5: number;
   receptions_cv5: number;
-  // Weather features (2 features)
+  // Weather features (9 features - Phase 20)
   temp_normalized: number;
   wind_normalized: number;
+  extreme_cold: boolean;
+  freezing: boolean;
+  extreme_heat: boolean;
+  high_wind: boolean;
+  very_high_wind: boolean;
+  has_precip: boolean;
+  precip_amount: number;
+  // Matchup features (5 features - Phase 20)
+  home_spread: number;
+  total_points: number;
+  vegas_strength_diff: number;
+  home_favored: boolean;
+  is_divisional: boolean;
   // Context features (2 features)
   is_home: boolean;
   is_dome: boolean;
@@ -92,9 +105,22 @@ export function createDefaultFeatures(
     team_points_roll5: 22.0,
     team_yards_roll5: 340.0,
     team_plays_roll5: 65.0,
-    // Weather
+    // Weather features (Phase 20) - neutral defaults
     temp_normalized: 0.6,
     wind_normalized: 0.2,
+    extreme_cold: false,
+    freezing: false,
+    extreme_heat: false,
+    high_wind: false,
+    very_high_wind: false,
+    has_precip: false,
+    precip_amount: 0.0,
+    // Matchup features (Phase 20) - neutral defaults
+    home_spread: 0.0,
+    total_points: 45.0,
+    vegas_strength_diff: 0.0,
+    home_favored: false,
+    is_divisional: false,
     // Context
     is_home: isHome,
     is_dome: false,
