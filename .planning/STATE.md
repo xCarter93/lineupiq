@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 21.1 of 25 (Revamp Prediction Visualizations)
-Plan: 2 of 4 in current phase
+Plan: 4 of 4 in current phase
 Status: Complete
-Last activity: 2026-01-22 - Completed 21.1-02-PLAN.md (Convex storage for validation predictions)
+Last activity: 2026-01-22 - Completed 21.1-04-PLAN.md (Player drawer with 2025 validation visualizations)
 
 Progress: █████░░░░░ 25%
 
@@ -197,6 +197,11 @@ Progress: █████░░░░░ 25%
 | 21.1-02 | Batch size 100 for Convex upload | Safe batch size balances API throughput with Convex transaction limits; consistent with playerHistory pattern |
 | 21.1-02 | Transform field names in upload script | JSON snake_case → Convex camelCase transformation in Python upload script; keeps TypeScript schema clean |
 | 21.1-02 | Compute error/absoluteError in mutation | Calculated during upsert (not stored in JSON); reduces duplication and ensures consistency |
+| 21.1-04 | Sheet drawer from shadcn/ui | Slide-in drawer from right with mobile-friendly UX; responsive 80-90vw width for visualization |
+| 21.1-04 | ValidationChart with MAE/R²/accuracy badges | Line chart shows predicted (blue) vs actual (green) with performance metrics; week-by-week comparison |
+| 21.1-04 | Three-tab PlayerDrawer | 2025 Validation (primary), History (reused component), Stats (future); lazy-loaded PlayerHistory for performance |
+| 21.1-04 | Image error state with initial fallback | Prevents headshot flickering; shows player's first letter on load failure; improves UX stability |
+| 21.1-04 | Debug logging for validation troubleshooting | Console logs in hook and component; helps diagnose empty state issues; production can be removed later |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -222,6 +227,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Phase 21.1-02 complete (Convex storage for validation predictions)
+Stopped at: Phase 21.1-04 complete (Player drawer with 2025 validation visualizations)
 Resume file: None
-Next action: Phase 21.1 in progress (3/4 plans complete) - ready for Plan 21.1-04 (player drawer with validation data)
+Next action: Phase 21.1 complete (4/4 plans done) - ready to proceed to Phase 22 per ROADMAP.md
