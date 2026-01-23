@@ -8,12 +8,14 @@ interface PlayerCardProps {
   playerName: string;
   position: string;
   team: string;
+  headshotUrl?: string;
   onClick: () => void;
 }
 
-export function PlayerCard({ playerId, playerName, position, team, onClick }: PlayerCardProps) {
+export function PlayerCard({ playerId, playerName, position, team, headshotUrl, onClick }: PlayerCardProps) {
   const [imageError, setImageError] = useState(false);
-  const headshotUrl = `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${playerId}.png&w=96&h=70`;
+  // Use headshotUrl from Convex if available, otherwise fall back to ESPN URL
+  const imageUrl = headshotUrl || `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${playerId}.png&w=96&h=70`;
 
   return (
     <button
@@ -29,7 +31,7 @@ export function PlayerCard({ playerId, playerName, position, team, onClick }: Pl
             </div>
           ) : (
             <img
-              src={headshotUrl}
+              src={imageUrl}
               alt={playerName}
               className="w-full h-full object-cover"
               loading="lazy"

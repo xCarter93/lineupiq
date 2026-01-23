@@ -16,6 +16,7 @@ export function PlayerRepository() {
     playerName: string;
     position: string;
     team: string;
+    headshotUrl?: string;
   } | null>(null);
 
   // Fetch all players from Convex
@@ -57,12 +58,14 @@ export function PlayerRepository() {
     playerName: string;
     position: string;
     team: string;
+    headshotUrl?: string;
   }) => {
     setSelectedPlayer({
       playerId: player.playerId,
       playerName: player.playerName,
       position: player.position,
       team: player.team || "N/A",
+      headshotUrl: player.headshotUrl,
     });
   };
 
@@ -100,11 +103,13 @@ export function PlayerRepository() {
               playerName={player.name}
               position={player.position}
               team={player.team || "N/A"}
+              headshotUrl={player.headshotUrl}
               onClick={() => handlePlayerClick({
                 playerId: player.playerId,
                 playerName: player.name,
                 position: player.position,
                 team: player.team || "N/A",
+                headshotUrl: player.headshotUrl,
               })}
             />
           ))
@@ -120,6 +125,7 @@ export function PlayerRepository() {
           playerName={selectedPlayer.playerName}
           position={selectedPlayer.position}
           team={selectedPlayer.team}
+          headshotUrl={selectedPlayer.headshotUrl}
         />
       )}
     </div>

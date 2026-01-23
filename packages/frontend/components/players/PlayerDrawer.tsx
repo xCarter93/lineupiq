@@ -30,6 +30,7 @@ interface PlayerDrawerProps {
   playerName: string;
   position: string;
   team: string;
+  headshotUrl?: string;
 }
 
 const TABS = ["2025 Validation", "History", "Stats"] as const;
@@ -65,13 +66,15 @@ export function PlayerDrawer({
   playerName,
   position,
   team,
+  headshotUrl,
 }: PlayerDrawerProps) {
   const [activeTab, setActiveTab] = useState<Tab>("2025 Validation");
   const [imageError, setImageError] = useState(false);
   const season = 2025;
   const { groupedByTarget, isLoading } = useValidationPredictions(playerId, season);
 
-  const headshotUrl = `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${playerId}.png&w=150&h=110`;
+  // Use headshotUrl from Convex if available, otherwise fall back to ESPN URL
+  const imageUrl = headshotUrl || `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${playerId}.png&w=150&h=110`;
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -86,7 +89,7 @@ export function PlayerDrawer({
                 </div>
               ) : (
                 <img
-                  src={headshotUrl}
+                  src={imageUrl}
                   alt={playerName}
                   className="w-full h-full object-cover"
                   loading="lazy"
