@@ -99,9 +99,17 @@ def engineer_matchup_features(
         logger.info("Added 4 Vegas features: home_spread, total_points, vegas_strength_diff, home_favored")
     else:
         logger.warning(
-            "No odds data provided. Skipping Vegas features. "
+            "No odds data provided. Using neutral Vegas features. "
             "Set ODDS_API_KEY in .env to enable spreads/totals."
         )
+        # Still add Vegas columns with neutral values to maintain feature schema
+        df = df.with_columns([
+            pl.lit(0.0).alias("home_spread"),  # Neutral spread (no favorite)
+            pl.lit(45.0).alias("total_points"),  # NFL average
+            pl.lit(0.0).alias("vegas_strength_diff"),  # No strength difference
+            pl.lit(0).cast(pl.Int8).alias("home_favored"),  # No favorite
+        ])
+        logger.info("Added 4 neutral Vegas features (no API key provided)")
 
     # Step 2: Add divisional game flag
     # Load team divisions from nflreadpy
