@@ -67,6 +67,7 @@ export function PlayerDrawer({
   team,
 }: PlayerDrawerProps) {
   const [activeTab, setActiveTab] = useState<Tab>("2025 Validation");
+  const [imageError, setImageError] = useState(false);
   const { groupedByTarget, isLoading } = useValidationPredictions(playerId, 2025);
 
   const headshotUrl = `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${playerId}.png&w=150&h=110`;
@@ -77,14 +78,21 @@ export function PlayerDrawer({
         <SheetHeader className="space-y-4 pb-6">
           {/* Player Info */}
           <div className="flex items-center gap-4">
-            <img
-              src={headshotUrl}
-              alt={playerName}
-              className="w-20 h-20 rounded-full bg-muted object-cover"
-              onError={(e) => {
-                e.currentTarget.src = "/placeholder-player.png";
-              }}
-            />
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+              {imageError ? (
+                <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-gray-500 font-bold text-3xl">
+                  {playerName.charAt(0)}
+                </div>
+              ) : (
+                <img
+                  src={headshotUrl}
+                  alt={playerName}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={() => setImageError(true)}
+                />
+              )}
+            </div>
             <div className="flex-1">
               <SheetTitle className="text-2xl">{playerName}</SheetTitle>
               <SheetDescription className="text-base">
