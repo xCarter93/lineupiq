@@ -101,4 +101,21 @@ export default defineSchema({
     modelCount: v.number(), // Number of models included
     updatedAt: v.number(),
   }).index("by_season", ["season"]),
+
+  // 2025 validation predictions for predicted vs actual comparisons
+  validationPredictions: defineTable({
+    playerId: v.string(),
+    playerName: v.string(),
+    position: v.string(), // QB, RB, WR, TE, K, DEF
+    season: v.number(),
+    week: v.number(),
+    target: v.string(), // passing_yards, rushing_yards, receiving_yards, etc.
+    predictedValue: v.number(),
+    actualValue: v.number(),
+    error: v.number(), // predictedValue - actualValue
+    absoluteError: v.number(), // Math.abs(error)
+  })
+    .index("by_player_week", ["playerId", "season", "week"])
+    .index("by_position_week", ["position", "season", "week"])
+    .index("by_season_week", ["season", "week"]),
 });
