@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-15)
 ## Current Position
 
 Phase: 21.1 of 25 (Revamp Prediction Visualizations)
-Plan: 3 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: Complete
-Last activity: 2026-01-22 - Completed 21.1-03-PLAN.md (Player repository UI with position filtering and search)
+Last activity: 2026-01-22 - Completed 21.1-02-PLAN.md (Convex storage for validation predictions)
 
 Progress: █████░░░░░ 25%
 
@@ -193,6 +193,10 @@ Progress: █████░░░░░ 25%
 | 21.1-01 | Always add Vegas features for schema consistency | When Odds API unavailable, add neutral values (spread=0.0, total=45.0) to maintain 40-feature schema; prevents "missing column" errors |
 | 21.1-01 | 10 trials for validation models | Quick validation uses 10 Optuna trials vs 30 production; still achieves R² 0.585 average across positions |
 | 21.1-01 | Separate models_holdout directory | Prevents overwriting production models; enables side-by-side comparison of holdout vs production performance |
+| 21.1-02 | Three Convex indexes for validation queries | by_player_week, by_position_week, by_season_week support player-specific, position aggregate, and season-wide queries |
+| 21.1-02 | Batch size 100 for Convex upload | Safe batch size balances API throughput with Convex transaction limits; consistent with playerHistory pattern |
+| 21.1-02 | Transform field names in upload script | JSON snake_case → Convex camelCase transformation in Python upload script; keeps TypeScript schema clean |
+| 21.1-02 | Compute error/absoluteError in mutation | Calculated during upsert (not stored in JSON); reduces duplication and ensures consistency |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -218,6 +222,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Phase 21.1-01 and 21.1-03 complete (holdout validation + player repository UI)
+Stopped at: Phase 21.1-02 complete (Convex storage for validation predictions)
 Resume file: None
-Next action: Phase 21.1 in progress (2/4 plans complete) - ready for Plan 21.1-02 (Convex storage) or 21.1-04 (player drawer)
+Next action: Phase 21.1 in progress (3/4 plans complete) - ready for Plan 21.1-04 (player drawer with validation data)
