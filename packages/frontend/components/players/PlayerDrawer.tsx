@@ -128,28 +128,41 @@ export function PlayerDrawer({
             <div className="space-y-6">
               <SectionLabel>PREDICTED VS ACTUAL (2025 SEASON)</SectionLabel>
 
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-48 rounded-lg bg-muted animate-pulse" />
-                  ))}
-                </div>
-              ) : groupedByTarget && Object.keys(groupedByTarget).length > 0 ? (
-                Object.entries(groupedByTarget).map(([target, data]) => (
-                  <ValidationChart
-                    key={target}
-                    target={target}
-                    data={data}
-                    targetDisplayName={TARGET_DISPLAY_NAMES[target] || target}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  No validation data available for this player yet.
-                  <br />
-                  Run validation script to generate predictions.
-                </div>
-              )}
+              {(() => {
+                // Debug logging
+                console.log(`[PlayerDrawer] Rendering validation tab for ${playerName} (${playerId}):`, {
+                  isLoading,
+                  groupedByTarget,
+                  targetCount: groupedByTarget ? Object.keys(groupedByTarget).length : 0,
+                });
+
+                if (isLoading) {
+                  return (
+                    <div className="space-y-4">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-48 rounded-lg bg-muted animate-pulse" />
+                      ))}
+                    </div>
+                  );
+                } else if (groupedByTarget && Object.keys(groupedByTarget).length > 0) {
+                  return Object.entries(groupedByTarget).map(([target, data]) => (
+                    <ValidationChart
+                      key={target}
+                      target={target}
+                      data={data}
+                      targetDisplayName={TARGET_DISPLAY_NAMES[target] || target}
+                    />
+                  ));
+                } else {
+                  return (
+                    <div className="text-center py-12 text-muted-foreground">
+                      No validation data available for this player yet.
+                      <br />
+                      Run validation script to generate predictions.
+                    </div>
+                  );
+                }
+              })()}
             </div>
           )}
 
