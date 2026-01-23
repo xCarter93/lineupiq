@@ -78,7 +78,7 @@ export function PlayerDrawer({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-[48vw] lg:max-w-[45vw] xl:max-w-[45vw] overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:max-w-[48vw] lg:max-w-[45vw] xl:max-w-[45vw] overflow-y-auto p-6">
         <SheetHeader className="space-y-4 pb-6">
           {/* Player Info */}
           <div className="flex items-center gap-4">
@@ -155,6 +155,7 @@ export function PlayerDrawer({
                       target={target}
                       data={data}
                       targetDisplayName={TARGET_DISPLAY_NAMES[target] || target}
+                      syncId="playerValidation"
                     />
                   ));
                 } else {

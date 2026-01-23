@@ -7,9 +7,10 @@ interface ValidationChartProps {
   target: string;
   data: Array<{ week: number; predicted: number; actual: number; error: number }>;
   targetDisplayName: string;
+  syncId?: string;
 }
 
-export function ValidationChart({ target, data, targetDisplayName }: ValidationChartProps) {
+export function ValidationChart({ target, data, targetDisplayName, syncId }: ValidationChartProps) {
   // Sort by week
   const sortedData = [...data].sort((a, b) => a.week - b.week);
 
@@ -45,7 +46,7 @@ export function ValidationChart({ target, data, targetDisplayName }: ValidationC
 
       {/* Chart */}
       <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={sortedData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+        <LineChart data={sortedData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }} syncId={syncId}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis
             dataKey="week"
