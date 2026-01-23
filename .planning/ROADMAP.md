@@ -149,16 +149,18 @@ Plans:
 
 #### Phase 21.1: Revamp Prediction Visualizations (INSERTED)
 
-**Goal**: [Urgent work - to be planned]
+**Goal**: Build holdout validation infrastructure with 2025 predicted-vs-actual visualizations for model transparency
 **Depends on**: Phase 21
-**Research**: Unlikely (UI improvements)
-**Plans**: 0 plans
+**Research**: Complete (21.1-CONTEXT.md - holdout validation strategy)
+**Plans**: 4/4 complete
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 21.1 to break down)
+- [x] 21.1-01: Holdout validation on 2025 season (train 2022-2024, test 2025) — completed 2026-01-22
+- [x] 21.1-02: Store validation predictions in Convex — completed 2026-01-22
+- [x] 21.1-03: Player repository UI with filtering — completed 2026-01-22
+- [x] 21.1-04: Player drawer with validation charts — completed 2026-01-22
 
-**Details**:
-[To be added during planning]
+**Outcome**: Holdout validation reveals average R² 0.585 across positions (train 2022-2024, test 2025). Built /players page with 662 players, drawer shows predicted-vs-actual charts for 34,699 predictions. QB (MAE 14.19), RB (MAE 5.17), WR (MAE 5.73) establish transparent accuracy metrics.
 
 #### Phase 22: Multi-Player Comparison UI
 
@@ -231,7 +233,7 @@ Plans:
 | 19.2.1. Different Players Same Stats | v1.2 | 2/2 | Complete | 2026-01-20 |
 | 20. Advanced Features | v1.2 | 3/3 | Complete | 2026-01-21 |
 | 21. Position Tuning | v1.2 | 4/4 | Complete | 2026-01-22 |
-| 21.1. Revamp Prediction Viz | v1.2 | 0/? | Not started | - |
+| 21.1. Revamp Prediction Viz | v1.2 | 4/4 | Complete | 2026-01-22 |
 | 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
 | 23. Season-Long View | v1.2 | 0/? | Not started | - |
 | 24. Real-Time Updates | v1.2 | 0/? | Not started | - |

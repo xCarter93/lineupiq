@@ -202,6 +202,7 @@ Progress: █████░░░░░ 25%
 | 21.1-04 | Three-tab PlayerDrawer | 2025 Validation (primary), History (reused component), Stats (future); lazy-loaded PlayerHistory for performance |
 | 21.1-04 | Image error state with initial fallback | Prevents headshot flickering; shows player's first letter on load failure; improves UX stability |
 | 21.1-04 | Debug logging for validation troubleshooting | Console logs in hook and component; helps diagnose empty state issues; production can be removed later |
+| 21.1-04 | Use headshotUrl from Convex player data | Components read headshotUrl field from database instead of manually constructing ESPN URLs; eliminates flickering from redundant fetching; ESPN URL as fallback |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
