@@ -7,8 +7,8 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 ## Milestones
 
 - ✅ **[v1.0 MVP](milestones/v1.0-ROADMAP.md)** — Phases 1-10 (shipped 2026-01-15)
-- ✅ **v1.1 Model Confidence** — Phases 11-17 (shipped 2026-01-19)
-- 🚧 **v1.2 Platform Maturity** — Phases 18-25 (in progress)
+- ✅ **[v1.1 Model Confidence](milestones/v1.1-ROADMAP.md)** — Phases 11-17 (shipped 2026-01-19)
+- ✅ **[v1.2 Platform Maturity](milestones/v1.2-ROADMAP.md)** — Phases 18-21.1 (shipped 2026-01-22)
 
 ## Completed Milestones
 
@@ -46,163 +46,27 @@ Build a fantasy football prediction app from the ground up: establish a Python/N
 
 </details>
 
-### 🚧 v1.2 Platform Maturity (In Progress)
+<details>
+<summary>✅ v1.2 Platform Maturity (Phases 18-21.1) — SHIPPED 2026-01-22</summary>
 
-**Milestone Goal:** Mature the platform with performance optimizations, ensemble models, advanced features, and enhanced UI capabilities for production readiness.
+- [x] Phase 18: Performance Fixes & Optimization (3/3 plans) — completed 2026-01-20
+- [x] Phase 19: Ensemble Models & XGBoost Parity (4/4 plans) — completed 2026-01-20
+- [x] Phase 19.1: Re-evaluate Recent Performance Metrics (3/3 plans) — completed 2026-01-20
+- [x] Phase 19.2: Improve Model Confidence & Accuracy (3/3 plans) — completed 2026-01-20
+- [x] Phase 19.2.1: Different Players Showing Same Stats (2/2 plans) — completed 2026-01-20
+- [x] Phase 20: Advanced Features (3/3 plans) — completed 2026-01-21
+- [x] Phase 21: Position-Specific Tuning (4/4 plans) — completed 2026-01-22
+- [x] Phase 21.1: Revamp Prediction Visualizations (4/4 plans) — completed 2026-01-22
 
-#### Phase 18: Performance Fixes & Optimization
+**Full details:** [milestones/v1.2-ROADMAP.md](milestones/v1.2-ROADMAP.md)
 
-**Goal**: Fix player selection lag and optimize frontend/API performance through code splitting, lazy loading, and smarter caching
-**Depends on**: Previous milestone complete
-**Research**: Complete (18-RESEARCH.md)
-**Plans**: 3/3 complete
+</details>
 
-Plans:
-- [x] 18-01: Virtualize player dropdown with react-window — completed 2026-01-20
-- [x] 18-02: Lazy load heavy components with next/dynamic — completed 2026-01-20
-- [x] 18-03: Loading UX polish + Web Vitals monitoring — completed 2026-01-20
+## Next Milestone
 
-#### Phase 19: Ensemble Models & XGBoost Parity
+**Status:** Planning
 
-**Goal**: Combine LightGBM + XGBoost models using stacking/voting ensembles for improved prediction accuracy
-**Depends on**: Phase 18
-**Research**: Complete (19-RESEARCH.md)
-**Plans**: 4/4 complete
-
-Plans:
-- [x] 19-01: Train XGBoost models for all positions — completed 2026-01-20
-- [x] 19-02: Implement ensemble strategies (voting, stacking) — completed 2026-01-20
-- [x] 19-03: Benchmark ensembles vs single models on 2024 holdout — completed 2026-01-20
-- [x] 19-04: Integration decision (keep-single models) — completed 2026-01-20
-
-**Outcome**: Ensembles NOT adopted. Benchmarking showed single models win 20/21 stats (95.2%). LightGBM remains production default.
-
-#### Phase 19.1: Re-evaluate Recent Performance Metrics (INSERTED)
-
-**Goal**: Improve model accuracy by fixing data leakage, expanding training data window to 2022-2025, and increasing rolling window from 3 to 5 games
-**Depends on**: Phase 19
-**Research**: Complete (19.1-CONTEXT.md)
-**Plans**: 3/3 complete
-
-Plans:
-- [x] 19.1-01: Expand training data window from 2-year to 4-year (2022-2025) and re-benchmark ensembles — completed 2026-01-20
-- [x] 19.1-02: Expand rolling window from 3 to 5 games with shift(1) data leakage fix — completed 2026-01-20
-- [x] 19.1-03: Validate 5-game rolling window improvements with comprehensive benchmarking — completed 2026-01-20
-
-**Outcome**: 5-game rolling window adopted as new standard. Data leakage fixed with shift(1). Models trained on 2022-2025 data excluding COVID-era noise.
-
-#### Phase 19.2: Improve Model Confidence & Accuracy (INSERTED)
-
-**Goal**: Fix scale-dependent accuracy formula (100*(1-MAE/mean)) with R²-based calculation to properly reflect model quality
-**Depends on**: Phase 19.1
-**Research**: Complete (19.2-CONTEXT.md - accuracy audit)
-**Plans**: 3/3 complete
-
-Plans:
-- [x] 19.2-01: Audit current accuracy formula and evaluate alternatives (R²-based, MAPE, skill score) — completed 2026-01-20
-- [x] 19.2-02: Implement R²-based accuracy calculation and simplified confidence tiers — completed 2026-01-20
-- [x] 19.2-03: Update UI to reflect R²-based accuracy and verify display — completed 2026-01-20
-
-**Outcome**: R²-based accuracy (100*R²) replaces MAE/mean formula. Confidence tiers simplified to R²-only thresholds (High: >0.5, Medium: 0.3-0.5, Low: <0.3). Fixes "49% accuracy for R² 0.545" problem. UI tooltip explains "variance explained by the model".
-
-#### Phase 19.2.1: Different Players Showing Same Stats (INSERTED)
-
-**Goal**: Fix bug where different players in the same position show identical predicted stats instead of player-specific predictions
-**Depends on**: Phase 19.2
-**Research**: Complete (19.2.1-CONTEXT.md - window parameter mismatch investigation)
-**Plans**: 2/2 complete
-
-Plans:
-- [x] 19.2.1-01: Diagnose window parameter mismatch in player feature computation — completed 2026-01-20
-- [x] 19.2.1-02: Fix window parameter (3→5) in roster.py and verify player-specific predictions — completed 2026-01-20
-
-**Outcome**: Fixed window parameter mismatch. Models trained with window=5 (Phase 19.1-02) but API computed window=3 features, causing key mismatch (roll3 vs roll5). When dict.update() merged player features with defaults, roll3 keys didn't overwrite roll5 defaults → all players received identical position-typical predictions. Fix: Updated _compute_rolling_stats_for_player and _compute_volatility_for_player to window=5. Different players now produce different predictions based on individual performance history.
-
-#### Phase 20: Advanced Features
-
-**Goal**: Expand feature engineering with weather data, injury reports, and matchup-specific signals
-**Depends on**: Phase 19.2.1
-**Research**: Complete (20-RESEARCH.md)
-**Plans**: 3/3 complete
-
-Plans:
-- [x] 20-01: Enhanced Weather Features (Visual Crossing API) — completed 2026-01-21
-- [x] 20-02: Injury Status Features (nflreadpy injury reports) — completed 2026-01-21
-- [x] 20-03: Vegas Lines & Matchup Features (The Odds API) — completed 2026-01-21
-
-**Outcome**: Added 16 new ML features (7 weather, 2 injury, 5 matchup). Visual Crossing and The Odds API integrated with caching/graceful degradation. Models ready for retraining with expanded feature set.
-
-#### Phase 21: Position-Specific Tuning
-
-**Goal**: Retrain all ML models with Phase 20 expanded feature set (40 features) - position-by-position analysis and comparison
-**Depends on**: Phase 20
-**Research**: Complete (21-CONTEXT.md)
-**Plans**: 4/4 complete
-
-Plans:
-- [x] 21-01: QB models with 40-feature set — completed 2026-01-22
-- [x] 21-02: RB models with 40-feature set — completed 2026-01-22
-- [x] 21-03: WR/TE models with 40-feature set — completed 2026-01-22
-- [x] 21-04: K/DEF models with 40-feature set — completed 2026-01-22
-
-**Outcome**: All 32 models retrained with 40-feature set. Cross-position comparison reveals predictability hierarchy: K (~0.47) > TE (0.367) > RB (0.362) > QB (0.355) > DEF (~0.30) > WR (0.274). K models surprisingly outperform all skill positions (weather features directly affect kicking). TE more predictable than WR (usage consistency vs coverage variance). Volume metrics (receptions, carries, fg_att) consistently outperform production metrics (yards, TDs) across all positions.
-
-#### Phase 21.1: Revamp Prediction Visualizations (INSERTED)
-
-**Goal**: Build holdout validation infrastructure with 2025 predicted-vs-actual visualizations for model transparency
-**Depends on**: Phase 21
-**Research**: Complete (21.1-CONTEXT.md - holdout validation strategy)
-**Plans**: 4/4 complete
-
-Plans:
-- [x] 21.1-01: Holdout validation on 2025 season (train 2022-2024, test 2025) — completed 2026-01-22
-- [x] 21.1-02: Store validation predictions in Convex — completed 2026-01-22
-- [x] 21.1-03: Player repository UI with filtering — completed 2026-01-22
-- [x] 21.1-04: Player drawer with validation charts — completed 2026-01-22
-
-**Outcome**: Holdout validation reveals average R² 0.585 across positions (train 2022-2024, test 2025). Built /players page with 662 players, drawer shows predicted-vs-actual charts for 34,699 predictions. QB (MAE 14.19), RB (MAE 5.17), WR (MAE 5.73) establish transparent accuracy metrics.
-
-#### Phase 22: Multi-Player Comparison UI
-
-**Goal**: Build side-by-side player comparison interface for lineup decision support
-**Depends on**: Phase 21
-**Research**: Unlikely (internal UI patterns)
-**Plans**: TBD
-
-Plans:
-- [ ] 22-01: TBD
-
-#### Phase 23: Season-Long View UI
-
-**Goal**: Display weekly projections across full season with playoff scheduling support
-**Depends on**: Phase 22
-**Research**: Unlikely (data visualization with existing Recharts)
-**Plans**: TBD
-
-Plans:
-- [ ] 23-01: TBD
-
-#### Phase 24: Real-Time Data Updates
-
-**Goal**: Sync with latest NFL data for injuries and roster changes in real-time
-**Depends on**: Phase 23
-**Research**: Likely (new integration with real-time data sources)
-**Research topics**: NFL injury/roster APIs, polling vs webhooks, cache invalidation strategies
-**Plans**: TBD
-
-Plans:
-- [ ] 24-01: TBD
-
-#### Phase 25: Advanced Stats Pipeline
-
-**Goal**: Add target share, snap counts, and red zone usage metrics to feature pipeline
-**Depends on**: Phase 24
-**Research**: Likely (new data sources for advanced stats)
-**Research topics**: Target share data availability, snap count APIs, red zone metrics sources
-**Plans**: TBD
-
-Plans:
-- [ ] 25-01: TBD
+Future milestones could include:
 
 ## Progress
 
@@ -234,11 +98,7 @@ Plans:
 | 20. Advanced Features | v1.2 | 3/3 | Complete | 2026-01-21 |
 | 21. Position Tuning | v1.2 | 4/4 | Complete | 2026-01-22 |
 | 21.1. Revamp Prediction Viz | v1.2 | 4/4 | Complete | 2026-01-22 |
-| 22. Multi-Player Comparison | v1.2 | 0/? | Not started | - |
-| 23. Season-Long View | v1.2 | 0/? | Not started | - |
-| 24. Real-Time Updates | v1.2 | 0/? | Not started | - |
-| 25. Advanced Stats | v1.2 | 0/? | Not started | - |
 
 ---
 
-**Project Status:** v1.2 Platform Maturity — Phase 21 complete, Phase 21.1 (Revamp Prediction Visualizations) ready to plan
+**Project Status:** v1.2 Platform Maturity — Platform Maturity shipped — All milestones complete. Ready to plan next milestone.

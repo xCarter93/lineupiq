@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-15)
+See: .planning/PROJECT.md (updated 2026-01-22)
 
 **Core value:** Accurate stat-level predictions from well-engineered features and properly trained models.
-**Current focus:** v1.2 Platform Maturity — performance, ensemble models, and enhanced UI
+**Current focus:** Planning next milestone — v1.2 Platform Maturity shipped
 
 ## Current Position
 
-Phase: 21.1 of 25 (Revamp Prediction Visualizations)
-Plan: 4 of 4 in current phase
-Status: Complete
-Last activity: 2026-01-22 - Completed 21.1-04-PLAN.md (Player drawer with 2025 validation visualizations)
+Phase: Milestone complete
+Plan: N/A
+Status: v1.2 shipped — Ready to plan next milestone
+Last activity: 2026-01-22 - Completed v1.2 Platform Maturity milestone (Phases 18-21.1)
 
-Progress: █████░░░░░ 25%
+Progress: 100% (v1.2 complete)
 
 ## Performance Metrics
 
