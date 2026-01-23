@@ -68,7 +68,8 @@ export function PlayerDrawer({
 }: PlayerDrawerProps) {
   const [activeTab, setActiveTab] = useState<Tab>("2025 Validation");
   const [imageError, setImageError] = useState(false);
-  const { groupedByTarget, isLoading } = useValidationPredictions(playerId, 2025);
+  const season = 2025;
+  const { groupedByTarget, isLoading } = useValidationPredictions(playerId, season);
 
   const headshotUrl = `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${playerId}.png&w=150&h=110`;
 
@@ -156,9 +157,14 @@ export function PlayerDrawer({
                 } else {
                   return (
                     <div className="text-center py-12 text-muted-foreground">
-                      No validation data available for this player yet.
-                      <br />
-                      Run validation script to generate predictions.
+                      <div className="text-lg font-medium mb-2">No validation data available</div>
+                      <div className="text-sm">
+                        Player ID: {playerId}
+                        <br />
+                        Season: {season}
+                        <br />
+                        Check browser console for debug logs
+                      </div>
                     </div>
                   );
                 }
