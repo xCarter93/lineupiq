@@ -78,7 +78,7 @@ export function PlayerDrawer({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-[90vw] lg:max-w-[85vw] xl:max-w-[80vw] overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:max-w-[98vw] lg:max-w-[95vw] xl:max-w-[95vw] overflow-y-auto">
         <SheetHeader className="space-y-4 pb-6">
           {/* Player Info */}
           <div className="flex items-center gap-4">
