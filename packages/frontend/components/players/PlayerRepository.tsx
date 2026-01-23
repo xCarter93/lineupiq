@@ -5,11 +5,18 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PositionTabs } from "./PositionTabs";
 import { PlayerCard } from "./PlayerCard";
+import { PlayerDrawer } from "./PlayerDrawer";
 import { Input } from "@/components/ui/input";
 
 export function PlayerRepository() {
   const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPlayer, setSelectedPlayer] = useState<{
+    playerId: string;
+    playerName: string;
+    position: string;
+    team: string;
+  } | null>(null);
 
   // Fetch all players from Convex
   const allPlayers = useQuery(api.players.list) ?? [];
@@ -45,9 +52,18 @@ export function PlayerRepository() {
     return counts;
   }, [allPlayers]);
 
-  const handlePlayerClick = (playerId: string) => {
-    // Plan 04 will add Sheet drawer here
-    console.log("Selected player:", playerId);
+  const handlePlayerClick = (player: {
+    playerId: string;
+    playerName: string;
+    position: string;
+    team: string;
+  }) => {
+    setSelectedPlayer({
+      playerId: player.playerId,
+      playerName: player.playerName,
+      position: player.position,
+      team: player.team || "N/A",
+    });
   };
 
   return (
@@ -84,11 +100,28 @@ export function PlayerRepository() {
               playerName={player.name}
               position={player.position}
               team={player.team || "N/A"}
-              onClick={() => handlePlayerClick(player.playerId)}
+              onClick={() => handlePlayerClick({
+                playerId: player.playerId,
+                playerName: player.name,
+                position: player.position,
+                team: player.team || "N/A",
+              })}
             />
           ))
         )}
       </div>
+
+      {/* Player Drawer */}
+      {selectedPlayer && (
+        <PlayerDrawer
+          isOpen={!!selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+          playerId={selectedPlayer.playerId}
+          playerName={selectedPlayer.playerName}
+          position={selectedPlayer.position}
+          team={selectedPlayer.team}
+        />
+      )}
     </div>
   );
 }
