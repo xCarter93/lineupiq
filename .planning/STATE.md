@@ -189,6 +189,10 @@ Progress: █████░░░░░ 25%
 | 21.1-03 | Client-side filtering with useMemo | Position and search filters computed efficiently; all filtering happens in browser for instant response |
 | 21.1-03 | Responsive 1/2/3/4 column grid | Mobile-first design: 1 col mobile, 2 tablet, 3 desktop, 4 wide screens; scales to all players in database |
 | 21.1-03 | Console logging for player clicks | Prepared for Plan 04 Sheet drawer integration; onClick handlers ready to trigger drawer |
+| 21.1-01 | Holdout validation over walk-forward | Train once on 2022-2024 (30-60min) vs retrain 18 times (12-24hrs); ~20x speedup with equivalent scientific validity |
+| 21.1-01 | Always add Vegas features for schema consistency | When Odds API unavailable, add neutral values (spread=0.0, total=45.0) to maintain 40-feature schema; prevents "missing column" errors |
+| 21.1-01 | 10 trials for validation models | Quick validation uses 10 Optuna trials vs 30 production; still achieves R² 0.585 average across positions |
+| 21.1-01 | Separate models_holdout directory | Prevents overwriting production models; enables side-by-side comparison of holdout vs production performance |
 
 **v1.0 Decisions:** See .planning/milestones/v1.0-ROADMAP.md
 
@@ -214,6 +218,6 @@ None
 ## Session Continuity
 
 Last session: 2026-01-22
-Stopped at: Phase 21-03 complete (WR/TE models trained with 40-feature set)
+Stopped at: Phase 21.1-01 and 21.1-03 complete (holdout validation + player repository UI)
 Resume file: None
-Next action: Phase 21 complete - all positions trained with 40-feature set; ready for Phase 22 or holistic analysis
+Next action: Phase 21.1 in progress (2/4 plans complete) - ready for Plan 21.1-02 (Convex storage) or 21.1-04 (player drawer)
