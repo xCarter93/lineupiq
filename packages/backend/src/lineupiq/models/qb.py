@@ -122,6 +122,7 @@ def train_qb_models(
     seasons: list[int] | None = None,
     n_trials: int = 50,
     model_type: ModelType = "lightgbm",
+    df: pl.DataFrame | None = None,
 ) -> dict[str, tuple[Any, dict[str, Any]]]:
     """Train and persist QB models for all target stats.
 
@@ -135,6 +136,8 @@ def train_qb_models(
         seasons: List of seasons to train on. Defaults to [2021-2024] if None.
         n_trials: Number of Optuna trials for hyperparameter tuning (default: 50).
         model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
+        df: Optional pre-computed feature DataFrame. If None, features will be
+            computed from seasons. Use for feature caching across positions.
 
     Returns:
         Dict mapping target name to (model, metrics) tuple where metrics contains:
@@ -159,8 +162,9 @@ def train_qb_models(
         f"Training QB models for seasons {seasons} with {n_trials} trials using {model_type}"
     )
 
-    # Load features
-    df = build_features(seasons)
+    # Load features if not provided (enables feature caching)
+    if df is None:
+        df = build_features(seasons)
 
     # Prepare QB-specific data
     X, y_dict = prepare_qb_data(df)
@@ -171,9 +175,9 @@ def train_qb_models(
         logger.info(f"Training model for QB {target}...")
         y = y_dict[target]
 
-        # Run hyperparameter tuning
+        # Run hyperparameter tuning (uses Poisson for count targets like TDs)
         best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, model_type=model_type
+            X, y, n_trials=n_trials, model_type=model_type, target=target
         )
 
         # Train final model with best parameters

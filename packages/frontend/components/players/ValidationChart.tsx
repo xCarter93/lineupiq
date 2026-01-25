@@ -61,7 +61,7 @@ export function ValidationChart({ target, data, targetDisplayName, syncId }: Val
               borderRadius: "8px",
               fontSize: "12px",
             }}
-            formatter={(value: number) => value.toFixed(1)}
+            formatter={(value) => typeof value === "number" ? value.toFixed(1) : value}
           />
           <Legend wrapperStyle={{ fontSize: "12px" }} />
           <Line

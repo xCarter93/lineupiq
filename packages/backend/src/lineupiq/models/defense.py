@@ -93,12 +93,13 @@ def train_defense_models(
             logger.warning(f"Insufficient data for {target}: {len(y_valid)} samples")
             continue
 
-        # Tune hyperparameters
+        # Tune hyperparameters (uses Poisson for count targets)
         best_params, _ = tune_hyperparameters(
             X_valid,
             y_valid,
             n_trials=n_trials,
             model_type=model_type,
+            target=target,
         )
 
         # Train final model

@@ -136,8 +136,9 @@ def test_tune_hyperparameters_returns_best_params(
     best_params, study = tune_hyperparameters(X, y, n_trials=5, n_splits=2)
 
     # Should return dict with hyperparameters
+    # Default model is LightGBM which uses num_leaves instead of max_depth
     assert isinstance(best_params, dict)
-    assert "max_depth" in best_params
+    assert "num_leaves" in best_params  # LightGBM param
     assert "learning_rate" in best_params
 
     # Study should have completed trials

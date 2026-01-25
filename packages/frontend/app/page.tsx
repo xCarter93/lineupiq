@@ -1,61 +1,175 @@
+"use client";
+
+import { DashboardHeroCards } from "@/components/dashboard/DashboardHeroCards";
+import { PlayerPerformanceChart } from "@/components/dashboard/PlayerPerformanceChart";
+import { PositionContributionChart } from "@/components/dashboard/PositionContributionChart";
+import { WeeklyTrendChart } from "@/components/dashboard/WeeklyTrendChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { SectionLabel } from "@/components/ui/section-label";
+import { ArrowRight, Users, Settings } from "lucide-react";
+
+// Mock data - in production this would come from Convex
+const mockPlayerPerformance = [
+  { player: "Josh Allen", actual: 24.5, predicted: 22.8, position: "QB" },
+  { player: "Derrick Henry", actual: 18.2, predicted: 19.5, position: "RB" },
+  { player: "Ja'Marr Chase", actual: 21.3, predicted: 18.7, position: "WR" },
+  { player: "Travis Kelce", actual: 14.8, predicted: 15.2, position: "TE" },
+  { player: "Bijan Robinson", actual: 16.5, predicted: 17.1, position: "RB" },
+  { player: "Tyreek Hill", actual: 19.2, predicted: 20.5, position: "WR" },
+];
+
+const mockPositionContribution = [
+  { position: "QB", points: 24.5, percentage: 22 },
+  { position: "RB", points: 34.7, percentage: 31 },
+  { position: "WR", points: 40.5, percentage: 36 },
+  { position: "TE", points: 12.3, percentage: 11 },
+];
+
+const mockWeeklyTrend = [
+  { week: "Week 14", predicted: 105.2, actual: 98.5 },
+  { week: "Week 15", predicted: 112.3, actual: 115.8 },
+  { week: "Week 16", predicted: 108.7, actual: 102.3 },
+  { week: "Week 17", predicted: 118.5, actual: 121.2 },
+  { week: "Week 18", predicted: 115.8, actual: 110.5 },
+];
 
 export default function Page() {
-  return (
-    <div className="min-h-screen">
-      <div className="max-w-4xl mx-auto px-6 py-16 md:py-24">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <SectionLabel className="mb-6 block">
-            ML-POWERED PREDICTIONS
-          </SectionLabel>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground mb-6">
-            Smarter Fantasy Football
-            <br />
-            <span className="text-primary">Decisions</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
-            Get ML-powered stat projections for any player matchup. Built on historical NFL data
-            to help you set winning lineups.
-          </p>
-          <Link
-            href="/matchup"
-            className="inline-flex items-center justify-center px-8 py-4 text-lg font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
-          >
-            Build a Matchup
-          </Link>
-        </div>
+  // Mock data for hero cards
+  const projectedPoints = 118.5;
+  const lastWeekAccuracy = 92.3;
+  const seasonTrend = 2.8;
 
-        {/* Value Proposition */}
-        <div className="bg-white rounded-2xl shadow-sm p-8 md:p-12">
-          <SectionLabel className="mb-6 block text-center">
-            WHY LINEUPIQ
-          </SectionLabel>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="text-3xl mb-3">📊</div>
-              <h3 className="font-semibold text-foreground mb-2">Stat-Level Predictions</h3>
-              <p className="text-sm text-muted-foreground">
-                Individual stat projections for passing, rushing, and receiving yards plus touchdowns.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl mb-3">🎯</div>
-              <h3 className="font-semibold text-foreground mb-2">Custom Scoring</h3>
-              <p className="text-sm text-muted-foreground">
-                Configure your league&apos;s scoring rules for accurate fantasy point calculations.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl mb-3">🏈</div>
-              <h3 className="font-semibold text-foreground mb-2">Matchup Analysis</h3>
-              <p className="text-sm text-muted-foreground">
-                Factor in opponent defense strength and home/away advantage for better projections.
-              </p>
-            </div>
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Week 18, 2025 Season
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/settings">
+                <Settings className="h-4 w-4 mr-1.5" />
+                Settings
+              </Link>
+            </Button>
+            <Button size="sm" asChild>
+              <Link href="/lineup">
+                <Users className="h-4 w-4 mr-1.5" />
+                Edit Lineup
+              </Link>
+            </Button>
           </div>
         </div>
+
+        {/* Hero Cards */}
+        <div className="mb-8">
+          <DashboardHeroCards
+            projectedPoints={projectedPoints}
+            lastWeekAccuracy={lastWeekAccuracy}
+            seasonTrend={seasonTrend}
+          />
+        </div>
+
+        {/* Charts Grid */}
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+          {/* Player Performance - Takes 2 columns */}
+          <div className="lg:col-span-2">
+            <PlayerPerformanceChart data={mockPlayerPerformance} />
+          </div>
+
+          {/* Position Contribution */}
+          <div className="lg:col-span-1">
+            <PositionContributionChart data={mockPositionContribution} />
+          </div>
+        </div>
+
+        {/* Second Row */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          {/* Weekly Trend */}
+          <WeeklyTrendChart data={mockWeeklyTrend} />
+
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Link
+                href="/players"
+                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+              >
+                <div>
+                  <p className="font-medium">Browse Players</p>
+                  <p className="text-sm text-muted-foreground">
+                    Search and analyze player projections
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+
+              <Link
+                href="/lineup"
+                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="font-medium">My Lineup</p>
+                    <p className="text-sm text-muted-foreground">
+                      Manage your starting roster
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">7/9 filled</Badge>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </Link>
+
+              <Link
+                href="/settings"
+                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+              >
+                <div>
+                  <p className="font-medium">Configure Scoring</p>
+                  <p className="text-sm text-muted-foreground">
+                    Customize your league settings
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Model Info Footer */}
+        <Card className="bg-muted/30">
+          <CardContent className="py-4">
+            <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
+              <div className="flex items-center gap-4">
+                <div>
+                  <span className="text-muted-foreground">Models: </span>
+                  <span className="font-medium">32 LightGBM</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Training Data: </span>
+                  <span className="font-medium">2022-2025</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Last Updated: </span>
+                  <span className="font-medium">Jan 24, 2026</span>
+                </div>
+              </div>
+              <Badge variant="outline">Powered by LineupIQ ML</Badge>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

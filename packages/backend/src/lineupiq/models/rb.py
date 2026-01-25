@@ -111,6 +111,7 @@ def train_rb_models(
     n_trials: int = 50,
     rolling_window: int = 5,
     model_type: ModelType = "lightgbm",
+    df: pl.DataFrame | None = None,
 ) -> dict[str, tuple[Any, dict[str, Any]]]:
     """Train ML models for all 7 RB targets.
 
@@ -128,6 +129,8 @@ def train_rb_models(
         n_trials: Number of Optuna trials per target (default: 50).
         rolling_window: Rolling window for feature computation (default: 3).
         model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
+        df: Optional pre-computed feature DataFrame. If None, features will be
+            computed from seasons. Use for feature caching across positions.
 
     Returns:
         Dict mapping target name to (model, metrics) tuple.
@@ -148,9 +151,10 @@ def train_rb_models(
 
     logger.info(f"Training RB models for seasons {seasons} with {n_trials} trials using {model_type}")
 
-    # Load and prepare data
-    logger.info("Loading feature data...")
-    df = build_features(seasons, rolling_window=rolling_window)
+    # Load and prepare data (use cached features if provided)
+    if df is None:
+        logger.info("Loading feature data...")
+        df = build_features(seasons, rolling_window=rolling_window)
     X, y_dict = prepare_rb_data(df)
 
     results = {}
@@ -160,10 +164,10 @@ def train_rb_models(
 
         y = y_dict[target]
 
-        # Run hyperparameter tuning
+        # Run hyperparameter tuning (uses Poisson for count targets like TDs)
         logger.info(f"  Running {n_trials} Optuna trials...")
         best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, n_splits=5, model_type=model_type
+            X, y, n_trials=n_trials, n_splits=5, model_type=model_type, target=target
         )
 
         # Train final model with best params

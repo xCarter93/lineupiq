@@ -97,6 +97,7 @@ def train_wr_models(
     seasons: list[int] | None = None,
     n_trials: int = 50,
     model_type: ModelType = "lightgbm",
+    df: pl.DataFrame | None = None,
 ) -> dict[str, tuple[Any, dict[str, Any]]]:
     """Train ML models for all WR receiving targets.
 
@@ -107,6 +108,8 @@ def train_wr_models(
         seasons: List of seasons to train on. Defaults to [2021-2024] if None.
         n_trials: Number of Optuna trials per target (default: 50).
         model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
+        df: Optional pre-computed feature DataFrame. If None, features will be
+            computed from seasons. Use for feature caching across positions.
 
     Returns:
         Dict mapping target name to (model, metrics) tuple.
@@ -125,8 +128,9 @@ def train_wr_models(
 
     logger.info(f"Training WR models for seasons {seasons} using {model_type}")
 
-    # Load features
-    df = build_features(seasons)
+    # Load features if not provided (enables feature caching)
+    if df is None:
+        df = build_features(seasons)
 
     # Prepare WR data
     X, y_dict = prepare_receiver_data(df, "WR")
@@ -137,9 +141,9 @@ def train_wr_models(
         logger.info(f"Training WR {target} model...")
         y = y_dict[target]
 
-        # Tune hyperparameters
+        # Tune hyperparameters (uses Poisson for count targets like TDs)
         best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, model_type=model_type
+            X, y, n_trials=n_trials, model_type=model_type, target=target
         )
 
         # Train final model with best params
@@ -176,6 +180,7 @@ def train_te_models(
     seasons: list[int] | None = None,
     n_trials: int = 50,
     model_type: ModelType = "lightgbm",
+    df: pl.DataFrame | None = None,
 ) -> dict[str, tuple[Any, dict[str, Any]]]:
     """Train ML models for all TE receiving targets.
 
@@ -189,6 +194,8 @@ def train_te_models(
         seasons: List of seasons to train on. Defaults to [2021-2024] if None.
         n_trials: Number of Optuna trials per target (default: 50).
         model_type: Model type - "lightgbm" (default, 7x faster) or "xgboost".
+        df: Optional pre-computed feature DataFrame. If None, features will be
+            computed from seasons. Use for feature caching across positions.
 
     Returns:
         Dict mapping target name to (model, metrics) tuple.
@@ -207,8 +214,9 @@ def train_te_models(
 
     logger.info(f"Training TE models for seasons {seasons} using {model_type}")
 
-    # Load features
-    df = build_features(seasons)
+    # Load features if not provided (enables feature caching)
+    if df is None:
+        df = build_features(seasons)
 
     # Prepare TE data
     X, y_dict = prepare_receiver_data(df, "TE")
@@ -219,9 +227,9 @@ def train_te_models(
         logger.info(f"Training TE {target} model...")
         y = y_dict[target]
 
-        # Tune hyperparameters
+        # Tune hyperparameters (uses Poisson for count targets like TDs)
         best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, model_type=model_type
+            X, y, n_trials=n_trials, model_type=model_type, target=target
         )
 
         # Train final model with best params
