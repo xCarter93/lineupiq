@@ -150,6 +150,88 @@ class PredictionRequest(BaseModel):
         ..., description="Whether the game is in a dome/indoor stadium"
     )
 
+    # Game context features (4 features)
+    days_since_last_game: float = Field(
+        ..., description="Days since team's last game"
+    )
+    is_post_bye: bool = Field(
+        ..., description="Post-bye week game"
+    )
+    implied_team_total: float = Field(
+        ..., description="Vegas-derived expected team scoring"
+    )
+    game_script_lean: float = Field(
+        ..., description="Expected pass/rush lean from spread"
+    )
+
+    # Usage features (4 features)
+    snap_pct_roll5: float = Field(
+        ..., description="5-game rolling snap percentage"
+    )
+    snap_pct_trend: float = Field(
+        ..., description="Snap percentage trend (roll3 - roll5)"
+    )
+    target_share_roll5: float = Field(
+        ..., description="5-game rolling target share (WR/TE)"
+    )
+    carry_share_roll5: float = Field(
+        ..., description="5-game rolling carry share (RB)"
+    )
+
+    # EPA features (4 features)
+    team_epa_roll5: float = Field(
+        ..., description="5-game rolling team offensive EPA per play"
+    )
+    opp_def_epa_roll5: float = Field(
+        ..., description="5-game rolling opponent defensive EPA per play"
+    )
+    player_epa_roll5: float = Field(
+        ..., description="5-game rolling player EPA per play"
+    )
+    team_pass_epa_vs_rush_epa: float = Field(
+        ..., description="Team pass EPA minus rush EPA (pass lean)"
+    )
+
+    # Multi-window rolling features (8 features)
+    passing_yards_roll3: float = Field(
+        ..., description="3-game rolling average of passing yards"
+    )
+    rushing_yards_roll3: float = Field(
+        ..., description="3-game rolling average of rushing yards"
+    )
+    receiving_yards_roll3: float = Field(
+        ..., description="3-game rolling average of receiving yards"
+    )
+    receptions_roll3: float = Field(
+        ..., description="3-game rolling average of receptions"
+    )
+    passing_yards_momentum: float = Field(
+        ..., description="Passing yards momentum (roll3 - roll5)"
+    )
+    rushing_yards_momentum: float = Field(
+        ..., description="Rushing yards momentum (roll3 - roll5)"
+    )
+    receiving_yards_momentum: float = Field(
+        ..., description="Receiving yards momentum (roll3 - roll5)"
+    )
+    receptions_momentum: float = Field(
+        ..., description="Receptions momentum (roll3 - roll5)"
+    )
+
+    # Interaction features (4 features)
+    rush_yards_x_opp_rush_def: float = Field(
+        ..., description="Rushing yards × opponent rush defense"
+    )
+    pass_yards_x_opp_pass_def: float = Field(
+        ..., description="Passing yards × opponent pass defense"
+    )
+    recv_yards_x_opp_pass_def: float = Field(
+        ..., description="Receiving yards × opponent pass defense"
+    )
+    player_volume_x_team_pace: float = Field(
+        ..., description="Player volume × team pace"
+    )
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -194,6 +276,30 @@ class PredictionRequest(BaseModel):
                     "is_divisional": False,
                     "is_home": True,
                     "is_dome": False,
+                    "days_since_last_game": 7.0,
+                    "is_post_bye": False,
+                    "implied_team_total": 24.0,
+                    "game_script_lean": 0.0,
+                    "snap_pct_roll5": 0.95,
+                    "snap_pct_trend": 0.0,
+                    "target_share_roll5": 0.0,
+                    "carry_share_roll5": 0.0,
+                    "team_epa_roll5": 0.05,
+                    "opp_def_epa_roll5": 0.0,
+                    "player_epa_roll5": 0.1,
+                    "team_pass_epa_vs_rush_epa": 0.05,
+                    "passing_yards_roll3": 260.0,
+                    "rushing_yards_roll3": 18.0,
+                    "receiving_yards_roll3": 0.0,
+                    "receptions_roll3": 0.0,
+                    "passing_yards_momentum": 9.5,
+                    "rushing_yards_momentum": 3.0,
+                    "receiving_yards_momentum": 0.0,
+                    "receptions_momentum": 0.0,
+                    "rush_yards_x_opp_rush_def": 7.5,
+                    "pass_yards_x_opp_pass_def": 125.0,
+                    "recv_yards_x_opp_pass_def": 0.0,
+                    "player_volume_x_team_pace": 195.0,
                 }
             ]
         }

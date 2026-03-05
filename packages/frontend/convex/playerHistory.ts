@@ -103,6 +103,22 @@ export const bulkUpsert = mutation({
   },
 });
 
+// Get all player stats for a specific season/week (for player table actuals)
+export const getBySeasonWeek = query({
+  args: {
+    season: v.number(),
+    week: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // We need to scan all playerHistory and filter
+    // This is less efficient but necessary since we don't have a season_week index
+    const allHistory = await ctx.db.query("playerHistory").collect();
+    return allHistory.filter(
+      (h) => h.season === args.season && h.week === args.week
+    );
+  },
+});
+
 // Clear history for a player (for re-import)
 export const clearByPlayer = mutation({
   args: { playerId: v.string() },

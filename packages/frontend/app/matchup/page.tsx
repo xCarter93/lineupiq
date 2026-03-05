@@ -27,6 +27,7 @@ import {
 } from "@/lib/fantasy-points";
 import { useDefaultScoringConfig } from "@/hooks/useScoringConfigs";
 import { useModelMetrics } from "@/hooks/useModelMetrics";
+import { useSimulation } from "@/hooks/useSimulation";
 import { ModelConfidence } from "@/components/matchup/ModelConfidence";
 
 // Lazy load heavy chart components to reduce initial bundle size
@@ -80,6 +81,9 @@ export default function MatchupPage() {
     overallConfidence,
     isLoading: metricsLoading,
   } = useModelMetrics();
+
+  // Get simulation state for filtering historical data
+  const simulation = useSimulation();
 
   // Use Convex config if available and has PPR, otherwise use PPR default
   // This ensures receptions count toward fantasy points
@@ -366,6 +370,11 @@ export default function MatchupPage() {
                     playerName={matchupData.playerName}
                     position={matchupData.position as "QB" | "RB" | "WR" | "TE"}
                     compact
+                    simulationFilter={simulation.isActive ? {
+                      enabled: true,
+                      targetSeason: simulation.targetSeason,
+                      completedWeeks: simulation.completedWeeks,
+                    } : undefined}
                   />
                 </CollapsibleSection>
               </>

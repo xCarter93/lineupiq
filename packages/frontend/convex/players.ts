@@ -17,7 +17,9 @@ export const getByPosition = query({
       v.literal("QB"),
       v.literal("RB"),
       v.literal("WR"),
-      v.literal("TE")
+      v.literal("TE"),
+      v.literal("K"),
+      v.literal("DEF")
     ),
   },
   handler: async (ctx, args) => {

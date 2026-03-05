@@ -1,19 +1,24 @@
 """
-Ensemble infrastructure for combining LightGBM and XGBoost models.
+Ensemble infrastructure for combining LightGBM, XGBoost, and CatBoost models.
 
-Provides VotingRegressor and StackingRegressor wrappers for three ensemble strategies:
-- Simple averaging: Equal weight to both models
-- Weighted averaging: Custom weights based on validation performance
+Provides VotingRegressor and StackingRegressor wrappers for ensemble strategies:
+- Simple averaging: Equal weight to all models
+- Weighted averaging: Optimal weights via simplex grid search
 - Stacking: Meta-learner (Ridge) trained on base model predictions
+
+Supports 2 or 3 model ensembles (any combination of LightGBM, XGBoost, CatBoost).
 
 Key functions:
 - create_voting_ensemble: Create VotingRegressor with optional weights
 - create_stacking_ensemble: Create StackingRegressor with Ridge meta-learner
+- find_optimal_weights: Simplex grid search for optimal model weights
+- build_and_save_ensemble: End-to-end ensemble creation from trained models
 - save_ensemble: Save ensemble model to disk
 - load_ensemble: Load ensemble model from disk
 - benchmark_ensemble_strategies: Benchmark all strategies on holdout data
 """
 
+import itertools
 import logging
 from pathlib import Path
 from typing import Any, Literal
@@ -37,37 +42,33 @@ EnsembleType = Literal["voting_simple", "voting_weighted", "stacking"]
 
 
 def create_voting_ensemble(
-    lgbm_model: Any,
-    xgb_model: Any,
+    models: dict[str, Any],
     weights: list[float] | None = None,
 ) -> VotingRegressor:
     """Create VotingRegressor ensemble for averaging predictions.
 
+    Supports 2 or 3 models (any combination of LightGBM, XGBoost, CatBoost).
+
     Args:
-        lgbm_model: Trained LightGBM model.
-        xgb_model: Trained XGBoost model.
-        weights: Optional weights for weighted averaging [lgbm_weight, xgb_weight].
+        models: Dict mapping model names to trained model objects.
+            E.g., {"lgbm": m1, "xgb": m2, "catboost": m3}
+        weights: Optional weights for weighted averaging, same order as models dict.
             If None, uses simple averaging (equal weights).
 
     Returns:
         VotingRegressor ensemble ready for fitting or prediction.
 
     Example:
-        >>> from lineupiq.models import load_model, create_voting_ensemble
-        >>> lgbm, _ = load_model("QB", "passing_yards_lgbm")
-        >>> xgb, _ = load_model("QB", "passing_yards_xgb")
-        >>> # Simple averaging
-        >>> ensemble = create_voting_ensemble(lgbm, xgb)
-        >>> # Weighted averaging (60% LightGBM, 40% XGBoost)
-        >>> ensemble = create_voting_ensemble(lgbm, xgb, weights=[0.6, 0.4])
+        >>> ensemble = create_voting_ensemble({"lgbm": m1, "xgb": m2})
+        >>> ensemble = create_voting_ensemble(
+        ...     {"lgbm": m1, "xgb": m2, "catboost": m3},
+        ...     weights=[0.5, 0.3, 0.2]
+        ... )
     """
-    estimators = [
-        ("lgbm", lgbm_model),
-        ("xgb", xgb_model),
-    ]
+    estimators = list(models.items())
 
     if weights is None:
-        logger.info("Creating simple voting ensemble (equal weights)")
+        logger.info(f"Creating simple voting ensemble ({len(estimators)} models, equal weights)")
         voting_reg = VotingRegressor(estimators=estimators)
     else:
         logger.info(f"Creating weighted voting ensemble with weights={weights}")
@@ -77,8 +78,7 @@ def create_voting_ensemble(
 
 
 def create_stacking_ensemble(
-    lgbm_model: Any,
-    xgb_model: Any,
+    models: dict[str, Any],
     cv: int = 5,
 ) -> StackingRegressor:
     """Create StackingRegressor ensemble with Ridge meta-learner.
@@ -87,30 +87,23 @@ def create_stacking_ensemble(
     preventing overfitting. Ridge regularization handles correlated base predictions.
 
     Args:
-        lgbm_model: Trained LightGBM model.
-        xgb_model: Trained XGBoost model.
+        models: Dict mapping model names to trained model objects.
         cv: Number of cross-validation folds for meta-learner training (default: 5).
 
     Returns:
         StackingRegressor ensemble ready for fitting or prediction.
 
     Example:
-        >>> from lineupiq.models import load_model, create_stacking_ensemble
-        >>> lgbm, _ = load_model("QB", "passing_yards_lgbm")
-        >>> xgb, _ = load_model("QB", "passing_yards_xgb")
-        >>> ensemble = create_stacking_ensemble(lgbm, xgb, cv=5)
+        >>> ensemble = create_stacking_ensemble({"lgbm": m1, "xgb": m2, "catboost": m3})
         >>> ensemble.fit(X_train, y_train)
         >>> predictions = ensemble.predict(X_test)
     """
-    estimators = [
-        ("lgbm", lgbm_model),
-        ("xgb", xgb_model),
-    ]
+    estimators = list(models.items())
 
     # Ridge with alpha=1.0 prevents overfitting on correlated base predictions
     meta_learner = Ridge(alpha=1.0)
 
-    logger.info(f"Creating stacking ensemble with cv={cv}, meta-learner=Ridge(alpha=1.0)")
+    logger.info(f"Creating stacking ensemble ({len(estimators)} models, cv={cv}, meta-learner=Ridge)")
     stacking_reg = StackingRegressor(
         estimators=estimators,
         final_estimator=meta_learner,
@@ -119,6 +112,128 @@ def create_stacking_ensemble(
     )
 
     return stacking_reg
+
+
+def find_optimal_weights(
+    models: dict[str, Any],
+    X: NDArray[np.floating[Any]],
+    y: NDArray[np.floating[Any]],
+    step: float = 0.05,
+) -> list[float]:
+    """Find optimal model weights via simplex grid search.
+
+    Searches over all weight combinations that sum to 1.0 at the given step size.
+    For 3 models at step=0.05, this is 231 combinations (fast).
+    Computes weighted predictions directly (no VotingRegressor fit per combo) for speed.
+
+    Args:
+        models: Dict mapping model names to trained model objects.
+        X: Validation feature matrix.
+        y: Validation target array.
+        step: Step size for weight grid (default: 0.05).
+
+    Returns:
+        List of optimal weights in the same order as the models dict.
+
+    Example:
+        >>> weights = find_optimal_weights({"lgbm": m1, "xgb": m2, "catboost": m3}, X, y)
+        >>> weights
+        [0.5, 0.3, 0.2]
+    """
+    n_models = len(models)
+    model_names = list(models.keys())
+
+    # Pre-compute predictions for each model
+    predictions = {}
+    for name, model in models.items():
+        predictions[name] = model.predict(X)
+
+    # Generate simplex grid: all weight combinations summing to 1.0
+    n_steps = int(round(1.0 / step))
+    best_mae = float("inf")
+    best_weights = [1.0 / n_models] * n_models  # default: equal weights
+
+    # Generate all combos of n_models non-negative integers summing to n_steps
+    for combo in itertools.combinations_with_replacement(range(n_steps + 1), n_models - 1):
+        # Convert dividers to weights
+        dividers = [0] + list(combo) + [n_steps]
+        weights_int = [dividers[i + 1] - dividers[i] for i in range(n_models)]
+        weights = [w / n_steps for w in weights_int]
+
+        # Try all permutations of this weight combo
+        seen = set()
+        for perm in itertools.permutations(weights):
+            if perm in seen:
+                continue
+            seen.add(perm)
+
+            # Compute weighted prediction directly
+            weighted_pred = sum(
+                w * predictions[name] for w, name in zip(perm, model_names)
+            )
+            mae = mean_absolute_error(y, weighted_pred)
+
+            if mae < best_mae:
+                best_mae = mae
+                best_weights = list(perm)
+
+    logger.info(
+        f"Optimal weights for {model_names}: {[f'{w:.2f}' for w in best_weights]} (MAE: {best_mae:.4f})"
+    )
+    return best_weights
+
+
+def build_and_save_ensemble(
+    models: dict[str, Any],
+    position: str,
+    target: str,
+    X_train: NDArray[np.floating[Any]],
+    y_train: NDArray[np.floating[Any]],
+    X_val: NDArray[np.floating[Any]],
+    y_val: NDArray[np.floating[Any]],
+) -> Path:
+    """Build a weighted voting ensemble, find optimal weights, fit, and save.
+
+    Convenience function that:
+    1. Finds optimal weights via simplex grid search on validation data
+    2. Builds VotingRegressor with those weights
+    3. Fits the ensemble on full data (train + val) so base models see all data
+    4. Saves to disk
+
+    Args:
+        models: Dict mapping model names to trained model objects.
+            E.g., {"lgbm": m1, "xgb": m2, "catboost": m3}
+        position: Player position (e.g., "QB", "RB").
+        target: Base target stat name (e.g., "passing_yards").
+        X_train: Training features for fitting the ensemble.
+        y_train: Training target for fitting the ensemble.
+        X_val: Validation features for weight optimization.
+        y_val: Validation target for weight optimization.
+
+    Returns:
+        Path to the saved ensemble file.
+    """
+    logger.info(f"Building {len(models)}-model ensemble for {position}_{target}")
+
+    # Find optimal weights on validation data
+    optimal_weights = find_optimal_weights(models, X_val, y_val)
+
+    # Create and fit the ensemble on FULL data (train + val)
+    # VotingRegressor.fit() refits base models, so we must use all data
+    # to match the standalone models which were trained on 100% of data
+    X_full = np.vstack([X_train, X_val])
+    y_full = np.concatenate([y_train, y_val])
+    ensemble = create_voting_ensemble(models, weights=optimal_weights)
+    ensemble.fit(X_full, y_full)
+
+    # Save
+    filepath = save_ensemble(ensemble, position, target, "voting_weighted")
+    logger.info(
+        f"Saved {len(models)}-model ensemble for {position}_{target} "
+        f"with weights={[f'{w:.2f}' for w in optimal_weights]}"
+    )
+
+    return filepath
 
 
 def save_ensemble(
@@ -141,7 +256,6 @@ def save_ensemble(
         Path to the saved ensemble file.
 
     Example:
-        >>> from lineupiq.models import save_ensemble
         >>> path = save_ensemble(ensemble, "QB", "passing_yards", "voting_simple")
         >>> path.name
         'QB_passing_yards_voting_simple.joblib'
@@ -177,8 +291,7 @@ def load_ensemble(
         FileNotFoundError: If ensemble file doesn't exist.
 
     Example:
-        >>> from lineupiq.models import load_ensemble
-        >>> ensemble = load_ensemble("QB", "passing_yards", "voting_simple")
+        >>> ensemble = load_ensemble("QB", "passing_yards", "voting_weighted")
         >>> predictions = ensemble.predict(X_test)
     """
     filename = f"{position}_{target}_{ensemble_type}.joblib"
@@ -203,9 +316,8 @@ def benchmark_ensemble_strategies(
 ) -> dict[str, Any]:
     """Benchmark all ensemble strategies against single models on holdout data.
 
-    Loads LightGBM and XGBoost models for position/stat, evaluates 5 strategies
-    on holdout data (lgbm_solo, xgb_solo, voting_simple, voting_weighted, stacking),
-    and identifies the best performer by lowest MAE.
+    Loads available models (LightGBM, XGBoost, optionally CatBoost) for position/stat,
+    evaluates ensemble strategies on holdout data, and identifies the best performer.
 
     Args:
         position: Player position (e.g., "QB", "RB", "WR", "TE").
@@ -219,111 +331,83 @@ def benchmark_ensemble_strategies(
         Dict with keys:
         - results: Dict mapping strategy name to {"mae": float, "r2": float}
         - best_strategy: Name of strategy with lowest MAE
-        - correlation: Correlation between LightGBM and XGBoost predictions (diversity metric)
-        - optimal_weights: [lgbm_weight, xgb_weight] from grid search
+        - optimal_weights: Optimal weights from simplex search
+        - n_models: Number of models used in ensemble
 
     Raises:
         FileNotFoundError: If LightGBM or XGBoost model files don't exist.
-
-    Example:
-        >>> results = benchmark_ensemble_strategies(
-        ...     "QB", "passing_yards", X_train, y_train, X_holdout, y_holdout
-        ... )
-        >>> results["best_strategy"]
-        'stacking'
-        >>> results["results"]["stacking"]["mae"]
-        45.2
     """
     logger.info(f"Benchmarking ensemble strategies for {position}_{stat}")
 
-    # Load pre-trained models
-    # LightGBM models use base name (e.g., "passing_yards")
-    # XGBoost models use _xgb suffix (e.g., "passing_yards_xgb")
+    # Load pre-trained models (LightGBM + XGBoost required, CatBoost optional)
     try:
         lgbm_model, _ = load_model(position, stat)
         xgb_model, _ = load_model(position, f"{stat}_xgb")
     except FileNotFoundError as e:
-        logger.error(f"Models not found for {position}_{stat}: {e}")
+        logger.error(f"Required models not found for {position}_{stat}: {e}")
         raise
 
-    # Strategy 1: LightGBM solo
-    logger.info(f"Evaluating lgbm_solo for {position}_{stat}")
-    lgbm_pred_holdout = lgbm_model.predict(X_holdout)
-    lgbm_mae = mean_absolute_error(y_holdout, lgbm_pred_holdout)
-    lgbm_r2 = r2_score(y_holdout, lgbm_pred_holdout)
+    base_models: dict[str, Any] = {"lgbm": lgbm_model, "xgb": xgb_model}
 
-    # Strategy 2: XGBoost solo
-    logger.info(f"Evaluating xgb_solo for {position}_{stat}")
-    xgb_pred_holdout = xgb_model.predict(X_holdout)
-    xgb_mae = mean_absolute_error(y_holdout, xgb_pred_holdout)
-    xgb_r2 = r2_score(y_holdout, xgb_pred_holdout)
+    # Try loading CatBoost model (optional)
+    try:
+        catboost_model, _ = load_model(position, f"{stat}_catboost")
+        base_models["catboost"] = catboost_model
+        logger.info(f"Loaded CatBoost model for {position}_{stat}")
+    except FileNotFoundError:
+        logger.info(f"No CatBoost model for {position}_{stat}, using 2-model ensemble")
 
-    # Check prediction diversity (correlation)
-    correlation = np.corrcoef(lgbm_pred_holdout, xgb_pred_holdout)[0, 1]
-    logger.info(f"Base model correlation: {correlation:.3f}")
+    # Evaluate each single model
+    results: dict[str, dict[str, float]] = {}
+    predictions: dict[str, NDArray[np.floating[Any]]] = {}
 
-    # Strategy 3: Simple voting (equal weights)
-    logger.info(f"Evaluating voting_simple for {position}_{stat}")
-    voting_simple = create_voting_ensemble(lgbm_model, xgb_model)
+    for name, model in base_models.items():
+        pred = model.predict(X_holdout)
+        predictions[name] = pred
+        results[f"{name}_solo"] = {
+            "mae": mean_absolute_error(y_holdout, pred),
+            "r2": r2_score(y_holdout, pred),
+        }
+
+    # Simple voting (equal weights)
+    voting_simple = create_voting_ensemble(base_models)
     voting_simple.fit(X_train, y_train)
-    voting_simple_pred = voting_simple.predict(X_holdout)
-    voting_simple_mae = mean_absolute_error(y_holdout, voting_simple_pred)
-    voting_simple_r2 = r2_score(y_holdout, voting_simple_pred)
+    simple_pred = voting_simple.predict(X_holdout)
+    results["voting_simple"] = {
+        "mae": mean_absolute_error(y_holdout, simple_pred),
+        "r2": r2_score(y_holdout, simple_pred),
+    }
 
-    # Strategy 4: Weighted voting (grid search for optimal weights)
-    logger.info(f"Grid searching optimal weights for {position}_{stat}")
-    best_mae = float("inf")
-    best_weights = [0.5, 0.5]
-
-    # Grid search: 0.0, 0.05, 0.10, ..., 1.0 for lgbm weight
-    for lgbm_weight in np.linspace(0, 1, 21):
-        xgb_weight = 1 - lgbm_weight
-        weights = [lgbm_weight, xgb_weight]
-
-        # Create weighted ensemble
-        voting_weighted = create_voting_ensemble(lgbm_model, xgb_model, weights=weights)
-        voting_weighted.fit(X_train, y_train)
-        weighted_pred = voting_weighted.predict(X_holdout)
-        weighted_mae = mean_absolute_error(y_holdout, weighted_pred)
-
-        if weighted_mae < best_mae:
-            best_mae = weighted_mae
-            best_weights = weights
-
-    logger.info(f"Optimal weights: {best_weights} (MAE: {best_mae:.2f})")
-
-    # Evaluate with optimal weights
-    voting_weighted = create_voting_ensemble(lgbm_model, xgb_model, weights=best_weights)
+    # Weighted voting (optimal weights via simplex search)
+    optimal_weights = find_optimal_weights(base_models, X_holdout, y_holdout)
+    voting_weighted = create_voting_ensemble(base_models, weights=optimal_weights)
     voting_weighted.fit(X_train, y_train)
-    voting_weighted_pred = voting_weighted.predict(X_holdout)
-    voting_weighted_mae = mean_absolute_error(y_holdout, voting_weighted_pred)
-    voting_weighted_r2 = r2_score(y_holdout, voting_weighted_pred)
+    weighted_pred = voting_weighted.predict(X_holdout)
+    results["voting_weighted"] = {
+        "mae": mean_absolute_error(y_holdout, weighted_pred),
+        "r2": r2_score(y_holdout, weighted_pred),
+    }
 
-    # Strategy 5: Stacking with Ridge meta-learner
-    logger.info(f"Evaluating stacking for {position}_{stat}")
-    stacking = create_stacking_ensemble(lgbm_model, xgb_model, cv=5)
+    # Stacking with Ridge meta-learner
+    stacking = create_stacking_ensemble(base_models, cv=5)
     stacking.fit(X_train, y_train)
     stacking_pred = stacking.predict(X_holdout)
-    stacking_mae = mean_absolute_error(y_holdout, stacking_pred)
-    stacking_r2 = r2_score(y_holdout, stacking_pred)
-
-    # Compile results
-    results = {
-        "lgbm_solo": {"mae": lgbm_mae, "r2": lgbm_r2},
-        "xgb_solo": {"mae": xgb_mae, "r2": xgb_r2},
-        "voting_simple": {"mae": voting_simple_mae, "r2": voting_simple_r2},
-        "voting_weighted": {"mae": voting_weighted_mae, "r2": voting_weighted_r2},
-        "stacking": {"mae": stacking_mae, "r2": stacking_r2},
+    results["stacking"] = {
+        "mae": mean_absolute_error(y_holdout, stacking_pred),
+        "r2": r2_score(y_holdout, stacking_pred),
     }
 
     # Identify best strategy
     best_strategy = min(results, key=lambda k: results[k]["mae"])
 
-    logger.info(f"Best strategy for {position}_{stat}: {best_strategy} (MAE: {results[best_strategy]['mae']:.2f})")
+    logger.info(
+        f"Best strategy for {position}_{stat}: {best_strategy} "
+        f"(MAE: {results[best_strategy]['mae']:.2f})"
+    )
 
     return {
         "results": results,
         "best_strategy": best_strategy,
-        "correlation": correlation,
-        "optimal_weights": best_weights,
+        "optimal_weights": optimal_weights,
+        "n_models": len(base_models),
     }

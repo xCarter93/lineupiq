@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 // import { useQuery } from "convex/react";
 // import { api } from "@/convex/_generated/api";
@@ -17,7 +17,12 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 // import { SectionLabel } from "@/components/ui/section-label";
 import { useValidationPredictions } from "@/hooks/useValidationPredictions";
+import { useSimulation } from "@/hooks/useSimulation";
+import { useSimulationPredictions } from "@/hooks/useSimulationPredictions";
+import { useGameInfo } from "@/hooks/useGameInfo";
 import { ValidationChart } from "./ValidationChart";
+import { ConsolidatedPredictionChart } from "./ConsolidatedPredictionChart";
+import { ProjectedPointsBreakdown } from "./ProjectedPointsBreakdown";
 import {
   Plus,
   MapPin,
@@ -30,6 +35,7 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Calculator,
 } from "lucide-react";
 // import { cn } from "@/lib/utils";
 
@@ -126,35 +132,135 @@ export function PlayerDetailDrawer({
   onAddToLineup,
 }: PlayerDetailDrawerProps) {
   const [imageError, setImageError] = useState(false);
-  const season = 2025;
-  const { groupedByTarget, isLoading } = useValidationPredictions(
-    playerId,
+  const simulation = useSimulation();
+  const season = simulation.targetSeason;
+
+  // Get the current week for game info (week 1 if pre-season, otherwise completedWeeks + 1)
+  const currentGameWeek = simulation.isActive
+    ? Math.max(1, simulation.completedWeeks + 1)
+    : 1;
+
+  // Fetch real game info from schedule API
+  const { gameInfo, isLoading: gameInfoLoading } = useGameInfo(
+    team,
+    currentGameWeek,
     season
   );
 
-  // Get player features for this week (commented out - using mock data for now)
-  // const features = useQuery(api.playerFeatures.getByPlayerWeek, {
-  //   playerId,
-  //   week: 1, // Current week - would be dynamic in production
-  //   season: 2025,
-  // });
+  // Create simulation filter for validation predictions
+  const simulationFilter = useMemo(() => ({
+    enabled: simulation.isActive,
+    completedWeeks: simulation.completedWeeks,
+  }), [simulation.isActive, simulation.completedWeeks]);
 
-  // Mock data for sections that would come from backend
-  const mockGameContext = {
-    opponent: "vs. DAL",
-    gameTime: "Sun 1:00 PM",
-    location: "Home",
-    weather: { temp: 72, wind: 8, condition: "Clear" },
-  };
+  // Get validation data (actuals vs predicted) - filtered by simulation state
+  const { groupedByTarget: validationGrouped, isLoading: validationLoading } = useValidationPredictions(
+    playerId,
+    season,
+    simulationFilter
+  );
 
-  const mockVegas = {
-    spread: -3.5,
-    overUnder: 47.5,
-    impliedTotal: 25.5,
-    oppDefenseRank: 12,
-  };
+  // Get simulation predictions (predictions only, for pre-season display)
+  const {
+    currentWeekPrediction,
+    groupedByTarget: simulationGrouped,
+    isLoading: simulationLoading,
+  } = useSimulationPredictions(playerId, position);
 
-  const mockProjectedPoints = 18.5;
+  // Determine which data to use for charts
+  // During simulation mode, always use simulation predictions (which now include actuals for completed weeks)
+  // Outside of simulation mode, use validation data from Convex
+  const useSimulationData = simulation.isActive;
+  const chartData = useSimulationData ? simulationGrouped : validationGrouped;
+  const isLoading = useSimulationData ? simulationLoading : validationLoading;
+
+  // Get game context from schedule API data
+  const gameContext = useMemo(() => {
+    if (gameInfo) {
+      // Format game time from weekday and gametime
+      const dayAbbrev = gameInfo.weekday?.substring(0, 3) || "TBD";
+      const formattedTime = gameInfo.gametime || "TBD";
+      const gameTime = formattedTime !== "TBD" ? `${dayAbbrev} ${formattedTime}` : "TBD";
+
+      // Determine weather condition based on roof type
+      let weatherCondition = "Clear";
+      if (gameInfo.roof === "dome" || gameInfo.roof === "closed") {
+        weatherCondition = "Dome";
+      } else if (gameInfo.temp === null) {
+        weatherCondition = "TBD";
+      }
+
+      return {
+        opponent: `${gameInfo.is_home ? "vs." : "@"} ${gameInfo.opponent}`,
+        gameTime,
+        location: gameInfo.is_home ? "Home" : "Away",
+        stadium: gameInfo.stadium || "TBD",
+        weather: {
+          temp: gameInfo.temp,
+          wind: gameInfo.wind,
+          condition: weatherCondition,
+          roof: gameInfo.roof,
+        },
+      };
+    }
+    // Fallback when loading or no data
+    return {
+      opponent: currentWeekPrediction ? `vs. ${currentWeekPrediction.opponent}` : "TBD",
+      gameTime: "TBD",
+      location: "TBD",
+      stadium: "TBD",
+      weather: { temp: null as number | null, wind: null as number | null, condition: "TBD", roof: null as string | null },
+    };
+  }, [gameInfo, currentWeekPrediction]);
+
+  // Vegas lines from schedule API
+  const vegasLines = useMemo(() => {
+    if (gameInfo) {
+      return {
+        spread: gameInfo.spread_line,
+        overUnder: gameInfo.total_line,
+        impliedTotal: gameInfo.team_implied_total,
+        oppDefenseRank: null, // Would need separate API for this
+      };
+    }
+    return {
+      spread: null,
+      overUnder: null,
+      impliedTotal: null,
+      oppDefenseRank: null,
+    };
+  }, [gameInfo]);
+
+  // Calculate projected points from predictions
+  const projectedPoints = useMemo(() => {
+    if (!chartData || Object.keys(chartData).length === 0) return null;
+
+    // Standard PPR scoring values
+    const scoringValues: Record<string, number> = {
+      passing_yards: 0.04, // 1 point per 25 yards
+      passing_tds: 4,
+      interceptions: -2,
+      rushing_yards: 0.1,
+      rushing_tds: 6,
+      receiving_yards: 0.1,
+      receiving_tds: 6,
+      receptions: 1,
+      fumbles_lost: -2,
+    };
+
+    // Get the current week predictions
+    const targetWeek = currentGameWeek;
+    let totalPoints = 0;
+
+    Object.entries(chartData).forEach(([stat, data]) => {
+      const weekData = data.find((d) => d.week === targetWeek);
+      if (weekData && scoringValues[stat]) {
+        totalPoints += weekData.predicted * scoringValues[stat];
+      }
+    });
+
+    return totalPoints;
+  }, [chartData, currentGameWeek]);
 
   const imageUrl =
     headshotUrl ||
@@ -205,7 +311,7 @@ export function PlayerDetailDrawer({
                 <div className="flex items-center gap-4 mt-3">
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-bold text-primary">
-                      {mockProjectedPoints.toFixed(1)}
+                      {projectedPoints !== null ? projectedPoints.toFixed(1) : "—"}
                     </span>
                     <span className="text-sm text-muted-foreground">pts</span>
                   </div>
@@ -236,26 +342,32 @@ export function PlayerDetailDrawer({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Opponent</p>
-                <p className="font-medium">{mockGameContext.opponent}</p>
+                <p className="font-medium">{gameContext.opponent}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Game Time</p>
                 <p className="font-medium flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  {mockGameContext.gameTime}
+                  {gameContext.gameTime}
                 </p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Location</p>
-                <p className="font-medium">{mockGameContext.location}</p>
+                <p className="font-medium">{gameContext.location}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Weather</p>
                 <p className="font-medium flex items-center gap-1">
-                  <Cloud className="h-3.5 w-3.5" />
-                  {mockGameContext.weather.temp}°F
-                  <Wind className="h-3.5 w-3.5 ml-1" />
-                  {mockGameContext.weather.wind} mph
+                  {gameContext.weather.temp !== null ? (
+                    <>
+                      <Cloud className="h-3.5 w-3.5" />
+                      {gameContext.weather.temp}°F
+                      <Wind className="h-3.5 w-3.5 ml-1" />
+                      {gameContext.weather.wind} mph
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">TBD</span>
+                  )}
                 </p>
               </div>
             </div>
@@ -271,54 +383,89 @@ export function PlayerDetailDrawer({
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Spread</p>
                 <p className="font-medium">
-                  {mockVegas.spread > 0 ? "+" : ""}
-                  {mockVegas.spread}
+                  {vegasLines.spread !== null ? (
+                    <>
+                      {vegasLines.spread > 0 ? "+" : ""}
+                      {vegasLines.spread}
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">O/U</p>
-                <p className="font-medium">{mockVegas.overUnder}</p>
+                <p className="font-medium">
+                  {vegasLines.overUnder !== null ? (
+                    vegasLines.overUnder
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Implied Total</p>
-                <p className="font-medium">{mockVegas.impliedTotal}</p>
+                <p className="font-medium">
+                  {vegasLines.impliedTotal !== null ? (
+                    vegasLines.impliedTotal
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs text-muted-foreground">Opp Def Rank</p>
-                <p className="font-medium">#{mockVegas.oppDefenseRank}</p>
+                <p className="text-xs text-muted-foreground">Stadium</p>
+                <p className="font-medium text-sm">
+                  {gameContext.stadium !== "TBD" ? (
+                    gameContext.stadium
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </p>
               </div>
             </div>
           </CollapsibleSection>
 
-          {/* Prediction Breakdown */}
+          {/* Projected Points Breakdown */}
           <CollapsibleSection
-            title="Prediction Breakdown"
+            title={`Week ${currentGameWeek} Points Breakdown`}
+            icon={<Calculator className="h-4 w-4 text-muted-foreground" />}
+            defaultOpen={true}
+          >
+            {isLoading ? (
+              <div className="h-48 rounded-lg bg-muted animate-pulse" />
+            ) : chartData && Object.keys(chartData).length > 0 ? (
+              <ProjectedPointsBreakdown
+                groupedData={chartData}
+                week={currentGameWeek}
+                position={position}
+              />
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No projection data available</p>
+              </div>
+            )}
+          </CollapsibleSection>
+
+          {/* Prediction Chart (Consolidated) */}
+          <CollapsibleSection
+            title={simulation.isActive && simulation.completedWeeks > 0
+              ? `Prediction Accuracy (Weeks 1-${simulation.completedWeeks})`
+              : simulation.isActive
+              ? "Season Predictions"
+              : "Prediction Trends"}
             icon={<TrendingUp className="h-4 w-4 text-muted-foreground" />}
             defaultOpen={true}
           >
             {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2].map((i) => (
-                  <div
-                    key={i}
-                    className="h-32 rounded-lg bg-muted animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : groupedByTarget && Object.keys(groupedByTarget).length > 0 ? (
-              <div className="space-y-4">
-                {Object.entries(groupedByTarget)
-                  .slice(0, 3)
-                  .map(([target, data]) => (
-                    <ValidationChart
-                      key={target}
-                      target={target}
-                      data={data}
-                      targetDisplayName={TARGET_DISPLAY_NAMES[target] || target}
-                      syncId="playerDetail"
-                    />
-                  ))}
-              </div>
+              <div className="h-64 rounded-lg bg-muted animate-pulse" />
+            ) : chartData && Object.keys(chartData).length > 0 ? (
+              <ConsolidatedPredictionChart
+                groupedData={chartData}
+                showActuals={!simulation.isActive || simulation.completedWeeks > 0}
+                syncId="playerDetail"
+              />
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <BarChart3 className="h-8 w-8 mx-auto mb-2 opacity-50" />
@@ -339,6 +486,11 @@ export function PlayerDetailDrawer({
                 playerName={playerName}
                 position={position as "QB" | "RB" | "WR" | "TE"}
                 compact={false}
+                simulationFilter={simulation.isActive ? {
+                  enabled: true,
+                  targetSeason: simulation.targetSeason,
+                  completedWeeks: simulation.completedWeeks,
+                } : undefined}
               />
             ) : (
               <div className="text-center py-8 text-muted-foreground">

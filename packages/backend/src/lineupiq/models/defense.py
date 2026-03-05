@@ -21,8 +21,8 @@ from lineupiq.data.defense_processing import (
     get_defense_target_columns,
     process_defense_data,
 )
-from lineupiq.models.persistence import save_model
-from lineupiq.models.training import ModelType, train_model, tune_hyperparameters
+from lineupiq.models.persistence import get_save_target, save_model
+from lineupiq.models.training import ModelType, fit_conformal, train_model, tune_hyperparameters
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,8 @@ def train_defense_models(
     seasons: list[int] | None = None,
     n_trials: int = 30,
     model_type: ModelType = "lightgbm",
+    target_season: int | None = None,
+    include_weeks: list[int] | None = None,
 ) -> dict[str, Tuple[Any, dict[str, Any]]]:
     """Train all team defense prediction models.
 
@@ -50,6 +52,8 @@ def train_defense_models(
         seasons: List of seasons to train on (default: 2022-2025).
         n_trials: Number of Optuna trials per model.
         model_type: "lightgbm" or "xgboost".
+        target_season: Season to filter for partial week training (simulation mode).
+        include_weeks: Weeks to include from target_season (simulation mode).
 
     Returns:
         Dict mapping target names to (model, metrics) tuples.
@@ -60,7 +64,11 @@ def train_defense_models(
     logger.info("Training defense models")
 
     # Load and process defense data
-    df = process_defense_data(seasons)
+    df = process_defense_data(
+        seasons,
+        target_season=target_season,
+        include_weeks=include_weeks,
+    )
 
     feature_cols = get_defense_feature_columns()
     target_cols = get_defense_target_columns()
@@ -125,7 +133,12 @@ def train_defense_models(
             "seasons": seasons,
         }
 
-        model_path = save_model(model, "DEF", target, metadata)
+        # Fit conformal prediction intervals (MAPIE) - only for LightGBM (expensive 5-fold CV)
+        mapie_model = fit_conformal(model, X_valid, y_valid) if model_type == "lightgbm" else None
+
+        # Save model with correct suffix for model type
+        save_target = get_save_target(target, model_type)
+        model_path = save_model(model, "DEF", save_target, metadata, mapie_model=mapie_model)
         trained_models[target] = (model, metadata)
 
         logger.info(f"Saved DEF_{target} model: CV RMSE = {cv_rmse.mean():.4f}")

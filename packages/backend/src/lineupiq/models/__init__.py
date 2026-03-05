@@ -69,6 +69,7 @@ from lineupiq.models.importance import (
     get_xgb_importance,
 )
 from lineupiq.models.persistence import (
+    get_save_target,
     list_models,
     load_model,
     save_model,
@@ -111,10 +112,12 @@ from lineupiq.models.uncertainty import (
     predict_with_intervals,
 )
 from lineupiq.models.ensemble import (
-    create_voting_ensemble,
+    build_and_save_ensemble,
     create_stacking_ensemble,
-    save_ensemble,
+    create_voting_ensemble,
+    find_optimal_weights,
     load_ensemble,
+    save_ensemble,
 )
 
 __all__ = [
@@ -124,6 +127,7 @@ __all__ = [
     "train_model",
     "tune_hyperparameters",
     # Persistence
+    "get_save_target",
     "save_model",
     "load_model",
     "list_models",
@@ -177,8 +181,10 @@ __all__ = [
     "calculate_interval_width",
     "get_interval_coverage",
     # Ensemble Models
+    "build_and_save_ensemble",
     "create_voting_ensemble",
     "create_stacking_ensemble",
+    "find_optimal_weights",
     "save_ensemble",
     "load_ensemble",
 ]

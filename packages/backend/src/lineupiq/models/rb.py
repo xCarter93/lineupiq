@@ -24,8 +24,8 @@ import polars as pl
 from numpy.typing import NDArray
 
 from lineupiq.features.pipeline import build_features, get_feature_columns
-from lineupiq.models.persistence import save_model
-from lineupiq.models.training import ModelType, train_model, tune_hyperparameters
+from lineupiq.models.persistence import get_save_target, save_model
+from lineupiq.models.training import ModelType, fit_conformal, train_model, tune_hyperparameters
 
 logger = logging.getLogger(__name__)
 
@@ -196,8 +196,12 @@ def train_rb_models(
             "best_trial_value": study.best_value,
         }
 
-        # Save model
-        save_model(model, "RB", target, metadata)
+        # Fit conformal prediction intervals (MAPIE) - only for LightGBM (expensive 5-fold CV)
+        mapie_model = fit_conformal(model, X, y) if model_type == "lightgbm" else None
+
+        # Save model with correct suffix for model type
+        save_target = get_save_target(target, model_type)
+        save_model(model, "RB", save_target, metadata, mapie_model=mapie_model)
 
         logger.info(f"  CV RMSE: {cv_rmse_mean:.2f} +/- {cv_rmse_std:.2f}")
 
@@ -214,88 +218,18 @@ def train_rb_models_xgboost(
 ) -> dict[str, tuple[Any, dict[str, Any]]]:
     """Train XGBoost models for all 7 RB targets.
 
-    Trains XGBoost models (level-wise tree growth) to complement existing
-    LightGBM models (leaf-wise tree growth) for ensemble methods. Uses same
-    Optuna tuning and validation approach as train_rb_models().
-
-    Models saved with _xgb.joblib suffix for distinction from LightGBM models.
-
-    Args:
-        seasons: List of seasons to train on. Defaults to [2021-2024] if None.
-        n_trials: Number of Optuna trials per target (default: 30).
-        rolling_window: Rolling window for feature computation (default: 3).
-
-    Returns:
-        Dict mapping target name to (model, metrics) tuple.
-        Metrics include: cv_rmse_mean, cv_rmse_std, best_params, n_samples, model_type.
-
-    Example:
-        >>> results = train_rb_models_xgboost([2023, 2024], n_trials=10)
-        >>> "rushing_yards" in results
-        True
-        >>> "fumbles_lost" in results
-        True
-        >>> model, metrics = results["rushing_yards"]
-        >>> metrics["model_type"]
-        'xgboost'
+    .. deprecated::
+        Use ``train_rb_models(model_type="xgboost")`` instead.
+        This function is kept for backward compatibility only.
     """
-    if seasons is None:
-        seasons = [2021, 2022, 2023, 2024]
-
-    logger.info(
-        f"Training RB XGBoost models for seasons {seasons} with {n_trials} trials"
+    import warnings
+    warnings.warn(
+        "train_rb_models_xgboost() is deprecated. "
+        "Use train_rb_models(model_type='xgboost') instead.",
+        DeprecationWarning,
+        stacklevel=2,
     )
-
-    # Load and prepare data
-    logger.info("Loading feature data...")
-    df = build_features(seasons, rolling_window=rolling_window)
-    X, y_dict = prepare_rb_data(df)
-
-    results = {}
-
-    for i, target in enumerate(RB_TARGETS, 1):
-        logger.info(f"[{i}/{len(RB_TARGETS)}] Training XGBoost model for {target}...")
-
-        y = y_dict[target]
-
-        # Run hyperparameter tuning with XGBoost
-        logger.info(f"  Running {n_trials} Optuna trials...")
-        best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, n_splits=5, model_type="xgboost"
-        )
-
-        # Train final model with best params
-        logger.info(f"  Training final model with best params...")
-        model, cv_scores = train_model(
-            X, y, params=best_params, n_splits=5, model_type="xgboost"
-        )
-
-        # Compute metrics (cv_scores are negative RMSE)
-        cv_rmse_mean = float(-cv_scores.mean())
-        cv_rmse_std = float(cv_scores.std())
-
-        # Prepare metadata
-        metadata = {
-            "position": "RB",
-            "target": target,
-            "model_type": "xgboost",
-            "trained_at": datetime.now(timezone.utc).isoformat(),
-            "n_samples": len(y),
-            "n_features": X.shape[1],
-            "seasons": seasons,
-            "best_params": best_params,
-            "cv_rmse_mean": cv_rmse_mean,
-            "cv_rmse_std": cv_rmse_std,
-            "n_trials": n_trials,
-            "best_trial_value": study.best_value,
-        }
-
-        # Save model with _xgb suffix
-        save_model(model, "RB", f"{target}_xgb", metadata)
-
-        logger.info(f"  CV RMSE: {cv_rmse_mean:.2f} +/- {cv_rmse_std:.2f}")
-
-        results[target] = (model, metadata)
-
-    logger.info(f"Completed training all {len(RB_TARGETS)} RB XGBoost models")
-    return results
+    return train_rb_models(
+        seasons=seasons, n_trials=n_trials, rolling_window=rolling_window,
+        model_type="xgboost",
+    )

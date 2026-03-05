@@ -48,7 +48,7 @@ uv run ruff check src/  # Linting
 
 **Manual (Development):**
 ```bash
-# Train all models (default: 2022-2025 data, 30 trials, all positions)
+# Train all models (default: 2022-2025 data, 50 trials, all positions)
 cd packages/backend
 uv run python scripts/train_all.py
 

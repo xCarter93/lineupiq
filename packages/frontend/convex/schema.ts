@@ -63,7 +63,7 @@ export default defineSchema({
   players: defineTable({
     playerId: v.string(), // gsis_id from nflreadpy
     name: v.string(), // Display name (full_name)
-    position: v.string(), // "QB", "RB", "WR", "TE", "K"
+    position: v.string(), // "QB", "RB", "WR", "TE", "K", "DEF"
     team: v.string(), // Team abbreviation
     // Enriched fields (optional for backward compatibility)
     jerseyNumber: v.optional(v.number()),
@@ -173,6 +173,23 @@ export default defineSchema({
     timestamps: v.array(v.number()),
     updatedAt: v.number(),
   }),
+
+  // Season simulation state for backtesting
+  simulationState: defineTable({
+    name: v.string(), // e.g., "2025 Season Simulation"
+    targetSeason: v.number(), // Season being simulated (e.g., 2025)
+    trainingSeasons: v.array(v.number()), // Base seasons for training (e.g., [2022, 2023, 2024])
+    currentWeek: v.number(), // 0 = pre-season, 1-18 = active
+    status: v.union(
+      v.literal("ready"),
+      v.literal("training"),
+      v.literal("predicting"),
+      v.literal("advancing")
+    ),
+    lastTrainedAt: v.optional(v.string()), // ISO timestamp of last training
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_target_season", ["targetSeason"]),
 
   // Cached player features from ML backend for detail views
   playerFeatures: defineTable({

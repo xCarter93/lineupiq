@@ -9,6 +9,7 @@ import { useSidebar, SidebarProvider } from "./sidebar-context";
 import { SidebarNav } from "./SidebarNav";
 import { SidebarLineupPreview } from "./SidebarLineupPreview";
 import { SidebarRecentPlayers } from "./SidebarRecentPlayers";
+import { SidebarSimulationStatus } from "./SidebarSimulationStatus";
 import Link from "next/link";
 
 const SIDEBAR_WIDTH = 250;
@@ -71,6 +72,9 @@ function SidebarContent() {
     <div className="flex flex-col h-full">
       <SidebarLogo />
       <Separator className="bg-sidebar-border" />
+
+      {/* Simulation Status (when active) */}
+      <SidebarSimulationStatus />
 
       {/* Navigation */}
       <div className="flex-1 py-4 overflow-y-auto">

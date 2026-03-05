@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { ArrowRight, Users, Settings } from "lucide-react";
+import { useSimulation } from "@/hooks/useSimulation";
 
 // Mock data - in production this would come from Convex
 const mockPlayerPerformance = [
@@ -36,10 +37,28 @@ const mockWeeklyTrend = [
 ];
 
 export default function Page() {
+  const simulation = useSimulation();
+
   // Mock data for hero cards
   const projectedPoints = 118.5;
   const lastWeekAccuracy = 92.3;
   const seasonTrend = 2.8;
+
+  // Get week display based on simulation state
+  const weekDisplay = simulation.isActive
+    ? simulation.completedWeeks === 0
+      ? "Pre-Season"
+      : `Week ${simulation.currentWeek}`
+    : `Week ${simulation.currentWeek}`;
+
+  const seasonDisplay = `${simulation.targetSeason} Season`;
+
+  // Get training data display
+  const trainingDataDisplay = simulation.isActive
+    ? simulation.completedWeeks === 0
+      ? simulation.trainingSeasons.filter(s => s < simulation.targetSeason).join("-")
+      : `${simulation.trainingSeasons[0]}-${simulation.targetSeason} (through Wk ${simulation.completedWeeks})`
+    : "2022-2025";
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,7 +68,12 @@ export default function Page() {
           <div>
             <h1 className="text-2xl font-bold">Dashboard</h1>
             <p className="text-muted-foreground mt-1">
-              Week 18, 2025 Season
+              {weekDisplay}, {seasonDisplay}
+              {simulation.isActive && (
+                <Badge variant="outline" className="ml-2 text-xs">
+                  Simulation
+                </Badge>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -159,12 +183,14 @@ export default function Page() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Training Data: </span>
-                  <span className="font-medium">2022-2025</span>
+                  <span className="font-medium">{trainingDataDisplay}</span>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">Last Updated: </span>
-                  <span className="font-medium">Jan 24, 2026</span>
-                </div>
+                {!simulation.isActive && (
+                  <div>
+                    <span className="text-muted-foreground">Last Updated: </span>
+                    <span className="font-medium">Jan 24, 2026</span>
+                  </div>
+                )}
               </div>
               <Badge variant="outline">Powered by LineupIQ ML</Badge>
             </div>

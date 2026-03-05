@@ -6,7 +6,7 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_PREDICTION_API_URL || "http://localhost:8000";
 
-// Feature types required by the prediction models (40 features - Phase 20+21)
+// Feature types required by the prediction models (64 features)
 export interface PredictionFeatures {
   // Rolling stats (8 features) - 5-game windows
   passing_yards_roll5: number;
@@ -36,7 +36,7 @@ export interface PredictionFeatures {
   receiving_yards_cv5: number;
   receptions_std5: number;
   receptions_cv5: number;
-  // Weather features (9 features - Phase 20)
+  // Weather features (9 features)
   temp_normalized: number;
   wind_normalized: number;
   extreme_cold: boolean;
@@ -46,7 +46,7 @@ export interface PredictionFeatures {
   very_high_wind: boolean;
   has_precip: boolean;
   precip_amount: number;
-  // Matchup features (5 features - Phase 20)
+  // Matchup features (5 features)
   home_spread: number;
   total_points: number;
   vegas_strength_diff: number;
@@ -55,6 +55,41 @@ export interface PredictionFeatures {
   // Context features (2 features)
   is_home: boolean;
   is_dome: boolean;
+  // Game context features (4 features)
+  days_since_last_game: number;
+  is_post_bye: boolean;
+  implied_team_total: number;
+  game_script_lean: number;
+  // Usage features (4 features)
+  snap_pct_roll5: number;
+  snap_pct_trend: number;
+  target_share_roll5: number;
+  carry_share_roll5: number;
+  // EPA features (4 features)
+  team_epa_roll5: number;
+  opp_def_epa_roll5: number;
+  player_epa_roll5: number;
+  team_pass_epa_vs_rush_epa: number;
+  // Multi-window rolling features (8 features)
+  passing_yards_roll3: number;
+  rushing_yards_roll3: number;
+  receiving_yards_roll3: number;
+  receptions_roll3: number;
+  passing_yards_momentum: number;
+  rushing_yards_momentum: number;
+  receiving_yards_momentum: number;
+  receptions_momentum: number;
+  // Interaction features (4 features)
+  rush_yards_x_opp_rush_def: number;
+  pass_yards_x_opp_pass_def: number;
+  recv_yards_x_opp_pass_def: number;
+  player_volume_x_team_pace: number;
+}
+
+// Prediction interval (90% confidence)
+export interface PredictionInterval {
+  lower_90: number;
+  upper_90: number;
 }
 
 // Position-specific prediction response types
@@ -65,6 +100,7 @@ export interface QBPrediction {
   rushing_yards: number;
   rushing_tds: number;
   fumbles_lost: number;
+  intervals?: Record<string, PredictionInterval>;
 }
 
 export interface RBPrediction {
@@ -75,6 +111,7 @@ export interface RBPrediction {
   receptions: number;
   receiving_tds: number;
   fumbles_lost: number;
+  intervals?: Record<string, PredictionInterval>;
 }
 
 export interface ReceiverPrediction {
@@ -82,6 +119,7 @@ export interface ReceiverPrediction {
   receiving_tds: number;
   receptions: number;
   fumbles_lost: number;
+  intervals?: Record<string, PredictionInterval>;
 }
 
 export type Prediction = QBPrediction | RBPrediction | ReceiverPrediction;
@@ -105,7 +143,7 @@ export function createDefaultFeatures(
     team_points_roll5: 22.0,
     team_yards_roll5: 340.0,
     team_plays_roll5: 65.0,
-    // Weather features (Phase 20) - neutral defaults
+    // Weather features - neutral defaults
     temp_normalized: 0.6,
     wind_normalized: 0.2,
     extreme_cold: false,
@@ -115,7 +153,7 @@ export function createDefaultFeatures(
     very_high_wind: false,
     has_precip: false,
     precip_amount: 0.0,
-    // Matchup features (Phase 20) - neutral defaults
+    // Matchup features - neutral defaults
     home_spread: 0.0,
     total_points: 45.0,
     vegas_strength_diff: 0.0,
@@ -124,6 +162,15 @@ export function createDefaultFeatures(
     // Context
     is_home: isHome,
     is_dome: false,
+    // Game context features
+    days_since_last_game: 7,
+    is_post_bye: false,
+    implied_team_total: 22.5,
+    game_script_lean: 0.0,
+    // EPA features (league average)
+    team_epa_roll5: 0.0,
+    opp_def_epa_roll5: 0.0,
+    team_pass_epa_vs_rush_epa: 0.0,
   };
 
   // Position-typical rolling stats and volatility
@@ -147,6 +194,28 @@ export function createDefaultFeatures(
       receiving_yards_cv5: 0,
       receptions_std5: 0,
       receptions_cv5: 0,
+      // Usage features
+      snap_pct_roll5: 1.0,
+      snap_pct_trend: 0.0,
+      target_share_roll5: 0.0,
+      carry_share_roll5: 0.0,
+      // EPA (player-level)
+      player_epa_roll5: 0.1,
+      // Multi-window rolling (3-game)
+      passing_yards_roll3: 250,
+      rushing_yards_roll3: 15,
+      receiving_yards_roll3: 0,
+      receptions_roll3: 0,
+      // Momentum (roll3 - roll5, neutral)
+      passing_yards_momentum: 0,
+      rushing_yards_momentum: 0,
+      receiving_yards_momentum: 0,
+      receptions_momentum: 0,
+      // Interaction features
+      rush_yards_x_opp_rush_def: 15,
+      pass_yards_x_opp_pass_def: 250,
+      recv_yards_x_opp_pass_def: 0,
+      player_volume_x_team_pace: 195,
     };
   }
 
@@ -170,6 +239,28 @@ export function createDefaultFeatures(
       receiving_yards_cv5: 0.6,
       receptions_std5: 1.5,
       receptions_cv5: 0.5,
+      // Usage features
+      snap_pct_roll5: 0.6,
+      snap_pct_trend: 0.0,
+      target_share_roll5: 0.05,
+      carry_share_roll5: 0.5,
+      // EPA (player-level)
+      player_epa_roll5: 0.0,
+      // Multi-window rolling (3-game)
+      passing_yards_roll3: 0,
+      rushing_yards_roll3: 65,
+      receiving_yards_roll3: 20,
+      receptions_roll3: 2.5,
+      // Momentum (roll3 - roll5, neutral)
+      passing_yards_momentum: 0,
+      rushing_yards_momentum: 0,
+      receiving_yards_momentum: 0,
+      receptions_momentum: 0,
+      // Interaction features
+      rush_yards_x_opp_rush_def: 65,
+      pass_yards_x_opp_pass_def: 0,
+      recv_yards_x_opp_pass_def: 20,
+      player_volume_x_team_pace: 975,
     };
   }
 
@@ -193,6 +284,28 @@ export function createDefaultFeatures(
     receiving_yards_cv5: 0.5,
     receptions_std5: 2,
     receptions_cv5: 0.4,
+    // Usage features
+    snap_pct_roll5: 0.75,
+    snap_pct_trend: 0.0,
+    target_share_roll5: 0.15,
+    carry_share_roll5: 0.0,
+    // EPA (player-level)
+    player_epa_roll5: 0.0,
+    // Multi-window rolling (3-game)
+    passing_yards_roll3: 0,
+    rushing_yards_roll3: 2,
+    receiving_yards_roll3: 55,
+    receptions_roll3: 4,
+    // Momentum (roll3 - roll5, neutral)
+    passing_yards_momentum: 0,
+    rushing_yards_momentum: 0,
+    receiving_yards_momentum: 0,
+    receptions_momentum: 0,
+    // Interaction features
+    rush_yards_x_opp_rush_def: 2,
+    pass_yards_x_opp_pass_def: 0,
+    recv_yards_x_opp_pass_def: 55,
+    player_volume_x_team_pace: 260,
   };
 }
 

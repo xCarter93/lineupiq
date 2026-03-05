@@ -43,11 +43,17 @@ DEFENSE_TARGETS = [
 ]
 
 
-def process_defense_data(seasons: list[int]) -> pl.DataFrame:
+def process_defense_data(
+    seasons: list[int],
+    target_season: int | None = None,
+    include_weeks: list[int] | None = None,
+) -> pl.DataFrame:
     """Process team defense data for model training.
 
     Args:
         seasons: List of seasons to process.
+        target_season: If provided, filter this season to only include specific weeks.
+        include_weeks: Weeks to include from target_season (required if target_season set).
 
     Returns:
         DataFrame with defense features and targets, one row per team-game.
@@ -161,6 +167,15 @@ def process_defense_data(seasons: list[int]) -> pl.DataFrame:
         if col in df.columns:
             mean_val = df.select(pl.col(col).mean()).item() or 0.0
             df = df.with_columns(pl.col(col).fill_null(mean_val))
+
+    # Filter target season to only include specified weeks (simulation mode)
+    if target_season is not None and include_weeks is not None:
+        logger.info(f"Filtering season {target_season} to weeks {include_weeks}")
+        df = df.filter(
+            (pl.col("season") != target_season) |
+            ((pl.col("season") == target_season) & (pl.col("week").is_in(include_weeks)))
+        )
+        logger.info(f"After filtering: {len(df)} rows")
 
     logger.info(f"Processed defense data: {df.shape[0]} rows, {df.shape[1]} columns")
 

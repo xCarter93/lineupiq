@@ -28,10 +28,7 @@ export default function AdminPage() {
   }, {} as Record<string, number>) ?? {};
 
   return (
-    <div className="container mx-auto p-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">Admin - Roster Management</h1>
-
-      <div className="grid gap-6">
+    <div className="grid gap-6">
         {/* Current State */}
         <Card>
           <CardHeader>
@@ -103,7 +100,6 @@ export default function AdminPage() {
             </ol>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }

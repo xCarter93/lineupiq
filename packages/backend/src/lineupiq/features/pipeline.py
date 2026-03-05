@@ -17,6 +17,12 @@ import polars as pl
 
 from lineupiq.data import process_player_stats
 from lineupiq.data.fetchers import fetch_schedules
+from lineupiq.features.epa_features import compute_epa_features, get_epa_columns
+from lineupiq.features.game_context import (
+    compute_implied_team_total,
+    compute_rest_features,
+    get_game_context_columns,
+)
 from lineupiq.features.opponent_features import add_opponent_strength
 from lineupiq.features.rolling_stats import (
     compute_rolling_stats,
@@ -24,6 +30,7 @@ from lineupiq.features.rolling_stats import (
     get_volatility_columns,
 )
 from lineupiq.features.team_strength import compute_team_strength, get_team_strength_columns
+from lineupiq.features.usage_features import compute_usage_features, get_usage_columns
 from lineupiq.features.weather import engineer_weather_features
 from lineupiq.features.matchup import engineer_matchup_features
 from lineupiq.data.odds_cache import OddsClient
@@ -236,8 +243,118 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
         logger.warning("No game_id in player data or schedules, skipping matchup features")
         matchup_cols = []
 
+    # Step 8: Add rest/bye week features
+    logger.info("Step 8: Adding rest/bye week features...")
+    df = compute_rest_features(df, schedules_df)
+    rest_cols = ["days_since_last_game", "is_post_bye"]
+    logger.info(f"Added {len(rest_cols)} rest/bye features")
+
+    # Step 9: Add implied team total and game script features
+    logger.info("Step 9: Computing implied team total features...")
+    df = compute_implied_team_total(df)
+    implied_cols = ["implied_team_total", "game_script_lean"]
+    logger.info(f"Added {len(implied_cols)} implied total features")
+
+    # Step 10: Add snap count / usage rate features
+    logger.info("Step 10: Computing usage features...")
+    df = compute_usage_features(df, seasons, window=rolling_window)
+    usage_cols = get_usage_columns(rolling_window)
+    logger.info(f"Added {len(usage_cols)} usage features")
+
+    # Step 11: Add EPA features
+    logger.info("Step 11: Computing EPA features...")
+    df = compute_epa_features(df, seasons, window=rolling_window)
+    epa_cols = get_epa_columns(rolling_window)
+    logger.info(f"Added {len(epa_cols)} EPA features")
+
+    # Step 12: Add multi-window rolling features (3-game window + momentum)
+    logger.info("Step 12: Computing multi-window rolling features...")
+    short_window = 3
+    # Compute 3-game rolling for key stats
+    stat_cols_for_multiwindow = [
+        "passing_yards", "rushing_yards", "receiving_yards", "receptions"
+    ]
+    for stat_col in stat_cols_for_multiwindow:
+        if stat_col in df.columns:
+            roll3_col = f"{stat_col}_roll{short_window}"
+            roll5_col = f"{stat_col}_roll{rolling_window}"
+            momentum_col = f"{stat_col}_momentum"
+
+            df = df.sort(["player_id", "season", "week"])
+            df = df.with_columns(
+                pl.col(stat_col)
+                .shift(1)
+                .rolling_mean(window_size=short_window, min_samples=1)
+                .over("player_id")
+                .fill_null(0.0)
+                .alias(roll3_col)
+            )
+
+            # Momentum = roll3 - roll5 (positive = trending up)
+            if roll5_col in df.columns:
+                df = df.with_columns(
+                    (pl.col(roll3_col) - pl.col(roll5_col))
+                    .fill_null(0.0)
+                    .alias(momentum_col)
+                )
+            else:
+                df = df.with_columns(pl.lit(0.0).alias(momentum_col))
+
+    multiwindow_cols = [
+        f"{s}_roll{short_window}" for s in stat_cols_for_multiwindow
+    ] + [f"{s}_momentum" for s in stat_cols_for_multiwindow]
+    logger.info(f"Added {len(multiwindow_cols)} multi-window features")
+
+    # Step 13: Add interaction features
+    logger.info("Step 13: Computing interaction features...")
+    interaction_cols = []
+
+    # rush_yards_x_opp_rush_def
+    if f"rushing_yards_roll{rolling_window}" in df.columns and "opp_rush_defense_strength" in df.columns:
+        df = df.with_columns(
+            (pl.col(f"rushing_yards_roll{rolling_window}") * pl.col("opp_rush_defense_strength"))
+            .fill_null(0.0)
+            .alias("rush_yards_x_opp_rush_def")
+        )
+        interaction_cols.append("rush_yards_x_opp_rush_def")
+
+    # pass_yards_x_opp_pass_def
+    if f"passing_yards_roll{rolling_window}" in df.columns and "opp_pass_defense_strength" in df.columns:
+        df = df.with_columns(
+            (pl.col(f"passing_yards_roll{rolling_window}") * pl.col("opp_pass_defense_strength"))
+            .fill_null(0.0)
+            .alias("pass_yards_x_opp_pass_def")
+        )
+        interaction_cols.append("pass_yards_x_opp_pass_def")
+
+    # recv_yards_x_opp_pass_def
+    if f"receiving_yards_roll{rolling_window}" in df.columns and "opp_pass_defense_strength" in df.columns:
+        df = df.with_columns(
+            (pl.col(f"receiving_yards_roll{rolling_window}") * pl.col("opp_pass_defense_strength"))
+            .fill_null(0.0)
+            .alias("recv_yards_x_opp_pass_def")
+        )
+        interaction_cols.append("recv_yards_x_opp_pass_def")
+
+    # player_volume_x_team_pace (carries or receptions * team plays)
+    if f"carries_roll{rolling_window}" in df.columns and f"team_plays_roll{rolling_window}" in df.columns:
+        df = df.with_columns(
+            (pl.col(f"carries_roll{rolling_window}") * pl.col(f"team_plays_roll{rolling_window}"))
+            .fill_null(0.0)
+            .alias("player_volume_x_team_pace")
+        )
+        interaction_cols.append("player_volume_x_team_pace")
+
+    logger.info(f"Added {len(interaction_cols)} interaction features")
+
     # Sort for consistent ordering
     df = df.sort(["season", "week", "player_id"])
+
+    # Count all new feature types
+    new_feature_count = (
+        len(rest_cols) + len(implied_cols) + len(usage_cols)
+        + len(epa_cols) + len(multiwindow_cols) + len(interaction_cols)
+    )
 
     logger.info(
         f"Feature build complete: {len(df)} rows, {len(df.columns)} columns"
@@ -246,7 +363,7 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
         f"Feature types: {len(rolling_cols)} rolling, {len(opp_cols)} opponent, "
         f"{len(team_cols)} team, {len(vol_cols)} volatility, "
         f"{total_weather_cols} weather ({len(detailed_weather_cols)} detailed), "
-        f"{len(matchup_cols)} matchup"
+        f"{len(matchup_cols)} matchup, {new_feature_count} new (rest/usage/EPA/multiwindow/interaction)"
     )
 
     return df
@@ -327,6 +444,35 @@ def get_feature_columns() -> list[str]:
         "is_dome",
     ]
 
+    # Game context features (rest/bye, implied totals)
+    game_context_features = get_game_context_columns()
+
+    # Usage features (snap count, target/carry share)
+    usage_features = get_usage_columns()
+
+    # EPA features (team/opp/player EPA)
+    epa_features = get_epa_columns()
+
+    # Multi-window rolling features (3-game window + momentum)
+    multiwindow_features = [
+        "passing_yards_roll3",
+        "rushing_yards_roll3",
+        "receiving_yards_roll3",
+        "receptions_roll3",
+        "passing_yards_momentum",
+        "rushing_yards_momentum",
+        "receiving_yards_momentum",
+        "receptions_momentum",
+    ]
+
+    # Interaction features
+    interaction_features = [
+        "rush_yards_x_opp_rush_def",
+        "pass_yards_x_opp_pass_def",
+        "recv_yards_x_opp_pass_def",
+        "player_volume_x_team_pace",
+    ]
+
     return (
         rolling_features
         + opponent_features
@@ -335,6 +481,11 @@ def get_feature_columns() -> list[str]:
         + weather_features
         + matchup_features
         + context_features
+        + game_context_features
+        + usage_features
+        + epa_features
+        + multiwindow_features
+        + interaction_features
     )
 
 

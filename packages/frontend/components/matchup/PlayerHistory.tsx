@@ -6,11 +6,22 @@ import { usePlayerHistory, calculateSeasonAverages } from "@/hooks/usePlayerHist
 import { FantasyPointsChart } from "@/components/charts";
 import { cn } from "@/lib/utils";
 
+interface SimulationFilter {
+  /** When true, filter out games based on simulation state */
+  enabled: boolean;
+  /** The target season being simulated (e.g., 2025) */
+  targetSeason: number;
+  /** Number of completed weeks in simulation (0 = pre-season) */
+  completedWeeks: number;
+}
+
 interface PlayerHistoryProps {
   playerId: string | null;
   playerName: string;
   position: "QB" | "RB" | "WR" | "TE";
   compact?: boolean;
+  /** Optional simulation filter to hide future data */
+  simulationFilter?: SimulationFilter;
 }
 
 function StatCell({ value, label, isNegative = false }: { value: number | undefined; label: string; isNegative?: boolean }) {
@@ -180,8 +191,8 @@ function SeasonSummary({ games, season, position }: SeasonSummaryProps) {
   );
 }
 
-export function PlayerHistory({ playerId, playerName, position, compact = false }: PlayerHistoryProps) {
-  const { games, isLoading, error } = usePlayerHistory(playerId);
+export function PlayerHistory({ playerId, playerName, position, compact = false, simulationFilter }: PlayerHistoryProps) {
+  const { games, isLoading, error } = usePlayerHistory(playerId, 3, simulationFilter);
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
 
   if (!playerId) {

@@ -62,7 +62,8 @@ def load_models() -> dict[str, Any]:
     # Filter to only base models (exclude XGBoost variants and ensemble models)
     base_models = [
         (pos, target) for pos, target in model_list
-        if not target.endswith("_xgb") and not target.endswith("_voting_weighted")
+        if not target.endswith("_xgb") and not target.endswith("_catboost")
+        and not target.endswith("_voting_weighted")
         and not target.endswith("_voting_simple") and not target.endswith("_stacking")
     ]
 
@@ -84,6 +85,41 @@ def load_models() -> dict[str, Any]:
 
     logger.info(f"Successfully loaded {len(models)} models")
     return models
+
+
+def load_mapie_models() -> dict[str, Any]:
+    """Load all MAPIE conformal prediction models from disk.
+
+    MAPIE models are stored alongside base models in the artifact dict.
+    Only base models (not ensembles) have MAPIE models.
+
+    Returns:
+        Dict mapping model names (e.g., "QB_passing_yards") to CrossConformalRegressor objects.
+    """
+    mapie_models: dict[str, Any] = {}
+
+    model_list = list_models()
+
+    # Only load from base models (not XGBoost variants or ensembles)
+    base_models = [
+        (pos, target) for pos, target in model_list
+        if not target.endswith("_xgb") and not target.endswith("_catboost")
+        and not target.endswith("_voting_weighted")
+        and not target.endswith("_voting_simple") and not target.endswith("_stacking")
+    ]
+
+    for position, target in base_models:
+        model_name = f"{position}_{target}"
+        try:
+            _, metadata = load_model(position, target)
+            mapie_model = metadata.get("mapie_model")
+            if mapie_model is not None:
+                mapie_models[model_name] = mapie_model
+        except FileNotFoundError:
+            pass
+
+    logger.info(f"Loaded {len(mapie_models)} MAPIE conformal models")
+    return mapie_models
 
 
 def get_position_models(models: dict[str, Any], position: str) -> dict[str, Any]:

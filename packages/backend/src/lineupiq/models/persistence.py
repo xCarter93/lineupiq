@@ -16,9 +16,48 @@ from pathlib import Path
 from typing import Any
 
 import joblib
+from mapie.regression import CrossConformalRegressor
 from xgboost import XGBRegressor
 
 logger = logging.getLogger(__name__)
+
+# Model type suffix mapping
+_MODEL_TYPE_SUFFIXES: dict[str, str] = {
+    "lightgbm": "",
+    "xgboost": "_xgb",
+    "catboost": "_catboost",
+}
+
+
+def get_save_target(target: str, model_type: str) -> str:
+    """Map a target name and model_type to the correct save target with suffix.
+
+    Args:
+        target: Base target name (e.g., "passing_yards").
+        model_type: Model type ("lightgbm", "xgboost", or "catboost").
+
+    Returns:
+        Target with appropriate suffix for saving:
+        - "lightgbm" → target (no suffix, base model)
+        - "xgboost" → f"{target}_xgb"
+        - "catboost" → f"{target}_catboost"
+
+    Raises:
+        ValueError: If model_type is not recognized.
+
+    Example:
+        >>> get_save_target("passing_yards", "lightgbm")
+        'passing_yards'
+        >>> get_save_target("passing_yards", "xgboost")
+        'passing_yards_xgb'
+        >>> get_save_target("passing_yards", "catboost")
+        'passing_yards_catboost'
+    """
+    suffix = _MODEL_TYPE_SUFFIXES.get(model_type)
+    if suffix is None:
+        raise ValueError(f"Unknown model_type: {model_type}. Expected one of {list(_MODEL_TYPE_SUFFIXES.keys())}")
+    return f"{target}{suffix}"
+
 
 # Directory for saved model files
 # Located at packages/backend/models/ (not in src/, these are artifacts)
@@ -30,6 +69,7 @@ def save_model(
     position: str,
     target: str,
     metadata: dict[str, Any] | None = None,
+    mapie_model: CrossConformalRegressor | None = None,
 ) -> Path:
     """Save trained model with metadata to disk.
 
@@ -78,6 +118,7 @@ def save_model(
         "feature_names": feature_names,
         "position": position,
         "target": target,
+        "mapie_model": mapie_model,
     }
 
     # Save to disk
@@ -121,6 +162,7 @@ def load_model(position: str, target: str) -> tuple[XGBRegressor, dict[str, Any]
     metadata["position"] = artifact.get("position", position)
     metadata["target"] = artifact.get("target", target)
     metadata["feature_names"] = artifact.get("feature_names")
+    metadata["mapie_model"] = artifact.get("mapie_model")
 
     logger.info(f"Loaded model from {filepath}")
     return model, metadata

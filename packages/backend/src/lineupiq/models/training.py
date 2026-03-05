@@ -18,13 +18,15 @@ from typing import Any, Literal
 
 import numpy as np
 import optuna
+from catboost import CatBoostRegressor
 from lightgbm import LGBMRegressor, early_stopping, log_evaluation
+from mapie.regression import CrossConformalRegressor
 from numpy.typing import NDArray
 from sklearn.metrics import root_mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit
 from xgboost import XGBRegressor
 
-ModelType = Literal["xgboost", "lightgbm"]
+ModelType = Literal["xgboost", "lightgbm", "catboost"]
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +163,8 @@ def get_lgb_params(trial: optuna.Trial, target: str | None = None) -> dict[str, 
         "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
         "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 10.0, log=True),
         "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
+        "max_bin": trial.suggest_int("max_bin", 127, 511),
+        "min_data_in_bin": trial.suggest_int("min_data_in_bin", 3, 20),
         "verbosity": -1,  # Suppress warnings
         "num_threads": os.cpu_count() or 4,  # Use all CPU cores for 10-20% speedup
     }
@@ -174,6 +178,51 @@ def get_lgb_params(trial: optuna.Trial, target: str | None = None) -> dict[str, 
     return params
 
 
+def get_catboost_params(trial: optuna.Trial, target: str | None = None) -> dict[str, Any]:
+    """Generate CatBoost parameters from Optuna trial.
+
+    Defines the hyperparameter search space for CatBoost regression:
+    - depth: 4-10 (tree depth)
+    - learning_rate: 0.01-0.3 (log scale)
+    - iterations: 100-500 (number of trees)
+    - l2_leaf_reg: 1.0-10.0 (L2 regularization)
+    - subsample: 0.6-1.0 (row sampling, requires bootstrap_type=Bernoulli)
+    - colsample_bylevel: 0.6-1.0 (column sampling per level)
+    - min_data_in_leaf: 5-50 (minimum samples per leaf)
+    - random_strength: 0.1-10.0 (randomization for scoring splits)
+
+    Args:
+        trial: Optuna trial object for suggesting parameters.
+        target: Optional target name for objective selection.
+
+    Returns:
+        Dictionary of CatBoost hyperparameters.
+    """
+    params: dict[str, Any] = {
+        "depth": trial.suggest_int("depth", 4, 10),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+        "iterations": trial.suggest_int("iterations", 100, 500),
+        "l2_leaf_reg": trial.suggest_float("l2_leaf_reg", 1.0, 10.0),
+        "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+        "colsample_bylevel": trial.suggest_float("colsample_bylevel", 0.6, 1.0),
+        "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 5, 50),
+        "random_strength": trial.suggest_float("random_strength", 0.1, 10.0, log=True),
+        "bootstrap_type": "Bernoulli",
+        "verbose": 0,
+        "thread_count": os.cpu_count() or 4,
+        "allow_writing_files": False,
+    }
+
+    # Use Poisson loss for count targets
+    if target and target in COUNT_TARGETS:
+        params["loss_function"] = "Poisson"
+        logger.debug(f"Using Poisson loss for count target: {target}")
+    else:
+        params["loss_function"] = "RMSE"
+
+    return params
+
+
 def train_model(
     X: NDArray[np.floating[Any]],
     y: NDArray[np.floating[Any]],
@@ -182,22 +231,22 @@ def train_model(
     model_type: ModelType = "lightgbm",
     early_stopping_rounds: int = 50,
     trial: optuna.Trial | None = None,
-) -> tuple[XGBRegressor | LGBMRegressor, NDArray[np.floating[Any]]]:
+) -> tuple[XGBRegressor | LGBMRegressor | CatBoostRegressor, NDArray[np.floating[Any]]]:
     """Train model with TimeSeriesSplit cross-validation and early stopping.
 
     Uses TimeSeriesSplit to maintain temporal integrity - training data always
     comes before validation data, preventing future data leakage.
 
-    For LightGBM, uses early stopping callbacks to prevent overfitting and
-    reduce training time (15-25% speedup). Reports intermediate values to
-    Optuna for trial pruning when trial object is provided.
+    Supports LightGBM, XGBoost, and CatBoost with early stopping callbacks
+    to prevent overfitting. Reports intermediate values to Optuna for trial
+    pruning when trial object is provided.
 
     Args:
         X: Feature matrix of shape (n_samples, n_features).
         y: Target array of shape (n_samples,).
         params: Model parameters. If None, uses defaults.
         n_splits: Number of CV splits (default: 5).
-        model_type: "xgboost" or "lightgbm" (default: "lightgbm").
+        model_type: "xgboost", "lightgbm", or "catboost" (default: "lightgbm").
         early_stopping_rounds: Rounds without improvement before stopping (default: 50).
         trial: Optional Optuna trial for reporting intermediate values and pruning.
 
@@ -225,9 +274,10 @@ def train_model(
         y_train, y_val = y[train_idx], y[val_idx]
 
         # Create fresh model for each fold
+        fold_model: XGBRegressor | LGBMRegressor | CatBoostRegressor
         if model_type == "lightgbm":
             model_params = {**params, "random_state": 42, "verbosity": -1}
-            fold_model: XGBRegressor | LGBMRegressor = LGBMRegressor(**model_params)
+            fold_model = LGBMRegressor(**model_params)
 
             # Fit with early stopping callbacks
             fold_model.fit(
@@ -238,6 +288,15 @@ def train_model(
                     early_stopping(stopping_rounds=early_stopping_rounds),
                     log_evaluation(period=0),  # Suppress per-iteration logs
                 ],
+            )
+        elif model_type == "catboost":
+            model_params = {**params, "random_seed": 42, "verbose": 0}
+            fold_model = CatBoostRegressor(**model_params)
+            fold_model.fit(
+                X_train,
+                y_train,
+                eval_set=(X_val, y_val),
+                early_stopping_rounds=early_stopping_rounds,
             )
         else:
             model_params = {**params, "random_state": 42}
@@ -266,9 +325,13 @@ def train_model(
     scores_array = np.array(scores)
 
     # Fit final model on full data with early stopping disabled
+    model: XGBRegressor | LGBMRegressor | CatBoostRegressor
     if model_type == "lightgbm":
         model_params = {**params, "random_state": 42, "verbosity": -1}
-        model: XGBRegressor | LGBMRegressor = LGBMRegressor(**model_params)
+        model = LGBMRegressor(**model_params)
+    elif model_type == "catboost":
+        model_params = {**params, "random_seed": 42, "verbose": 0}
+        model = CatBoostRegressor(**model_params)
     else:
         model_params = {**params, "random_state": 42}
         model = XGBRegressor(**model_params)
@@ -320,6 +383,8 @@ def tune_hyperparameters(
         """Objective function for Optuna optimization with pruning."""
         if model_type == "lightgbm":
             params = get_lgb_params(trial, target=target)
+        elif model_type == "catboost":
+            params = get_catboost_params(trial, target=target)
         else:
             params = get_xgb_params(trial)
         # Pass trial to enable intermediate reporting and pruning
@@ -342,3 +407,33 @@ def tune_hyperparameters(
     logger.info(f"Best parameters: {best_params}")
 
     return best_params, study
+
+
+def fit_conformal(
+    model: XGBRegressor | LGBMRegressor | CatBoostRegressor,
+    X: NDArray[np.floating[Any]],
+    y: NDArray[np.floating[Any]],
+    confidence_level: float = 0.9,
+) -> CrossConformalRegressor:
+    """Wrap a trained model with MAPIE for conformal prediction intervals.
+
+    Uses CrossConformalRegressor with the "plus" method (jackknife+) which
+    provides valid coverage guarantees without requiring a separate calibration set.
+
+    Args:
+        model: Already-trained base model (LightGBM, XGBoost, or CatBoost).
+        X: Training feature matrix.
+        y: Training target array.
+        confidence_level: Confidence level (default 0.9 = 90% intervals).
+
+    Returns:
+        CrossConformalRegressor wrapping the base model, ready for interval predictions.
+    """
+    ccr = CrossConformalRegressor(
+        estimator=model, confidence_level=confidence_level, method="plus", cv=5,
+    )
+    ccr.fit_conformalize(X, y)
+    logger.info(
+        f"Fit MAPIE conformal model (method=plus, cv=5, confidence_level={confidence_level})"
+    )
+    return ccr

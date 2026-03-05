@@ -177,7 +177,7 @@ def load_player_stats_cached(
             force_refresh=force_refresh,
         )
         dfs.append(df)
-    return pl.concat(dfs) if dfs else pl.DataFrame()
+    return pl.concat(dfs, how="diagonal_relaxed") if dfs else pl.DataFrame()
 
 
 def load_schedules_cached(

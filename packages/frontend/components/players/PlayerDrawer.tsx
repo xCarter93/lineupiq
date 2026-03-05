@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import {
   Sheet,
@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { SectionLabel } from "@/components/ui/section-label";
 import { useValidationPredictions } from "@/hooks/useValidationPredictions";
+import { useSimulation } from "@/hooks/useSimulation";
 import { ValidationChart } from "./ValidationChart";
 
 // Lazy load PlayerHistory from existing component
@@ -33,8 +34,8 @@ interface PlayerDrawerProps {
   headshotUrl?: string;
 }
 
-const TABS = ["2025 Validation", "History", "Stats"] as const;
-type Tab = typeof TABS[number];
+// Tabs vary based on simulation state
+type Tab = "Accuracy" | "History" | "Stats";
 
 // Map stat targets to display names
 const TARGET_DISPLAY_NAMES: Record<string, string> = {
@@ -68,10 +69,51 @@ export function PlayerDrawer({
   team,
   headshotUrl,
 }: PlayerDrawerProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("2025 Validation");
+  const [activeTab, setActiveTab] = useState<Tab>("Accuracy");
   const [imageError, setImageError] = useState(false);
-  const season = 2025;
-  const { groupedByTarget, isLoading } = useValidationPredictions(playerId, season);
+  const simulation = useSimulation();
+  const season = simulation.targetSeason;
+
+  // Create simulation filter for validation predictions
+  const simulationFilter = useMemo(() => ({
+    enabled: simulation.isActive,
+    completedWeeks: simulation.completedWeeks,
+  }), [simulation.isActive, simulation.completedWeeks]);
+
+  const { groupedByTarget, isLoading, hasAnyData } = useValidationPredictions(
+    playerId,
+    season,
+    simulationFilter
+  );
+
+  // Determine available tabs based on simulation state
+  const tabs = useMemo((): Tab[] => {
+    // In simulation mode with no completed weeks, hide Accuracy tab
+    if (simulation.isActive && simulation.completedWeeks === 0) {
+      return ["History", "Stats"];
+    }
+    return ["Accuracy", "History", "Stats"];
+  }, [simulation.isActive, simulation.completedWeeks]);
+
+  // Get tab label based on simulation state
+  const getTabLabel = (tab: Tab): string => {
+    if (tab === "Accuracy") {
+      if (simulation.isActive) {
+        return simulation.completedWeeks > 0
+          ? `Accuracy (Wk 1-${simulation.completedWeeks})`
+          : "Accuracy";
+      }
+      return `${season} Accuracy`;
+    }
+    return tab;
+  };
+
+  // Reset to first available tab if current tab is no longer available
+  useEffect(() => {
+    if (!tabs.includes(activeTab) && tabs.length > 0) {
+      setActiveTab(tabs[0]);
+    }
+  }, [tabs, activeTab]);
 
   // Use headshotUrl from Convex if available, otherwise fall back to ESPN URL
   const imageUrl = headshotUrl || `https://a.espncdn.com/combiner/i?img=/i/headshots/nfl/players/full/${playerId}.png&w=150&h=110`;
@@ -108,7 +150,7 @@ export function PlayerDrawer({
 
           {/* Tabs */}
           <div className="flex gap-2 border-b pb-2">
-            {TABS.map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -120,7 +162,7 @@ export function PlayerDrawer({
                   }
                 `}
               >
-                {tab}
+                {getTabLabel(tab)}
               </button>
             ))}
           </div>
@@ -128,14 +170,20 @@ export function PlayerDrawer({
 
         {/* Tab Content */}
         <div className="py-6 space-y-6">
-          {activeTab === "2025 Validation" && (
+          {activeTab === "Accuracy" && (
             <div className="space-y-6">
-              <SectionLabel>PREDICTED VS ACTUAL (2025 SEASON)</SectionLabel>
+              <SectionLabel>
+                {simulation.isActive && simulation.completedWeeks > 0
+                  ? `PREDICTED VS ACTUAL (WEEKS 1-${simulation.completedWeeks})`
+                  : `PREDICTED VS ACTUAL (${season} SEASON)`}
+              </SectionLabel>
 
               {(() => {
                 // Debug logging
                 console.log(`[PlayerDrawer] Rendering validation tab for ${playerName} (${playerId}):`, {
                   isLoading,
+                  simulationActive: simulation.isActive,
+                  completedWeeks: simulation.completedWeeks,
                   groupedByTarget,
                   targetCount: groupedByTarget ? Object.keys(groupedByTarget).length : 0,
                 });
@@ -161,13 +209,21 @@ export function PlayerDrawer({
                 } else {
                   return (
                     <div className="text-center py-12 text-muted-foreground">
-                      <div className="text-lg font-medium mb-2">No validation data available</div>
+                      <div className="text-lg font-medium mb-2">
+                        {simulation.isActive && simulation.completedWeeks === 0
+                          ? "No completed weeks yet"
+                          : "No validation data available"}
+                      </div>
                       <div className="text-sm">
-                        Player ID: {playerId}
-                        <br />
-                        Season: {season}
-                        <br />
-                        Check browser console for debug logs
+                        {simulation.isActive && simulation.completedWeeks === 0 ? (
+                          <>Advance through weeks in the simulation to see prediction accuracy.</>
+                        ) : (
+                          <>
+                            Player ID: {playerId}
+                            <br />
+                            Season: {season}
+                          </>
+                        )}
                       </div>
                     </div>
                   );
@@ -184,6 +240,11 @@ export function PlayerDrawer({
                 playerName={playerName}
                 position={position as "QB" | "RB" | "WR" | "TE"}
                 compact={false}
+                simulationFilter={simulation.isActive ? {
+                  enabled: true,
+                  targetSeason: simulation.targetSeason,
+                  completedWeeks: simulation.completedWeeks,
+                } : undefined}
               />
             </div>
           )}

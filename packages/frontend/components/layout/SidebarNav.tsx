@@ -7,6 +7,7 @@ import {
   Users,
   ClipboardList,
   Settings,
+  Shield,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ const navItems: NavItem[] = [
   { href: "/players", label: "Players", icon: Users },
   { href: "/lineup", label: "Lineup", icon: ClipboardList },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/admin", label: "Admin", icon: Shield },
 ];
 
 export function SidebarNav() {

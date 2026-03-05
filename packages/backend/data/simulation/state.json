@@ -1,0 +1,14 @@
+{
+  "name": "2025 Season Simulation",
+  "target_season": 2025,
+  "training_seasons": [
+    2022,
+    2023,
+    2024
+  ],
+  "current_week": 3,
+  "status": "ready",
+  "last_trained_at": "2026-01-26T01:29:58.818649",
+  "created_at": "2026-01-25T11:55:37.222499",
+  "updated_at": "2026-01-26T01:31:39.465133"
+}

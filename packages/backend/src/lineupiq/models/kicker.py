@@ -22,8 +22,8 @@ from lineupiq.data.kicker_processing import (
     get_kicker_target_columns,
     process_kicker_data,
 )
-from lineupiq.models.persistence import save_model
-from lineupiq.models.training import ModelType, train_model, tune_hyperparameters
+from lineupiq.models.persistence import get_save_target, save_model
+from lineupiq.models.training import ModelType, fit_conformal, train_model, tune_hyperparameters
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,8 @@ def train_kicker_models(
     seasons: list[int] | None = None,
     n_trials: int = 30,
     model_type: ModelType = "lightgbm",
+    target_season: int | None = None,
+    include_weeks: list[int] | None = None,
 ) -> dict[str, Tuple[Any, dict[str, Any]]]:
     """Train all kicker prediction models.
 
@@ -45,6 +47,8 @@ def train_kicker_models(
         seasons: List of seasons to train on (default: 2022-2025).
         n_trials: Number of Optuna trials per model.
         model_type: "lightgbm" or "xgboost".
+        target_season: Season to filter for partial week training (simulation mode).
+        include_weeks: Weeks to include from target_season (simulation mode).
 
     Returns:
         Dict mapping target names to (model, metrics) tuples.
@@ -55,7 +59,11 @@ def train_kicker_models(
     logger.info("Training kicker models")
 
     # Load and process kicker data
-    df = process_kicker_data(seasons)
+    df = process_kicker_data(
+        seasons,
+        target_season=target_season,
+        include_weeks=include_weeks,
+    )
 
     feature_cols = get_kicker_feature_columns()
     target_cols = get_kicker_target_columns()
@@ -121,9 +129,12 @@ def train_kicker_models(
             "seasons": seasons,
         }
 
-        # save_model expects XGBRegressor but we're passing LGBMRegressor
-        # The persistence module handles both since they have compatible interfaces
-        model_path = save_model(model, "K", target, metadata)  # type: ignore[arg-type]
+        # Fit conformal prediction intervals (MAPIE) - only for LightGBM (expensive 5-fold CV)
+        mapie_model = fit_conformal(model, X_valid, y_valid) if model_type == "lightgbm" else None
+
+        # Save model with correct suffix for model type
+        save_target = get_save_target(target, model_type)
+        model_path = save_model(model, "K", save_target, metadata, mapie_model=mapie_model)  # type: ignore[arg-type]
         trained_models[target] = (model, metadata)
 
         logger.info(f"Saved K_{target} model: CV RMSE = {cv_rmse.mean():.4f}")

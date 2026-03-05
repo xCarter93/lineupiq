@@ -18,6 +18,7 @@ import type * as predictions from "../predictions.js";
 import type * as recentPlayers from "../recentPlayers.js";
 import type * as scoringConfigs from "../scoringConfigs.js";
 import type * as seedPlayers from "../seedPlayers.js";
+import type * as simulation from "../simulation.js";
 import type * as validationPredictions from "../validationPredictions.js";
 
 import type {
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   recentPlayers: typeof recentPlayers;
   scoringConfigs: typeof scoringConfigs;
   seedPlayers: typeof seedPlayers;
+  simulation: typeof simulation;
   validationPredictions: typeof validationPredictions;
 }>;
 

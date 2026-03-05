@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation } from "convex/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { api } from "@/convex/_generated/api";
 import { fetchPlayerHistory } from "@/lib/roster-api";
 
@@ -28,13 +28,27 @@ interface UsePlayerHistoryResult {
   refetch: () => Promise<void>;
 }
 
+interface SimulationFilter {
+  /** When true, filter out games based on simulation state */
+  enabled: boolean;
+  /** The target season being simulated (e.g., 2025) */
+  targetSeason: number;
+  /** Number of completed weeks in simulation (0 = pre-season) */
+  completedWeeks: number;
+}
+
 /**
  * Hook to get player's historical stats.
  * Checks Convex cache first, fetches from API if missing.
+ *
+ * @param playerId - The player's ID
+ * @param seasons - Number of seasons to fetch (default: 3)
+ * @param simulationFilter - Optional filter to hide future data during simulation mode
  */
 export function usePlayerHistory(
   playerId: string | null,
-  seasons: number = 3
+  seasons: number = 3,
+  simulationFilter?: SimulationFilter
 ): UsePlayerHistoryResult {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,8 +104,35 @@ export function usePlayerHistory(
     }
   }, [playerId, cachedGames, fetchAndCache]);
 
+  // Filter games based on simulation state
+  const filteredGames = useMemo(() => {
+    const allGames = cachedGames ?? [];
+
+    // If no simulation filter or not enabled, return all games
+    if (!simulationFilter?.enabled) {
+      return allGames;
+    }
+
+    const { targetSeason, completedWeeks } = simulationFilter;
+
+    return allGames.filter((game) => {
+      // Keep all games from seasons before the target season
+      if (game.season < targetSeason) {
+        return true;
+      }
+
+      // For the target season, only show games from completed weeks
+      if (game.season === targetSeason) {
+        return game.week <= completedWeeks;
+      }
+
+      // Hide games from future seasons (shouldn't happen, but just in case)
+      return false;
+    });
+  }, [cachedGames, simulationFilter]);
+
   return {
-    games: cachedGames ?? [],
+    games: filteredGames,
     isLoading: isLoading || cachedGames === undefined,
     error,
     refetch: fetchAndCache,

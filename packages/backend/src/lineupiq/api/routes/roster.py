@@ -14,10 +14,37 @@ from lineupiq.api.schemas.roster import (
     WeeklyStats,
 )
 from lineupiq.data.fetchers import fetch_player_history, fetch_rosters
+from lineupiq.features.rankings_cache import (
+    get_latest_opponent_strength,
+    get_latest_team_strength,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+# All 32 NFL teams for DEF position
+NFL_TEAMS = [
+    "ARI", "ATL", "BAL", "BUF", "CAR", "CHI", "CIN", "CLE",
+    "DAL", "DEN", "DET", "GB", "HOU", "IND", "JAX", "KC",
+    "LV", "LAC", "LAR", "MIA", "MIN", "NE", "NO", "NYG",
+    "NYJ", "PHI", "PIT", "SF", "SEA", "TB", "TEN", "WAS"
+]
+
+# Team full names for DEF display
+TEAM_NAMES = {
+    "ARI": "Arizona Cardinals", "ATL": "Atlanta Falcons", "BAL": "Baltimore Ravens",
+    "BUF": "Buffalo Bills", "CAR": "Carolina Panthers", "CHI": "Chicago Bears",
+    "CIN": "Cincinnati Bengals", "CLE": "Cleveland Browns", "DAL": "Dallas Cowboys",
+    "DEN": "Denver Broncos", "DET": "Detroit Lions", "GB": "Green Bay Packers",
+    "HOU": "Houston Texans", "IND": "Indianapolis Colts", "JAX": "Jacksonville Jaguars",
+    "KC": "Kansas City Chiefs", "LV": "Las Vegas Raiders", "LAC": "Los Angeles Chargers",
+    "LAR": "Los Angeles Rams", "MIA": "Miami Dolphins", "MIN": "Minnesota Vikings",
+    "NE": "New England Patriots", "NO": "New Orleans Saints", "NYG": "New York Giants",
+    "NYJ": "New York Jets", "PHI": "Philadelphia Eagles", "PIT": "Pittsburgh Steelers",
+    "SF": "San Francisco 49ers", "SEA": "Seattle Seahawks", "TB": "Tampa Bay Buccaneers",
+    "TEN": "Tennessee Titans", "WAS": "Washington Commanders"
+}
 
 
 @router.get("/roster", response_model=RosterResponse)
@@ -26,7 +53,8 @@ async def get_roster(
 ) -> RosterResponse:
     """Get current NFL roster for fantasy-relevant positions.
 
-    Returns all players in QB, RB, WR, TE, K positions for the specified season.
+    Returns all players in QB, RB, WR, TE, K positions for the specified season,
+    plus all 32 team defenses as synthetic "DEF" players.
     Use this to populate player dropdowns and search interfaces.
 
     Args:
@@ -55,6 +83,24 @@ async def get_roster(
         )
         for row in df.to_dicts()
     ]
+
+    # Add team defenses as synthetic "players"
+    for team in NFL_TEAMS:
+        team_name = TEAM_NAMES.get(team, f"{team} Defense")
+        players.append(
+            PlayerRoster(
+                player_id=f"DEF_{team}",
+                name=f"{team_name} D/ST",
+                position="DEF",
+                team=team,
+                jersey_number=None,
+                height=None,
+                weight=None,
+                college=None,
+                years_exp=None,
+                headshot_url=None,
+            )
+        )
 
     return RosterResponse(season=season, players=players, count=len(players))
 
@@ -243,7 +289,7 @@ def _get_default_features(position: str, is_home: bool) -> dict[str, float | boo
         "team_points_roll5": 22.0,
         "team_yards_roll5": 340.0,
         "team_plays_roll5": 65.0,
-        # Weather features (Phase 20) - neutral defaults
+        # Weather features - neutral defaults
         "temp_normalized": 0.5,
         "wind_normalized": 0.2,
         "extreme_cold": False,
@@ -253,7 +299,7 @@ def _get_default_features(position: str, is_home: bool) -> dict[str, float | boo
         "very_high_wind": False,
         "has_precip": False,
         "precip_amount": 0.0,
-        # Matchup features (Phase 20) - neutral defaults
+        # Matchup features - neutral defaults
         "home_spread": 0.0,
         "total_points": 45.0,
         "vegas_strength_diff": 0.0,
@@ -262,6 +308,35 @@ def _get_default_features(position: str, is_home: bool) -> dict[str, float | boo
         # Context
         "is_home": is_home,
         "is_dome": False,
+        # Game context features - neutral defaults
+        "days_since_last_game": 7.0,
+        "is_post_bye": False,
+        "implied_team_total": 22.5,
+        "game_script_lean": 0.0,
+        # Usage features - neutral defaults
+        "snap_pct_roll5": 0.5,
+        "snap_pct_trend": 0.0,
+        "target_share_roll5": 0.0,
+        "carry_share_roll5": 0.0,
+        # EPA features - neutral defaults
+        "team_epa_roll5": 0.0,
+        "opp_def_epa_roll5": 0.0,
+        "player_epa_roll5": 0.0,
+        "team_pass_epa_vs_rush_epa": 0.0,
+        # Multi-window rolling features - will be overridden per position
+        "passing_yards_roll3": 0.0,
+        "rushing_yards_roll3": 0.0,
+        "receiving_yards_roll3": 0.0,
+        "receptions_roll3": 0.0,
+        "passing_yards_momentum": 0.0,
+        "rushing_yards_momentum": 0.0,
+        "receiving_yards_momentum": 0.0,
+        "receptions_momentum": 0.0,
+        # Interaction features - neutral defaults
+        "rush_yards_x_opp_rush_def": 0.0,
+        "pass_yards_x_opp_pass_def": 0.0,
+        "recv_yards_x_opp_pass_def": 0.0,
+        "player_volume_x_team_pace": 0.0,
     }
 
     # Position-typical rolling stats and volatility
@@ -333,10 +408,12 @@ def _get_default_features(position: str, is_home: bool) -> dict[str, float | boo
 
 
 def _get_opponent_strength(opponent_team: str | None) -> dict[str, float]:
-    """Get opponent defensive strength features.
+    """Get opponent defensive strength features from cached rankings.
 
-    For now, returns neutral/average values. In the future, could look up
-    actual defensive rankings from cached data.
+    Looks up actual defensive rankings computed from historical data,
+    using the same logic as the training pipeline (opponent_features.py).
+    Falls back to neutral defaults only if no opponent is specified or
+    ranking data is unavailable.
 
     Args:
         opponent_team: Opponent team abbreviation (or None).
@@ -344,22 +421,24 @@ def _get_opponent_strength(opponent_team: str | None) -> dict[str, float]:
     Returns:
         Dict with opponent strength features.
     """
-    # TODO: Look up actual opponent rankings from cached defensive stats
-    # For now, return neutral/average values
-    return {
-        "opp_pass_defense_strength": 0.5,
-        "opp_rush_defense_strength": 0.5,
-        "opp_pass_yards_allowed_rank": 16.0,
-        "opp_rush_yards_allowed_rank": 16.0,
-        "opp_total_yards_allowed_rank": 16.0,
-    }
+    if opponent_team is None:
+        return {
+            "opp_pass_defense_strength": 0.5,
+            "opp_rush_defense_strength": 0.5,
+            "opp_pass_yards_allowed_rank": 16.0,
+            "opp_rush_yards_allowed_rank": 16.0,
+            "opp_total_yards_allowed_rank": 16.0,
+        }
+
+    return get_latest_opponent_strength(opponent_team)
 
 
 def _get_team_strength(team: str) -> dict[str, float]:
-    """Get team offensive strength features.
+    """Get team offensive strength features from cached data.
 
-    For now, returns neutral/average values. In the future, could look up
-    actual team strength from cached data.
+    Looks up actual team offensive metrics computed from historical data,
+    using the same logic as the training pipeline (team_strength.py).
+    Falls back to league average defaults only if data is unavailable.
 
     Args:
         team: Team abbreviation.
@@ -367,13 +446,7 @@ def _get_team_strength(team: str) -> dict[str, float]:
     Returns:
         Dict with team strength features.
     """
-    # TODO: Look up actual team strength from cached offensive stats
-    # For now, return neutral/average values
-    return {
-        "team_points_roll5": 22.0,
-        "team_yards_roll5": 340.0,
-        "team_plays_roll5": 65.0,
-    }
+    return get_latest_team_strength(team)
 
 
 @router.get("/player/{player_id}/features", response_model=PlayerFeaturesResponse)
@@ -441,13 +514,45 @@ async def get_player_features(
         opponent_features = _get_opponent_strength(opponent_team)
         team_features = _get_team_strength(team)
 
-        # Combine all features (40 features total - Phase 20+21)
+        # Compute 3-game rolling stats for multi-window features
+        rolling_stats_3 = _compute_rolling_stats_for_player(history_df, window=3)
+
+        # Compute momentum features (roll3 - roll5)
+        momentum_features: dict[str, float] = {}
+        for stat in ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]:
+            roll3_key = f"{stat}_roll3"
+            roll5_key = f"{stat}_roll5"
+            roll3_val = rolling_stats_3.get(roll3_key, 0.0)
+            roll5_val = rolling_stats.get(roll5_key, 0.0)
+            momentum_features[f"{stat}_momentum"] = round(roll3_val - roll5_val, 2)
+
+        # Compute interaction features
+        opp_pass_def = opponent_features.get("opp_pass_defense_strength", 0.5)
+        opp_rush_def = opponent_features.get("opp_rush_defense_strength", 0.5)
+        team_pace = team_features.get("team_plays_roll5", 65.0)
+
+        interaction_features = {
+            "rush_yards_x_opp_rush_def": round(
+                rolling_stats.get("rushing_yards_roll5", 0.0) * opp_rush_def, 2
+            ),
+            "pass_yards_x_opp_pass_def": round(
+                rolling_stats.get("passing_yards_roll5", 0.0) * opp_pass_def, 2
+            ),
+            "recv_yards_x_opp_pass_def": round(
+                rolling_stats.get("receiving_yards_roll5", 0.0) * opp_pass_def, 2
+            ),
+            "player_volume_x_team_pace": round(
+                rolling_stats.get("carries_roll5", 0.0) * team_pace, 2
+            ),
+        }
+
+        # Combine all features (64 features total)
         features: dict[str, float | bool] = {
             **rolling_stats,
             **volatility,
             **opponent_features,
             **team_features,
-            # Weather features (Phase 20) - neutral defaults for real-time predictions
+            # Weather features - neutral defaults for real-time predictions
             "temp_normalized": 0.5,
             "wind_normalized": 0.2,
             "extreme_cold": False,
@@ -457,7 +562,7 @@ async def get_player_features(
             "very_high_wind": False,
             "has_precip": False,
             "precip_amount": 0.0,
-            # Matchup features (Phase 20) - neutral defaults for real-time predictions
+            # Matchup features - neutral defaults for real-time predictions
             "home_spread": 0.0,  # Pick'em
             "total_points": 45.0,  # NFL average
             "vegas_strength_diff": 0.0,  # Even matchup
@@ -466,6 +571,26 @@ async def get_player_features(
             # Context features
             "is_home": is_home,
             "is_dome": False,
+            # Game context features
+            "days_since_last_game": 7.0,
+            "is_post_bye": False,
+            "implied_team_total": 22.5,
+            "game_script_lean": 0.0,
+            # Usage features
+            "snap_pct_roll5": 0.5,
+            "snap_pct_trend": 0.0,
+            "target_share_roll5": 0.0,
+            "carry_share_roll5": 0.0,
+            # EPA features
+            "team_epa_roll5": 0.0,
+            "opp_def_epa_roll5": 0.0,
+            "player_epa_roll5": 0.0,
+            "team_pass_epa_vs_rush_epa": 0.0,
+            # Multi-window rolling features
+            **{k: v for k, v in rolling_stats_3.items() if k.endswith("_roll3")},
+            **momentum_features,
+            # Interaction features
+            **interaction_features,
         }
     else:
         # Not enough data - use position defaults but merge any available stats

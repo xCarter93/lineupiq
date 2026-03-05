@@ -29,6 +29,45 @@ from lineupiq.features import get_feature_columns
 
 router = APIRouter()
 
+def _predict_with_intervals(
+    model: object,
+    mapie_model: object | None,
+    features: np.ndarray,
+    floor_zero: bool = False,
+) -> dict[str, float]:
+    """Make a prediction with optional conformal intervals.
+
+    Args:
+        model: Base model (LightGBM/XGBoost/ensemble).
+        mapie_model: MAPIE CrossConformalRegressor for intervals (or None).
+        features: Feature array of shape (1, n_features).
+        floor_zero: If True, clamp prediction and bounds at 0.
+
+    Returns:
+        Dict with "prediction", and optionally "lower_90" and "upper_90".
+    """
+    pred = float(model.predict(features)[0])
+    if floor_zero:
+        pred = max(0.0, pred)
+    result = {"prediction": round(pred, 1)}
+
+    if mapie_model is not None:
+        try:
+            # MAPIE 1.3+ API: predict_interval returns (preds, intervals)
+            # intervals shape: (n_samples, 2, n_confidence_levels)
+            _, intervals = mapie_model.predict_interval(features)
+            lower = float(intervals[0, 0, 0])
+            upper = float(intervals[0, 1, 0])
+            if floor_zero:
+                lower = max(0.0, lower)
+                upper = max(0.0, upper)
+            result["lower_90"] = round(lower, 1)
+            result["upper_90"] = round(upper, 1)
+        except Exception:
+            pass  # Silently skip intervals if MAPIE fails
+
+    return result
+
 
 def prepare_features(request: PredictionRequest) -> np.ndarray:
     """Convert prediction request to numpy array for model inference.
@@ -81,23 +120,32 @@ async def predict_qb(request: PredictionRequest, req: Request) -> JSONResponse:
     # Cache miss - run prediction
     features = prepare_features(request)
     models = get_position_models(req.app.state.models, position)
+    mapie_models = get_position_models(
+        getattr(req.app.state, "mapie_models", {}), position
+    )
 
-    # Predict all 6 QB targets
-    passing_yards = round(float(models["passing_yards"].predict(features)[0]), 1)
-    passing_tds = round(float(models["passing_tds"].predict(features)[0]), 1)
-    interceptions = max(0.0, round(float(models["interceptions"].predict(features)[0]), 1))
-    rushing_yards = round(float(models["rushing_yards"].predict(features)[0]), 1)
-    rushing_tds = max(0.0, round(float(models["rushing_tds"].predict(features)[0]), 1))
-    fumbles_lost = max(0.0, round(float(models["fumbles_lost"].predict(features)[0]), 1))
-
-    response_data = {
-        "passing_yards": passing_yards,
-        "passing_tds": passing_tds,
-        "interceptions": interceptions,
-        "rushing_yards": rushing_yards,
-        "rushing_tds": rushing_tds,
-        "fumbles_lost": fumbles_lost,
+    # Predict all 6 QB targets with optional intervals
+    targets = {
+        "passing_yards": False,
+        "passing_tds": False,
+        "interceptions": True,
+        "rushing_yards": False,
+        "rushing_tds": True,
+        "fumbles_lost": True,
     }
+    response_data: dict[str, object] = {}
+    intervals: dict[str, dict[str, float]] = {}
+
+    for target, floor_zero in targets.items():
+        result = _predict_with_intervals(
+            models[target], mapie_models.get(target), features, floor_zero=floor_zero
+        )
+        response_data[target] = result["prediction"]
+        if "lower_90" in result:
+            intervals[target] = {"lower_90": result["lower_90"], "upper_90": result["upper_90"]}
+
+    if intervals:
+        response_data["intervals"] = intervals
 
     # Store in cache
     cache.set(position, features_dict, response_data)
@@ -135,25 +183,33 @@ async def predict_rb(request: PredictionRequest, req: Request) -> JSONResponse:
     # Cache miss - run prediction
     features = prepare_features(request)
     models = get_position_models(req.app.state.models, position)
+    mapie_models = get_position_models(
+        getattr(req.app.state, "mapie_models", {}), position
+    )
 
-    # Predict all 7 RB targets
-    rushing_yards = round(float(models["rushing_yards"].predict(features)[0]), 1)
-    rushing_tds = max(0.0, round(float(models["rushing_tds"].predict(features)[0]), 1))
-    carries = round(float(models["carries"].predict(features)[0]), 1)
-    receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
-    receptions = round(float(models["receptions"].predict(features)[0]), 1)
-    receiving_tds = max(0.0, round(float(models["receiving_tds"].predict(features)[0]), 1))
-    fumbles_lost = max(0.0, round(float(models["fumbles_lost"].predict(features)[0]), 1))
-
-    response_data = {
-        "rushing_yards": rushing_yards,
-        "rushing_tds": rushing_tds,
-        "carries": carries,
-        "receiving_yards": receiving_yards,
-        "receptions": receptions,
-        "receiving_tds": receiving_tds,
-        "fumbles_lost": fumbles_lost,
+    # Predict all 7 RB targets with optional intervals
+    targets = {
+        "rushing_yards": False,
+        "rushing_tds": True,
+        "carries": False,
+        "receiving_yards": False,
+        "receptions": False,
+        "receiving_tds": True,
+        "fumbles_lost": True,
     }
+    response_data: dict[str, object] = {}
+    intervals: dict[str, dict[str, float]] = {}
+
+    for target, floor_zero in targets.items():
+        result = _predict_with_intervals(
+            models[target], mapie_models.get(target), features, floor_zero=floor_zero
+        )
+        response_data[target] = result["prediction"]
+        if "lower_90" in result:
+            intervals[target] = {"lower_90": result["lower_90"], "upper_90": result["upper_90"]}
+
+    if intervals:
+        response_data["intervals"] = intervals
 
     # Store in cache
     cache.set(position, features_dict, response_data)
@@ -187,18 +243,29 @@ async def predict_wr(request: PredictionRequest, req: Request) -> JSONResponse:
     # Cache miss - run prediction
     features = prepare_features(request)
     models = get_position_models(req.app.state.models, position)
+    mapie_models = get_position_models(
+        getattr(req.app.state, "mapie_models", {}), position
+    )
 
-    receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
-    receiving_tds = max(0.0, round(float(models["receiving_tds"].predict(features)[0]), 1))
-    receptions = round(float(models["receptions"].predict(features)[0]), 1)
-    fumbles_lost = max(0.0, round(float(models["fumbles_lost"].predict(features)[0]), 2))
-
-    response_data = {
-        "receiving_yards": receiving_yards,
-        "receiving_tds": receiving_tds,
-        "receptions": receptions,
-        "fumbles_lost": fumbles_lost,
+    targets = {
+        "receiving_yards": False,
+        "receiving_tds": True,
+        "receptions": False,
+        "fumbles_lost": True,
     }
+    response_data: dict[str, object] = {}
+    intervals: dict[str, dict[str, float]] = {}
+
+    for target, floor_zero in targets.items():
+        result = _predict_with_intervals(
+            models[target], mapie_models.get(target), features, floor_zero=floor_zero
+        )
+        response_data[target] = result["prediction"]
+        if "lower_90" in result:
+            intervals[target] = {"lower_90": result["lower_90"], "upper_90": result["upper_90"]}
+
+    if intervals:
+        response_data["intervals"] = intervals
 
     # Store in cache
     cache.set(position, features_dict, response_data)
@@ -232,18 +299,29 @@ async def predict_te(request: PredictionRequest, req: Request) -> JSONResponse:
     # Cache miss - run prediction
     features = prepare_features(request)
     models = get_position_models(req.app.state.models, position)
+    mapie_models = get_position_models(
+        getattr(req.app.state, "mapie_models", {}), position
+    )
 
-    receiving_yards = round(float(models["receiving_yards"].predict(features)[0]), 1)
-    receiving_tds = max(0.0, round(float(models["receiving_tds"].predict(features)[0]), 1))
-    receptions = round(float(models["receptions"].predict(features)[0]), 1)
-    fumbles_lost = max(0.0, round(float(models["fumbles_lost"].predict(features)[0]), 2))
-
-    response_data = {
-        "receiving_yards": receiving_yards,
-        "receiving_tds": receiving_tds,
-        "receptions": receptions,
-        "fumbles_lost": fumbles_lost,
+    targets = {
+        "receiving_yards": False,
+        "receiving_tds": True,
+        "receptions": False,
+        "fumbles_lost": True,
     }
+    response_data: dict[str, object] = {}
+    intervals: dict[str, dict[str, float]] = {}
+
+    for target, floor_zero in targets.items():
+        result = _predict_with_intervals(
+            models[target], mapie_models.get(target), features, floor_zero=floor_zero
+        )
+        response_data[target] = result["prediction"]
+        if "lower_90" in result:
+            intervals[target] = {"lower_90": result["lower_90"], "upper_90": result["upper_90"]}
+
+    if intervals:
+        response_data["intervals"] = intervals
 
     # Store in cache
     cache.set(position, features_dict, response_data)
