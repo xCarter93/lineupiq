@@ -18,6 +18,12 @@ from lineupiq.features.rankings_cache import (
     get_latest_opponent_strength,
     get_latest_team_strength,
 )
+from lineupiq.features.pipeline import get_feature_columns
+from lineupiq.features.live_feature_service import (
+    compute_interaction_features,
+    compute_live_context_features,
+    compute_multiwindow_features,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -308,6 +314,8 @@ def _get_default_features(position: str, is_home: bool) -> dict[str, float | boo
         # Context
         "is_home": is_home,
         "is_dome": False,
+        "injury_severity": 0.0,
+        "on_injury_report": 0,
         # Game context features - neutral defaults
         "days_since_last_game": 7.0,
         "is_post_bye": False,
@@ -514,37 +522,40 @@ async def get_player_features(
         opponent_features = _get_opponent_strength(opponent_team)
         team_features = _get_team_strength(team)
 
-        # Compute 3-game rolling stats for multi-window features
-        rolling_stats_3 = _compute_rolling_stats_for_player(history_df, window=3)
+        # Compute context features using shared live feature service.
+        context_features = compute_live_context_features(
+            history_df=history_df,
+            player_id=player_id,
+            team=team,
+            season=current,
+            opponent_team=opponent_team,
+            is_home=is_home,
+            rolling_window=5,
+        )
 
-        # Compute momentum features (roll3 - roll5)
-        momentum_features: dict[str, float] = {}
-        for stat in ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]:
-            roll3_key = f"{stat}_roll3"
-            roll5_key = f"{stat}_roll5"
-            roll3_val = rolling_stats_3.get(roll3_key, 0.0)
-            roll5_val = rolling_stats.get(roll5_key, 0.0)
-            momentum_features[f"{stat}_momentum"] = round(roll3_val - roll5_val, 2)
-
-        # Compute interaction features
-        opp_pass_def = opponent_features.get("opp_pass_defense_strength", 0.5)
-        opp_rush_def = opponent_features.get("opp_rush_defense_strength", 0.5)
-        team_pace = team_features.get("team_plays_roll5", 65.0)
-
-        interaction_features = {
-            "rush_yards_x_opp_rush_def": round(
-                rolling_stats.get("rushing_yards_roll5", 0.0) * opp_rush_def, 2
-            ),
-            "pass_yards_x_opp_pass_def": round(
-                rolling_stats.get("passing_yards_roll5", 0.0) * opp_pass_def, 2
-            ),
-            "recv_yards_x_opp_pass_def": round(
-                rolling_stats.get("receiving_yards_roll5", 0.0) * opp_pass_def, 2
-            ),
-            "player_volume_x_team_pace": round(
-                rolling_stats.get("carries_roll5", 0.0) * team_pace, 2
-            ),
-        }
+        # Build one-row frame to reuse shared multi-window + interaction logic.
+        one_row = pl.DataFrame([
+            {
+                "player_id": player_id,
+                "season": current,
+                "week": int(history_df.select("week").max().item() or 0),
+                "passing_yards": float(rolling_stats.get("passing_yards_roll5", 0.0)),
+                "rushing_yards": float(rolling_stats.get("rushing_yards_roll5", 0.0)),
+                "receiving_yards": float(rolling_stats.get("receiving_yards_roll5", 0.0)),
+                "receptions": float(rolling_stats.get("receptions_roll5", 0.0)),
+                "passing_yards_roll5": float(rolling_stats.get("passing_yards_roll5", 0.0)),
+                "rushing_yards_roll5": float(rolling_stats.get("rushing_yards_roll5", 0.0)),
+                "receiving_yards_roll5": float(rolling_stats.get("receiving_yards_roll5", 0.0)),
+                "receptions_roll5": float(rolling_stats.get("receptions_roll5", 0.0)),
+                "carries_roll5": float(rolling_stats.get("carries_roll5", 0.0)),
+                "opp_pass_defense_strength": float(opponent_features.get("opp_pass_defense_strength", 0.5)),
+                "opp_rush_defense_strength": float(opponent_features.get("opp_rush_defense_strength", 0.5)),
+                "team_plays_roll5": float(team_features.get("team_plays_roll5", 65.0)),
+            }
+        ])
+        one_row, _ = compute_multiwindow_features(one_row, rolling_window=5, short_window=3)
+        one_row, _ = compute_interaction_features(one_row, rolling_window=5)
+        one_row_dict = one_row.row(0, named=True)
 
         # Combine all features (64 features total)
         features: dict[str, float | bool] = {
@@ -552,45 +563,26 @@ async def get_player_features(
             **volatility,
             **opponent_features,
             **team_features,
-            # Weather features - neutral defaults for real-time predictions
-            "temp_normalized": 0.5,
-            "wind_normalized": 0.2,
-            "extreme_cold": False,
-            "freezing": False,
-            "extreme_heat": False,
-            "high_wind": False,
-            "very_high_wind": False,
-            "has_precip": False,
-            "precip_amount": 0.0,
-            # Matchup features - neutral defaults for real-time predictions
-            "home_spread": 0.0,  # Pick'em
-            "total_points": 45.0,  # NFL average
-            "vegas_strength_diff": 0.0,  # Even matchup
-            "home_favored": False,
-            "is_divisional": False,
+            **context_features,
             # Context features
             "is_home": is_home,
             "is_dome": False,
-            # Game context features
-            "days_since_last_game": 7.0,
-            "is_post_bye": False,
-            "implied_team_total": 22.5,
-            "game_script_lean": 0.0,
-            # Usage features
-            "snap_pct_roll5": 0.5,
-            "snap_pct_trend": 0.0,
-            "target_share_roll5": 0.0,
-            "carry_share_roll5": 0.0,
-            # EPA features
-            "team_epa_roll5": 0.0,
-            "opp_def_epa_roll5": 0.0,
-            "player_epa_roll5": 0.0,
-            "team_pass_epa_vs_rush_epa": 0.0,
+            "injury_severity": 0.0,
+            "on_injury_report": 0,
             # Multi-window rolling features
-            **{k: v for k, v in rolling_stats_3.items() if k.endswith("_roll3")},
-            **momentum_features,
+            "passing_yards_roll3": float(one_row_dict.get("passing_yards_roll3", 0.0)),
+            "rushing_yards_roll3": float(one_row_dict.get("rushing_yards_roll3", 0.0)),
+            "receiving_yards_roll3": float(one_row_dict.get("receiving_yards_roll3", 0.0)),
+            "receptions_roll3": float(one_row_dict.get("receptions_roll3", 0.0)),
+            "passing_yards_momentum": float(one_row_dict.get("passing_yards_momentum", 0.0)),
+            "rushing_yards_momentum": float(one_row_dict.get("rushing_yards_momentum", 0.0)),
+            "receiving_yards_momentum": float(one_row_dict.get("receiving_yards_momentum", 0.0)),
+            "receptions_momentum": float(one_row_dict.get("receptions_momentum", 0.0)),
             # Interaction features
-            **interaction_features,
+            "rush_yards_x_opp_rush_def": float(one_row_dict.get("rush_yards_x_opp_rush_def", 0.0)),
+            "pass_yards_x_opp_pass_def": float(one_row_dict.get("pass_yards_x_opp_pass_def", 0.0)),
+            "recv_yards_x_opp_pass_def": float(one_row_dict.get("recv_yards_x_opp_pass_def", 0.0)),
+            "player_volume_x_team_pace": float(one_row_dict.get("player_volume_x_team_pace", 0.0)),
         }
     else:
         # Not enough data - use position defaults but merge any available stats
@@ -607,6 +599,13 @@ async def get_player_features(
         f"Computed features for {player_name}: {games_available} games, "
         f"sufficient_data={has_sufficient_data}"
     )
+
+    # Keep serving contract aligned with training feature schema.
+    for feature_name in get_feature_columns():
+        if feature_name not in features:
+            # Most engineered features are numeric; booleans are represented
+            # by explicit defaults in _get_default_features.
+            features[feature_name] = 0.0
 
     return PlayerFeaturesResponse(
         player_id=player_id,

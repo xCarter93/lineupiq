@@ -71,7 +71,9 @@ from lineupiq.models.importance import (
 from lineupiq.models.persistence import (
     get_save_target,
     list_models,
+    list_model_versions,
     load_model,
+    rollback_model,
     save_model,
 )
 from lineupiq.models.qb import (
@@ -131,6 +133,8 @@ __all__ = [
     "save_model",
     "load_model",
     "list_models",
+    "list_model_versions",
+    "rollback_model",
     # Evaluation
     "calculate_metrics",
     "create_holdout_split",

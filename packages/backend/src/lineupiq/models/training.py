@@ -49,6 +49,7 @@ COUNT_TARGETS = frozenset({
     "def_fumbles",
     "total_def_tds",
 })
+TD_TARGETS = frozenset({"passing_tds", "rushing_tds", "receiving_tds", "total_def_tds"})
 
 
 def create_study(direction: str = "minimize") -> optuna.Study:
@@ -172,8 +173,16 @@ def get_lgb_params(trial: optuna.Trial, target: str | None = None) -> dict[str, 
     # Use Poisson objective for count targets (TDs, INTs, receptions, etc.)
     # Poisson regression is more appropriate for discrete, non-negative counts
     if target and target in COUNT_TARGETS:
-        params["objective"] = "poisson"
-        logger.debug(f"Using Poisson objective for count target: {target}")
+        if target in TD_TARGETS:
+            # TD counts are highly zero-inflated; Tweedie is typically more stable.
+            params["objective"] = "tweedie"
+            params["tweedie_variance_power"] = trial.suggest_float(
+                "tweedie_variance_power", 1.1, 1.7
+            )
+            logger.debug("Using Tweedie objective for TD target: %s", target)
+        else:
+            params["objective"] = "poisson"
+            logger.debug(f"Using Poisson objective for count target: {target}")
 
     return params
 
@@ -231,6 +240,8 @@ def train_model(
     model_type: ModelType = "lightgbm",
     early_stopping_rounds: int = 50,
     trial: optuna.Trial | None = None,
+    season_array: NDArray[np.integer[Any]] | None = None,
+    decay_rate: float = 0.15,
 ) -> tuple[XGBRegressor | LGBMRegressor | CatBoostRegressor, NDArray[np.floating[Any]]]:
     """Train model with TimeSeriesSplit cross-validation and early stopping.
 
@@ -268,10 +279,16 @@ def train_model(
     tscv = TimeSeriesSplit(n_splits=n_splits)
 
     scores = []
+    sample_weights: NDArray[np.floating[Any]] | None = None
+    if season_array is not None:
+        max_season = int(np.max(season_array))
+        sample_weights = np.exp(-decay_rate * (max_season - season_array))
+        logger.info("Using exponential recency sample weighting (decay_rate=%.3f)", decay_rate)
 
     for fold_idx, (train_idx, val_idx) in enumerate(tscv.split(X)):
         X_train, X_val = X[train_idx], X[val_idx]
         y_train, y_val = y[train_idx], y[val_idx]
+        w_train = sample_weights[train_idx] if sample_weights is not None else None
 
         # Create fresh model for each fold
         fold_model: XGBRegressor | LGBMRegressor | CatBoostRegressor
@@ -284,6 +301,7 @@ def train_model(
                 X_train,
                 y_train,
                 eval_set=[(X_val, y_val)],
+                sample_weight=w_train,
                 callbacks=[
                     early_stopping(stopping_rounds=early_stopping_rounds),
                     log_evaluation(period=0),  # Suppress per-iteration logs
@@ -296,6 +314,7 @@ def train_model(
                 X_train,
                 y_train,
                 eval_set=(X_val, y_val),
+                sample_weight=w_train,
                 early_stopping_rounds=early_stopping_rounds,
             )
         else:
@@ -308,6 +327,7 @@ def train_model(
                 X_train,
                 y_train,
                 eval_set=[(X_val, y_val)],
+                sample_weight=w_train,
                 verbose=False,
             )
 
@@ -336,7 +356,7 @@ def train_model(
         model_params = {**params, "random_state": 42}
         model = XGBRegressor(**model_params)
 
-    model.fit(X, y)
+    model.fit(X, y, sample_weight=sample_weights)
 
     logger.info(
         f"Trained {model_type} model with mean CV score: {scores_array.mean():.4f} (+/- {scores_array.std():.4f})"
@@ -352,6 +372,8 @@ def tune_hyperparameters(
     n_splits: int = 5,
     model_type: ModelType = "lightgbm",
     target: str | None = None,
+    season_array: NDArray[np.integer[Any]] | None = None,
+    decay_rate: float = 0.15,
 ) -> tuple[dict[str, Any], optuna.Study]:
     """Run Optuna hyperparameter optimization with pruning support.
 
@@ -389,7 +411,14 @@ def tune_hyperparameters(
             params = get_xgb_params(trial)
         # Pass trial to enable intermediate reporting and pruning
         _, scores = train_model(
-            X, y, params=params, n_splits=n_splits, model_type=model_type, trial=trial
+            X,
+            y,
+            params=params,
+            n_splits=n_splits,
+            model_type=model_type,
+            trial=trial,
+            season_array=season_array,
+            decay_rate=decay_rate,
         )
         # Return mean negative RMSE (minimize this)
         return float(-scores.mean())

@@ -23,19 +23,24 @@ import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 
+from lineupiq.data.defense_processing import get_defense_target_columns
+from lineupiq.data.kicker_processing import get_kicker_target_columns
 from lineupiq.features.pipeline import build_features
+from lineupiq.models.qb import QB_TARGETS
+from lineupiq.models.rb import RB_TARGETS
+from lineupiq.models.receiver import RECEIVER_TARGETS
 from lineupiq.models.persistence import MODELS_DIR, load_model
 
 logger = logging.getLogger(__name__)
 
 # All position-target combinations (32 total models)
 POSITION_TARGETS = {
-    "QB": ["passing_yards", "passing_tds", "interceptions", "rushing_yards", "rushing_tds", "fumbles_lost"],
-    "RB": ["rushing_yards", "rushing_tds", "carries", "receiving_yards", "receptions", "receiving_tds", "fumbles_lost"],
-    "WR": ["receiving_yards", "receptions", "receiving_tds", "fumbles_lost"],
-    "TE": ["receiving_yards", "receptions", "receiving_tds", "fumbles_lost"],
-    "K": ["fg_att_0_39", "fg_att_40_49", "fg_att_50_plus", "fg_made", "xp_made"],
-    "DEF": ["points_allowed", "sacks", "interceptions", "fumbles_recovered", "tds"],
+    "QB": QB_TARGETS,
+    "RB": RB_TARGETS,
+    "WR": RECEIVER_TARGETS,
+    "TE": RECEIVER_TARGETS,
+    "K": get_kicker_target_columns(),
+    "DEF": get_defense_target_columns(),
 }
 
 

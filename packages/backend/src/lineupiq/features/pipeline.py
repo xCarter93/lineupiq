@@ -16,14 +16,24 @@ from pathlib import Path
 import polars as pl
 
 from lineupiq.data import process_player_stats
-from lineupiq.data.fetchers import fetch_schedules
+from lineupiq.data.fetchers import fetch_injuries, fetch_schedules
 from lineupiq.features.epa_features import compute_epa_features, get_epa_columns
+from lineupiq.features.depth_chart_features import add_depth_chart_features, get_depth_chart_columns
 from lineupiq.features.game_context import (
     compute_implied_team_total,
     compute_rest_features,
     get_game_context_columns,
 )
+from lineupiq.features.live_feature_service import (
+    compute_interaction_features,
+    compute_multiwindow_features,
+)
 from lineupiq.features.opponent_features import add_opponent_strength
+from lineupiq.features.injury import engineer_injury_features
+from lineupiq.features.nextgen_features import add_nextgen_features, get_nextgen_columns
+from lineupiq.features.opportunity_features import add_opportunity_features, get_opportunity_columns
+from lineupiq.features.pfr_features import add_pfr_features, get_pfr_columns
+from lineupiq.features.qb_connection_features import add_qb_connection_features, get_qb_connection_columns
 from lineupiq.features.rolling_stats import (
     compute_rolling_stats,
     compute_volatility_features,
@@ -100,6 +110,25 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     df = add_opponent_strength(df)
     opp_cols = [c for c in df.columns if "opp_" in c]
     logger.info(f"Added {len(opp_cols)} opponent columns")
+
+    # Step 3.5: Add injury features
+    logger.info("Step 3.5: Adding injury features...")
+    try:
+        injuries_df = fetch_injuries(seasons)
+        if not injuries_df.is_empty():
+            df = engineer_injury_features(df, injuries_df)
+            logger.info("Added injury_severity and on_injury_report features")
+        else:
+            df = df.with_columns(
+                pl.lit(0.0).alias("injury_severity"),
+                pl.lit(0).alias("on_injury_report"),
+            )
+    except Exception as exc:
+        logger.warning("Failed to add injury features: %s", exc)
+        df = df.with_columns(
+            pl.lit(0.0).alias("injury_severity"),
+            pl.lit(0).alias("on_injury_report"),
+        )
 
     # Step 4: Add team strength features
     logger.info("Step 4: Computing team strength features...")
@@ -267,84 +296,44 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     epa_cols = get_epa_columns(rolling_window)
     logger.info(f"Added {len(epa_cols)} EPA features")
 
+    # Step 11.5: Add depth chart features
+    logger.info("Step 11.5: Computing depth chart features...")
+    df = add_depth_chart_features(df, seasons)
+    depth_cols = get_depth_chart_columns()
+    logger.info(f"Added {len(depth_cols)} depth chart features")
+
+    # Step 11.6: Add Next Gen Stats features
+    logger.info("Step 11.6: Computing Next Gen Stats features...")
+    df = add_nextgen_features(df, seasons)
+    nextgen_cols = get_nextgen_columns()
+    logger.info(f"Added {len(nextgen_cols)} Next Gen Stats features")
+
+    # Step 11.7: Add expected fantasy point opportunity features (xFP)
+    logger.info("Step 11.7: Computing xFP features...")
+    df = add_opportunity_features(df, seasons)
+    opportunity_cols = get_opportunity_columns()
+    logger.info(f"Added {len(opportunity_cols)} xFP features")
+
+    # Step 11.8: Add PFR advanced features
+    logger.info("Step 11.8: Computing PFR advanced features...")
+    df = add_pfr_features(df, seasons)
+    pfr_cols = get_pfr_columns()
+    logger.info(f"Added {len(pfr_cols)} PFR features")
+
+    # Step 11.9: Add QB connection + TD opportunity features
+    logger.info("Step 11.9: Computing QB connection features...")
+    df = add_qb_connection_features(df, window=rolling_window)
+    qb_connection_cols = get_qb_connection_columns()
+    logger.info(f"Added {len(qb_connection_cols)} QB connection features")
+
     # Step 12: Add multi-window rolling features (3-game window + momentum)
     logger.info("Step 12: Computing multi-window rolling features...")
-    short_window = 3
-    # Compute 3-game rolling for key stats
-    stat_cols_for_multiwindow = [
-        "passing_yards", "rushing_yards", "receiving_yards", "receptions"
-    ]
-    for stat_col in stat_cols_for_multiwindow:
-        if stat_col in df.columns:
-            roll3_col = f"{stat_col}_roll{short_window}"
-            roll5_col = f"{stat_col}_roll{rolling_window}"
-            momentum_col = f"{stat_col}_momentum"
-
-            df = df.sort(["player_id", "season", "week"])
-            df = df.with_columns(
-                pl.col(stat_col)
-                .shift(1)
-                .rolling_mean(window_size=short_window, min_samples=1)
-                .over("player_id")
-                .fill_null(0.0)
-                .alias(roll3_col)
-            )
-
-            # Momentum = roll3 - roll5 (positive = trending up)
-            if roll5_col in df.columns:
-                df = df.with_columns(
-                    (pl.col(roll3_col) - pl.col(roll5_col))
-                    .fill_null(0.0)
-                    .alias(momentum_col)
-                )
-            else:
-                df = df.with_columns(pl.lit(0.0).alias(momentum_col))
-
-    multiwindow_cols = [
-        f"{s}_roll{short_window}" for s in stat_cols_for_multiwindow
-    ] + [f"{s}_momentum" for s in stat_cols_for_multiwindow]
+    df, multiwindow_cols = compute_multiwindow_features(df, rolling_window=rolling_window, short_window=3)
     logger.info(f"Added {len(multiwindow_cols)} multi-window features")
 
     # Step 13: Add interaction features
     logger.info("Step 13: Computing interaction features...")
-    interaction_cols = []
-
-    # rush_yards_x_opp_rush_def
-    if f"rushing_yards_roll{rolling_window}" in df.columns and "opp_rush_defense_strength" in df.columns:
-        df = df.with_columns(
-            (pl.col(f"rushing_yards_roll{rolling_window}") * pl.col("opp_rush_defense_strength"))
-            .fill_null(0.0)
-            .alias("rush_yards_x_opp_rush_def")
-        )
-        interaction_cols.append("rush_yards_x_opp_rush_def")
-
-    # pass_yards_x_opp_pass_def
-    if f"passing_yards_roll{rolling_window}" in df.columns and "opp_pass_defense_strength" in df.columns:
-        df = df.with_columns(
-            (pl.col(f"passing_yards_roll{rolling_window}") * pl.col("opp_pass_defense_strength"))
-            .fill_null(0.0)
-            .alias("pass_yards_x_opp_pass_def")
-        )
-        interaction_cols.append("pass_yards_x_opp_pass_def")
-
-    # recv_yards_x_opp_pass_def
-    if f"receiving_yards_roll{rolling_window}" in df.columns and "opp_pass_defense_strength" in df.columns:
-        df = df.with_columns(
-            (pl.col(f"receiving_yards_roll{rolling_window}") * pl.col("opp_pass_defense_strength"))
-            .fill_null(0.0)
-            .alias("recv_yards_x_opp_pass_def")
-        )
-        interaction_cols.append("recv_yards_x_opp_pass_def")
-
-    # player_volume_x_team_pace (carries or receptions * team plays)
-    if f"carries_roll{rolling_window}" in df.columns and f"team_plays_roll{rolling_window}" in df.columns:
-        df = df.with_columns(
-            (pl.col(f"carries_roll{rolling_window}") * pl.col(f"team_plays_roll{rolling_window}"))
-            .fill_null(0.0)
-            .alias("player_volume_x_team_pace")
-        )
-        interaction_cols.append("player_volume_x_team_pace")
-
+    df, interaction_cols = compute_interaction_features(df, rolling_window=rolling_window)
     logger.info(f"Added {len(interaction_cols)} interaction features")
 
     # Sort for consistent ordering
@@ -353,7 +342,8 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     # Count all new feature types
     new_feature_count = (
         len(rest_cols) + len(implied_cols) + len(usage_cols)
-        + len(epa_cols) + len(multiwindow_cols) + len(interaction_cols)
+        + len(epa_cols) + len(depth_cols) + len(nextgen_cols) + len(opportunity_cols)
+        + len(pfr_cols) + len(qb_connection_cols) + len(multiwindow_cols) + len(interaction_cols)
     )
 
     logger.info(
@@ -442,6 +432,8 @@ def get_feature_columns() -> list[str]:
     context_features = [
         "is_home",
         "is_dome",
+        "injury_severity",
+        "on_injury_report",
     ]
 
     # Game context features (rest/bye, implied totals)
@@ -452,6 +444,11 @@ def get_feature_columns() -> list[str]:
 
     # EPA features (team/opp/player EPA)
     epa_features = get_epa_columns()
+    depth_features = get_depth_chart_columns()
+    nextgen_features = get_nextgen_columns()
+    opportunity_features = get_opportunity_columns()
+    pfr_features = get_pfr_columns()
+    qb_connection_features = get_qb_connection_columns()
 
     # Multi-window rolling features (3-game window + momentum)
     multiwindow_features = [
@@ -484,6 +481,11 @@ def get_feature_columns() -> list[str]:
         + game_context_features
         + usage_features
         + epa_features
+        + depth_features
+        + nextgen_features
+        + opportunity_features
+        + pfr_features
+        + qb_connection_features
         + multiwindow_features
         + interaction_features
     )

@@ -149,6 +149,12 @@ class PredictionRequest(BaseModel):
     is_dome: bool = Field(
         ..., description="Whether the game is in a dome/indoor stadium"
     )
+    injury_severity: float = Field(
+        ..., description="Injury severity score (0.0 healthy -> 1.0 out)"
+    )
+    on_injury_report: int = Field(
+        ..., description="Binary indicator for active injury report designation"
+    )
 
     # Game context features (4 features)
     days_since_last_game: float = Field(
@@ -191,6 +197,46 @@ class PredictionRequest(BaseModel):
     team_pass_epa_vs_rush_epa: float = Field(
         ..., description="Team pass EPA minus rush EPA (pass lean)"
     )
+
+    # Depth chart features
+    depth_rank: float = Field(..., description="Depth chart rank (1 starter, higher is backup)")
+    is_starter: int = Field(..., description="Binary starter indicator")
+
+    # Next Gen Stats features
+    ngs_cpoe: float = Field(..., description="Completion percentage over expected")
+    ngs_avg_time_to_throw: float = Field(..., description="Average time to throw")
+    ngs_avg_intended_air_yards: float = Field(..., description="Average intended air yards")
+    ngs_aggressiveness: float = Field(..., description="Aggressiveness (tight-window throw rate)")
+    ngs_avg_separation: float = Field(..., description="Average receiver separation")
+    ngs_avg_cushion: float = Field(..., description="Average defensive cushion")
+    ngs_air_yards_share: float = Field(..., description="Share of team intended air yards")
+    ngs_avg_yac_above_expectation: float = Field(..., description="YAC above expectation")
+    ngs_ryoe: float = Field(..., description="Rush yards over expected")
+    ngs_efficiency: float = Field(..., description="Rushing efficiency")
+    ngs_avg_time_to_los: float = Field(..., description="Average time to line of scrimmage")
+    ngs_dib_pct: float = Field(..., description="Rush attempts vs 8+ defenders percentage")
+
+    # Opportunity / xFP features
+    xfp_rush: float = Field(..., description="Expected fantasy points from rushing opportunities")
+    xfp_rec: float = Field(..., description="Expected fantasy points from receiving opportunities")
+    xfp_total: float = Field(..., description="Total expected fantasy points opportunity")
+    xfp_efficiency_delta: float = Field(..., description="Actual fantasy points minus expected fantasy points")
+
+    # PFR advanced features
+    pfr_times_pressured: float = Field(..., description="PFR passing times pressured")
+    pfr_times_hit: float = Field(..., description="PFR passing times hit")
+    pfr_times_blitzed: float = Field(..., description="PFR times blitzed")
+    pfr_passing_bad_throws: float = Field(..., description="PFR bad throws")
+    pfr_passing_drop_pct: float = Field(..., description="PFR drop percentage")
+    pfr_receiving_drop: float = Field(..., description="PFR receiving drops")
+    pfr_receiving_broken_tackles: float = Field(..., description="PFR receiving broken tackles")
+    pfr_rushing_broken_tackles: float = Field(..., description="PFR rushing broken tackles")
+    pfr_rushing_yards_before_contact: float = Field(..., description="PFR rushing yards before contact")
+
+    # QB-connection and TD opportunity features
+    qb_cpoe_roll5: float = Field(..., description="5-game rolling QB CPOE quality proxy")
+    qb_target_share_to_player_roll5: float = Field(..., description="5-game rolling target share to player")
+    red_zone_target_share_roll5: float = Field(..., description="5-game rolling red-zone target share proxy")
 
     # Multi-window rolling features (8 features)
     passing_yards_roll3: float = Field(
@@ -570,7 +616,7 @@ class PlayerFeaturesResponse(BaseModel):
         ..., description="Number of recent games used for rolling stats"
     )
     features: dict[str, float | bool] = Field(
-        ..., description="The 28 feature values for model input"
+        ..., description="Computed feature values for model input"
     )
     has_sufficient_data: bool = Field(
         ..., description="True if player has >= 5 games for reliable rolling stats"

@@ -11,6 +11,10 @@ Key functions:
 """
 
 import logging
+import os
+import shutil
+import hashlib
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -62,6 +66,34 @@ def get_save_target(target: str, model_type: str) -> str:
 # Directory for saved model files
 # Located at packages/backend/models/ (not in src/, these are artifacts)
 MODELS_DIR = Path(__file__).parent.parent.parent.parent / "models"
+MODELS_VERSIONS_DIR = MODELS_DIR / "versions"
+MODELS_MANIFEST_DIR = MODELS_DIR / "manifests"
+
+
+def _utc_timestamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def _manifest_path(position: str, target: str) -> Path:
+    return MODELS_MANIFEST_DIR / f"{position}_{target}.json"
+
+
+def _schema_hash(feature_names: list[str] | None) -> str | None:
+    if not feature_names:
+        return None
+    joined = ",".join(feature_names)
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()
+
+
+def _read_manifest(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"position": None, "target": None, "current_version": None, "versions": []}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def _write_manifest(path: Path, manifest: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
 def save_model(
@@ -96,8 +128,10 @@ def save_model(
         >>> path.exists()
         True
     """
-    # Ensure models directory exists
+    # Ensure model directories exist
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    MODELS_VERSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    MODELS_MANIFEST_DIR.mkdir(parents=True, exist_ok=True)
 
     # Build metadata with defaults
     if metadata is None:
@@ -105,11 +139,14 @@ def save_model(
 
     if "trained_at" not in metadata:
         metadata["trained_at"] = datetime.now(timezone.utc).isoformat()
+    if "git_sha" not in metadata:
+        metadata["git_sha"] = os.getenv("GITHUB_SHA")
 
     # Get feature names if available
     feature_names = None
     if hasattr(model, "feature_names_in_"):
         feature_names = list(model.feature_names_in_)
+    metadata.setdefault("feature_schema_hash", _schema_hash(feature_names))
 
     # Create artifact
     artifact = {
@@ -121,12 +158,39 @@ def save_model(
         "mapie_model": mapie_model,
     }
 
-    # Save to disk
+    # Save versioned artifact
+    version = metadata.get("version") or _utc_timestamp()
+    metadata["version"] = version
+
+    versioned_filename = f"{position}_{target}__{version}.joblib"
+    versioned_filepath = MODELS_VERSIONS_DIR / versioned_filename
+    joblib.dump(artifact, versioned_filepath)
+
+    # Save/overwrite canonical "latest" model for runtime compatibility
     filename = f"{position}_{target}.joblib"
     filepath = MODELS_DIR / filename
-    joblib.dump(artifact, filepath)
+    shutil.copy2(versioned_filepath, filepath)
 
-    logger.info(f"Saved model to {filepath}")
+    # Update manifest with retention
+    manifest_path = _manifest_path(position, target)
+    manifest = _read_manifest(manifest_path)
+    manifest["position"] = position
+    manifest["target"] = target
+    versions = manifest.get("versions", [])
+    versions.append(
+        {
+            "version": version,
+            "path": str(versioned_filepath),
+            "saved_at": datetime.now(timezone.utc).isoformat(),
+            "metadata": metadata,
+        }
+    )
+    # Keep last 3 versions by default
+    manifest["versions"] = versions[-3:]
+    manifest["current_version"] = version
+    _write_manifest(manifest_path, manifest)
+
+    logger.info(f"Saved model to {filepath} (version={version})")
     return filepath
 
 
@@ -195,3 +259,32 @@ def list_models() -> list[tuple[str, str]]:
 
     logger.info(f"Found {len(models)} saved models")
     return models
+
+
+def list_model_versions(position: str, target: str) -> list[str]:
+    """List available versions for a model, newest last."""
+    manifest = _read_manifest(_manifest_path(position, target))
+    return [v["version"] for v in manifest.get("versions", [])]
+
+
+def rollback_model(position: str, target: str, version: str) -> Path:
+    """Rollback canonical model artifact to a previous version."""
+    manifest_path = _manifest_path(position, target)
+    manifest = _read_manifest(manifest_path)
+    versions = manifest.get("versions", [])
+    match = next((v for v in versions if v.get("version") == version), None)
+    if match is None:
+        raise FileNotFoundError(
+            f"Version '{version}' not found for {position}_{target}"
+        )
+
+    source = Path(match["path"])
+    if not source.exists():
+        raise FileNotFoundError(f"Version file does not exist: {source}")
+
+    dest = MODELS_DIR / f"{position}_{target}.joblib"
+    shutil.copy2(source, dest)
+    manifest["current_version"] = version
+    _write_manifest(manifest_path, manifest)
+    logger.info(f"Rolled back {position}_{target} to version {version}")
+    return dest

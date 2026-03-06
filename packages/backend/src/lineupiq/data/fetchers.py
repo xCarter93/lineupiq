@@ -503,3 +503,73 @@ def fetch_injuries(seasons: list[int]) -> pl.DataFrame:
     except Exception as e:
         logger.error(f"Failed to fetch injuries: {e}")
         raise RuntimeError(f"Failed to fetch injuries: {e}") from e
+
+
+def fetch_nextgen_stats(
+    seasons: list[int],
+    stat_type: Literal["passing", "receiving", "rushing"],
+) -> pl.DataFrame:
+    """Fetch Next Gen Stats from nflreadpy."""
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    logger.info(f"Fetching nextgen stats: seasons={seasons}, stat_type={stat_type}")
+    try:
+        return nfl.load_nextgen_stats(seasons=seasons, stat_type=stat_type)
+    except Exception as e:
+        logger.error(f"Failed to fetch nextgen stats ({stat_type}): {e}")
+        raise RuntimeError(f"Failed to fetch nextgen stats: {e}") from e
+
+
+def fetch_pfr_advstats(
+    seasons: list[int],
+    stat_type: Literal["pass", "rush", "rec", "def"] = "pass",
+) -> pl.DataFrame:
+    """Fetch PFR advanced stats from nflreadpy."""
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    logger.info(f"Fetching PFR advanced stats: seasons={seasons}, stat_type={stat_type}")
+    try:
+        return nfl.load_pfr_advstats(seasons=seasons, stat_type=stat_type)
+    except Exception as e:
+        logger.error(f"Failed to fetch PFR advanced stats ({stat_type}): {e}")
+        raise RuntimeError(f"Failed to fetch PFR advanced stats: {e}") from e
+
+
+def fetch_ff_opportunity(seasons: list[int], stat_type: str = "weekly") -> pl.DataFrame:
+    """Fetch expected fantasy points / opportunity data from nflreadpy."""
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    logger.info(f"Fetching ff opportunity: seasons={seasons}, stat_type={stat_type}")
+    try:
+        return nfl.load_ff_opportunity(seasons=seasons, stat_type=stat_type)
+    except Exception as e:
+        logger.error(f"Failed to fetch ff opportunity: {e}")
+        raise RuntimeError(f"Failed to fetch ff opportunity: {e}") from e
+
+
+def fetch_depth_charts(seasons: list[int]) -> pl.DataFrame:
+    """Fetch depth chart data from nflreadpy."""
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    logger.info(f"Fetching depth charts: seasons={seasons}")
+    try:
+        return nfl.load_depth_charts(seasons=seasons)
+    except Exception as e:
+        logger.error(f"Failed to fetch depth charts: {e}")
+        raise RuntimeError(f"Failed to fetch depth charts: {e}") from e

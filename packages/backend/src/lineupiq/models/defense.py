@@ -27,7 +27,7 @@ from lineupiq.models.training import ModelType, fit_conformal, train_model, tune
 logger = logging.getLogger(__name__)
 
 # Default training seasons (excluding 2025 holdout)
-DEFAULT_TRAINING_SEASONS = [2022, 2023, 2024, 2025]
+DEFAULT_TRAINING_SEASONS = [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
 # Target columns for defense models
 DEF_TARGETS = [
@@ -91,11 +91,13 @@ def train_defense_models(
         logger.info(f"Training DEF_{target} model")
 
         y: NDArray[np.floating] = df.select(target).to_numpy().flatten()
+        season_array = df.select("season").to_numpy().flatten().astype(np.int64)
 
         # Remove rows with null targets
         valid_mask = ~np.isnan(y)
         X_valid = X[valid_mask]
         y_valid = y[valid_mask]
+        season_valid = season_array[valid_mask]
 
         if len(y_valid) < 100:
             logger.warning(f"Insufficient data for {target}: {len(y_valid)} samples")
@@ -108,6 +110,7 @@ def train_defense_models(
             n_trials=n_trials,
             model_type=model_type,
             target=target,
+            season_array=season_valid,
         )
 
         # Train final model
@@ -116,6 +119,7 @@ def train_defense_models(
             y_valid,
             params=best_params,
             model_type=model_type,
+            season_array=season_valid,
         )
 
         # Calculate metrics (scores are negative RMSE, so negate)

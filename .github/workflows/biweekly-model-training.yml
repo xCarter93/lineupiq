@@ -165,6 +165,54 @@ jobs:
           echo "✓ Successfully created $MODEL_COUNT models"
           ls -lh models/*.joblib
 
+      - name: Validate with walk-forward gate
+        working-directory: packages/backend
+        run: |
+          echo "Running walk-forward validation gate (last 4 weeks)..."
+          uv run python scripts/validate_2025.py \
+            --quick \
+            --positions QB RB WR TE K DEF \
+            --trials 5 \
+            --weeks 1 2 3 4 \
+            --output walkforward_gate_predictions.json || {
+              echo "Walk-forward gate failed"
+              exit 1
+            }
+
+      - name: Prepare rollback backup
+        working-directory: packages/backend
+        run: |
+          mkdir -p models_previous
+          cp -f models/*.joblib models_previous/ 2>/dev/null || true
+
+      - name: Deploy artifacts (local package output)
+        working-directory: packages/backend
+        run: |
+          mkdir -p models_deploy
+          cp -f models/*.joblib models_deploy/
+          echo "Prepared deploy bundle in models_deploy/"
+
+      - name: Smoke test API inference
+        working-directory: packages/backend
+        run: |
+          uv run python -m uvicorn lineupiq.api.main:app --host 127.0.0.1 --port 8001 &
+          API_PID=$!
+          sleep 8
+          curl --fail http://127.0.0.1:8001/health
+          curl --fail -X POST http://127.0.0.1:8001/api/models/reload
+          kill $API_PID
+
+      - name: Rollback on deploy/smoke failure
+        if: failure()
+        working-directory: packages/backend
+        run: |
+          if ls models_previous/*.joblib >/dev/null 2>&1; then
+            cp -f models_previous/*.joblib models/
+            echo "Rollback completed from models_previous/"
+          else
+            echo "No rollback artifacts available"
+          fi
+
       - name: Upload trained models
         uses: actions/upload-artifact@v4
         with:
@@ -210,17 +258,6 @@ jobs:
           name: training-summary-${{ github.run_number }}
           path: packages/backend/training-summary.md
           retention-days: 90
-
-      # Optional: Add your deployment step here
-      # - name: Deploy models to production
-      #   if: success()
-      #   run: |
-      #     # Example: Upload to S3
-      #     # aws s3 sync packages/backend/models/ s3://your-bucket/models/
-      #     #
-      #     # Example: Copy to server via SCP
-      #     # scp packages/backend/models/*.joblib user@server:/path/to/models/
-      #     echo "Add your deployment logic here"
 
       - name: Create GitHub issue on failure
         if: failure()

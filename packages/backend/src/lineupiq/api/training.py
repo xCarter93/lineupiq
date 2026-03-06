@@ -49,8 +49,8 @@ class TrainingRequest(BaseModel):
     )
     seasons: Optional[List[int]] = Field(
         default=None,
-        description="Seasons to train on (default: 2022-2025)",
-        example=[2022, 2023, 2024, 2025]
+        description="Seasons to train on (default: 2016-2025 excluding 2020)",
+        example=[2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
     )
     n_trials: int = Field(
         default=30,
@@ -190,7 +190,7 @@ async def start_training(
 
     # Use defaults if not provided
     positions = request.positions or ["QB", "RB", "WR", "TE", "K", "DEF"]
-    seasons = request.seasons or [2022, 2023, 2024, 2025]
+    seasons = request.seasons or [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
     # Schedule background task
     background_tasks.add_task(

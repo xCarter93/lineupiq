@@ -32,25 +32,27 @@ jobs:
         run: |
           echo "Fetching latest NFL data..."
           CURRENT_YEAR=$(date +%Y)
+          export CURRENT_YEAR
 
-          uv run python -c "
+          uv run python - <<'PY'
+          import os
           from lineupiq.data.fetchers import fetch_player_stats, fetch_schedules
-          from lineupiq.data.storage import save_player_stats, save_schedules
+          from lineupiq.data.storage import get_cache_path, save_parquet
 
-          # Fetch current season data (will update cache)
-          print(f'Fetching {$CURRENT_YEAR} player stats...')
-          player_stats = fetch_player_stats($CURRENT_YEAR)
-          save_player_stats(player_stats, $CURRENT_YEAR)
-          print(f'✓ Cached {len(player_stats)} player stat rows')
+          current_year = int(os.environ["CURRENT_YEAR"])
 
-          # Fetch schedules
-          print(f'Fetching {$CURRENT_YEAR} schedules...')
-          schedules = fetch_schedules([$CURRENT_YEAR])
-          save_schedules(schedules, str($CURRENT_YEAR))
-          print(f'✓ Cached {len(schedules)} games')
+          print(f"Fetching {current_year} player stats...")
+          player_stats = fetch_player_stats([current_year])
+          save_parquet(player_stats, get_cache_path("player_stats", str(current_year)))
+          print(f"Cached {len(player_stats)} player stat rows")
 
-          print('Data sync complete!')
-          "
+          print(f"Fetching {current_year} schedules...")
+          schedules = fetch_schedules([current_year])
+          save_parquet(schedules, get_cache_path("schedules", str(current_year)))
+          print(f"Cached {len(schedules)} games")
+
+          print("Data sync complete!")
+          PY
 
       - name: Verify cache updated
         working-directory: packages/backend

@@ -14,6 +14,9 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
+from lineupiq.models.over_under import compute_over_under_edge
+from lineupiq.models.regression_mean import compute_regression_signal
+from lineupiq.simulation.monte_carlo import simulate_player_outcomes
 from lineupiq.simulation.state import (
     SimulationState,
     load_state,
@@ -64,6 +67,27 @@ class SimulationStatusResponse(BaseModel):
     state: SimulationStateResponse | None
     predictions: dict[str, int] | None  # week -> count
     message: str
+
+
+class MonteCarloRequest(BaseModel):
+    mean: float
+    lower_bound: float
+    upper_bound: float
+    line: float | None = None
+    n_simulations: int = 10_000
+
+
+class OverUnderRequest(BaseModel):
+    prediction_mean: float
+    lower_bound: float
+    upper_bound: float
+    line: float
+    market_over_probability: float = 0.5
+
+
+class RegressionMeanRequest(BaseModel):
+    actual_fp_recent: float
+    xfp_recent: float
 
 
 def run_simulation_command(command: list[str]) -> None:
@@ -508,4 +532,59 @@ async def get_week_actuals(week: int, position: str | None = None) -> dict[str, 
         "season": state.target_season,
         "count": len(actuals),
         "actuals": actuals,
+    }
+
+
+@router.post("/monte-carlo")
+async def run_monte_carlo(request: MonteCarloRequest) -> dict[str, Any]:
+    """Generate distribution-based outcome summary for a player stat."""
+    summary = simulate_player_outcomes(
+        mean=request.mean,
+        lower_bound=request.lower_bound,
+        upper_bound=request.upper_bound,
+        n_simulations=request.n_simulations,
+        line=request.line,
+    )
+    return {
+        "mean": summary.mean,
+        "median": summary.median,
+        "floor_p10": summary.floor_p10,
+        "ceiling_p90": summary.ceiling_p90,
+        "p25": summary.p25,
+        "p75": summary.p75,
+        "std_dev": summary.std_dev,
+        "hit_rate_over_line": summary.hit_rate_over_line,
+    }
+
+
+@router.post("/over-under")
+async def run_over_under(request: OverUnderRequest) -> dict[str, Any]:
+    """Compare model distribution to market line and return edge."""
+    edge = compute_over_under_edge(
+        prediction_mean=request.prediction_mean,
+        lower_bound=request.lower_bound,
+        upper_bound=request.upper_bound,
+        line=request.line,
+        market_over_probability=request.market_over_probability,
+    )
+    return {
+        "line": edge.line,
+        "model_over_probability": edge.model_over_probability,
+        "market_over_probability": edge.market_over_probability,
+        "edge": edge.edge,
+        "recommendation": edge.recommendation,
+    }
+
+
+@router.post("/regression-mean")
+async def run_regression_mean(request: RegressionMeanRequest) -> dict[str, Any]:
+    """Compute buy-low / sell-high signal from actual-vs-expected FP."""
+    signal = compute_regression_signal(
+        actual_fp_recent=request.actual_fp_recent,
+        xfp_recent=request.xfp_recent,
+    )
+    return {
+        "luck_factor": signal.luck_factor,
+        "label": signal.label,
+        "confidence": signal.confidence,
     }

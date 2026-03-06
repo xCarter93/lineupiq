@@ -7,15 +7,17 @@ Prediction cache is stored in app.state.cache for response caching.
 """
 
 import logging
+from threading import Lock
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from lineupiq.api.cache import PredictionCache
 from lineupiq.api.models_loader import load_mapie_models, load_models
+from lineupiq.api.training import router as training_router
 from lineupiq.api.routes import (
     explainability_router,
     roster_router,
@@ -26,6 +28,7 @@ from lineupiq.api.routes import (
 )
 
 logger = logging.getLogger(__name__)
+_models_reload_lock = Lock()
 
 
 @asynccontextmanager
@@ -65,6 +68,7 @@ app.include_router(roster_router, prefix="/api", tags=["roster"])
 app.include_router(explainability_router, prefix="/api/explain", tags=["explainability"])
 app.include_router(simulation_router, prefix="/api/simulation", tags=["simulation"])
 app.include_router(schedule_router, prefix="/api/schedule", tags=["schedule"])
+app.include_router(training_router, prefix="/api", tags=["training"])
 
 
 @app.get("/health")
@@ -99,3 +103,32 @@ async def clear_cache() -> dict[str, bool]:
     """
     app.state.cache.clear()
     return {"cleared": True}
+
+
+@app.post("/api/models/reload")
+async def reload_models() -> dict[str, Any]:
+    """Reload model artifacts in-place without restarting the API process."""
+    if not _models_reload_lock.acquire(blocking=False):
+        raise HTTPException(status_code=409, detail="Model reload already in progress")
+    try:
+        old_models = len(app.state.models)
+        old_mapie = len(app.state.mapie_models)
+        new_models = load_models()
+        new_mapie_models = load_mapie_models()
+
+        if not new_models:
+            raise HTTPException(status_code=500, detail="No models found during reload")
+
+        # Atomic replacement to avoid partial state.
+        app.state.models = new_models
+        app.state.mapie_models = new_mapie_models
+        app.state.cache.clear()
+        return {
+            "status": "reloaded",
+            "models_before": old_models,
+            "models_after": len(new_models),
+            "mapie_before": old_mapie,
+            "mapie_after": len(new_mapie_models),
+        }
+    finally:
+        _models_reload_lock.release()

@@ -123,8 +123,8 @@ def parse_args():
         "--seasons",
         nargs="+",
         type=int,
-        default=[2022, 2023, 2024, 2025],
-        help="Seasons to train on (default: 2022-2025)"
+        default=[2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025],
+        help="Seasons to train on (default: 2016-2025, excluding 2020)"
     )
 
     parser.add_argument(
@@ -548,7 +548,7 @@ def train_all_models(
     if positions is None:
         positions = ["QB", "RB", "WR", "TE", "K", "DEF"]
     if seasons is None:
-        seasons = [2022, 2023, 2024, 2025]
+        seasons = [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
     # Handle deprecated --model-type
     if model_type is not None:

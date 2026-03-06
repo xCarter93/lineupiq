@@ -156,7 +156,7 @@ def train_qb_models(
         True
     """
     if seasons is None:
-        seasons = [2021, 2022, 2023, 2024]
+        seasons = [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
     logger.info(
         f"Training QB models for seasons {seasons} with {n_trials} trials using {model_type}"
@@ -168,6 +168,16 @@ def train_qb_models(
 
     # Prepare QB-specific data
     X, y_dict = prepare_qb_data(df)
+    feature_cols = get_feature_columns()
+    qb_df_for_weights = (
+        df.filter(pl.col("position") == "QB")
+        .with_columns(
+            pl.col("passing_interceptions").fill_null(0).alias("interceptions"),
+            (pl.col("sack_fumbles_lost").fill_null(0) + pl.col("rushing_fumbles_lost").fill_null(0)).alias("fumbles_lost"),
+        )
+        .drop_nulls(subset=feature_cols + QB_TARGETS)
+    )
+    season_array = qb_df_for_weights.select("season").to_numpy().flatten().astype(np.int64)
 
     results: dict[str, tuple[Any, dict[str, Any]]] = {}
 
@@ -177,11 +187,22 @@ def train_qb_models(
 
         # Run hyperparameter tuning (uses Poisson for count targets like TDs)
         best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, model_type=model_type, target=target
+            X,
+            y,
+            n_trials=n_trials,
+            model_type=model_type,
+            target=target,
+            season_array=season_array,
         )
 
         # Train final model with best parameters
-        model, cv_scores = train_model(X, y, params=best_params, model_type=model_type)
+        model, cv_scores = train_model(
+            X,
+            y,
+            params=best_params,
+            model_type=model_type,
+            season_array=season_array,
+        )
 
         # Fit conformal prediction intervals (MAPIE) - only for LightGBM (expensive 5-fold CV)
         mapie_model = fit_conformal(model, X, y) if model_type == "lightgbm" else None

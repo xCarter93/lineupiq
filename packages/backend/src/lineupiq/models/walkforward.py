@@ -23,65 +23,33 @@ import polars as pl
 from numpy.typing import NDArray
 
 from lineupiq.data.defense_processing import (
+    DEFENSE_TARGETS,
     get_defense_feature_columns,
     get_defense_target_columns,
     process_defense_data,
 )
 from lineupiq.data.kicker_processing import (
+    KICKER_TARGETS,
     get_kicker_feature_columns,
     get_kicker_target_columns,
     process_kicker_data,
 )
 from lineupiq.features.pipeline import build_features, get_feature_columns
 from lineupiq.models.persistence import save_model
+from lineupiq.models.qb import QB_TARGETS
+from lineupiq.models.rb import RB_TARGETS
+from lineupiq.models.receiver import RECEIVER_TARGETS
 
 logger = logging.getLogger(__name__)
 
 # Position to target mapping
 POSITION_TARGETS = {
-    "QB": [
-        "passing_yards",
-        "passing_tds",
-        "interceptions",
-        "rushing_yards",
-        "rushing_tds",
-        "fumbles_lost",
-    ],
-    "RB": [
-        "carries",
-        "rushing_yards",
-        "rushing_tds",
-        "receptions",
-        "receiving_yards",
-        "receiving_tds",
-        "fumbles_lost",
-    ],
-    "WR": [
-        "targets",
-        "receptions",
-        "receiving_yards",
-        "receiving_tds",
-    ],
-    "TE": [
-        "targets",
-        "receptions",
-        "receiving_yards",
-        "receiving_tds",
-    ],
-    "K": [
-        "fg_att",
-        "fg_made_0_39",
-        "fg_made_40_49",
-        "fg_made_50_plus",
-        "xp_made",
-    ],
-    "DEF": [
-        "sacks",
-        "interceptions",
-        "fumbles_recovered",
-        "def_tds",
-        "points_allowed",
-    ],
+    "QB": QB_TARGETS,
+    "RB": RB_TARGETS,
+    "WR": RECEIVER_TARGETS,
+    "TE": RECEIVER_TARGETS,
+    "K": KICKER_TARGETS,
+    "DEF": DEFENSE_TARGETS,
 }
 
 

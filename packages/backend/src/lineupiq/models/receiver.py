@@ -124,7 +124,7 @@ def train_wr_models(
         True
     """
     if seasons is None:
-        seasons = [2021, 2022, 2023, 2024]
+        seasons = [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
     logger.info(f"Training WR models for seasons {seasons} using {model_type}")
 
@@ -134,6 +134,13 @@ def train_wr_models(
 
     # Prepare WR data
     X, y_dict = prepare_receiver_data(df, "WR")
+    feature_cols = get_feature_columns()
+    wr_df_for_weights = (
+        df.filter(pl.col("position") == "WR")
+        .with_columns(pl.col("receiving_fumbles_lost").fill_null(0).alias("fumbles_lost"))
+        .drop_nulls(subset=feature_cols + RECEIVER_TARGETS)
+    )
+    season_array = wr_df_for_weights.select("season").to_numpy().flatten().astype(np.int64)
 
     results: dict[str, tuple[Any, dict[str, Any]]] = {}
 
@@ -143,11 +150,22 @@ def train_wr_models(
 
         # Tune hyperparameters (uses Poisson for count targets like TDs)
         best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, model_type=model_type, target=target
+            X,
+            y,
+            n_trials=n_trials,
+            model_type=model_type,
+            target=target,
+            season_array=season_array,
         )
 
         # Train final model with best params
-        model, cv_scores = train_model(X, y, params=best_params, model_type=model_type)
+        model, cv_scores = train_model(
+            X,
+            y,
+            params=best_params,
+            model_type=model_type,
+            season_array=season_array,
+        )
 
         # Fit conformal prediction intervals (MAPIE) - only for LightGBM (expensive 5-fold CV)
         mapie_model = fit_conformal(model, X, y) if model_type == "lightgbm" else None
@@ -214,7 +232,7 @@ def train_te_models(
         True
     """
     if seasons is None:
-        seasons = [2021, 2022, 2023, 2024]
+        seasons = [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
     logger.info(f"Training TE models for seasons {seasons} using {model_type}")
 
@@ -224,6 +242,13 @@ def train_te_models(
 
     # Prepare TE data
     X, y_dict = prepare_receiver_data(df, "TE")
+    feature_cols = get_feature_columns()
+    te_df_for_weights = (
+        df.filter(pl.col("position") == "TE")
+        .with_columns(pl.col("receiving_fumbles_lost").fill_null(0).alias("fumbles_lost"))
+        .drop_nulls(subset=feature_cols + RECEIVER_TARGETS)
+    )
+    season_array = te_df_for_weights.select("season").to_numpy().flatten().astype(np.int64)
 
     results: dict[str, tuple[Any, dict[str, Any]]] = {}
 
@@ -233,11 +258,22 @@ def train_te_models(
 
         # Tune hyperparameters (uses Poisson for count targets like TDs)
         best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, model_type=model_type, target=target
+            X,
+            y,
+            n_trials=n_trials,
+            model_type=model_type,
+            target=target,
+            season_array=season_array,
         )
 
         # Train final model with best params
-        model, cv_scores = train_model(X, y, params=best_params, model_type=model_type)
+        model, cv_scores = train_model(
+            X,
+            y,
+            params=best_params,
+            model_type=model_type,
+            season_array=season_array,
+        )
 
         # Fit conformal prediction intervals (MAPIE) - only for LightGBM (expensive 5-fold CV)
         mapie_model = fit_conformal(model, X, y) if model_type == "lightgbm" else None
@@ -296,7 +332,7 @@ def train_receiver_models(
         True
     """
     if seasons is None:
-        seasons = [2021, 2022, 2023, 2024]
+        seasons = [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
     logger.info(f"Training all receiver models (WR + TE) for seasons {seasons}")
 

@@ -147,7 +147,7 @@ def train_rb_models(
         True
     """
     if seasons is None:
-        seasons = [2021, 2022, 2023, 2024]
+        seasons = [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
 
     logger.info(f"Training RB models for seasons {seasons} with {n_trials} trials using {model_type}")
 
@@ -156,6 +156,15 @@ def train_rb_models(
         logger.info("Loading feature data...")
         df = build_features(seasons, rolling_window=rolling_window)
     X, y_dict = prepare_rb_data(df)
+    feature_cols = get_feature_columns()
+    rb_df_for_weights = (
+        df.filter(pl.col("position") == "RB")
+        .with_columns(
+            (pl.col("rushing_fumbles_lost").fill_null(0) + pl.col("receiving_fumbles_lost").fill_null(0)).alias("fumbles_lost")
+        )
+        .drop_nulls(subset=[c for c in feature_cols + RB_TARGETS if c in df.columns])
+    )
+    season_array = rb_df_for_weights.select("season").to_numpy().flatten().astype(np.int64)
 
     results = {}
 
@@ -167,13 +176,24 @@ def train_rb_models(
         # Run hyperparameter tuning (uses Poisson for count targets like TDs)
         logger.info(f"  Running {n_trials} Optuna trials...")
         best_params, study = tune_hyperparameters(
-            X, y, n_trials=n_trials, n_splits=5, model_type=model_type, target=target
+            X,
+            y,
+            n_trials=n_trials,
+            n_splits=5,
+            model_type=model_type,
+            target=target,
+            season_array=season_array,
         )
 
         # Train final model with best params
         logger.info(f"  Training final model with best params...")
         model, cv_scores = train_model(
-            X, y, params=best_params, n_splits=5, model_type=model_type
+            X,
+            y,
+            params=best_params,
+            n_splits=5,
+            model_type=model_type,
+            season_array=season_array,
         )
 
         # Compute metrics (cv_scores are negative RMSE)
