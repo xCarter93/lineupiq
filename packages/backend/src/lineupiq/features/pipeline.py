@@ -43,7 +43,6 @@ from lineupiq.features.team_strength import compute_team_strength, get_team_stre
 from lineupiq.features.usage_features import compute_usage_features, get_usage_columns
 from lineupiq.features.weather import engineer_weather_features
 from lineupiq.features.matchup import engineer_matchup_features
-from lineupiq.data.odds_cache import OddsClient
 
 logger = logging.getLogger(__name__)
 
@@ -66,9 +65,8 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     Rolling window expanded from 3 to 5 games (Phase 19.1) to better capture
     recent performance trends, especially for volatile stats like touchdowns.
 
-    Vegas lines (Phase 20-03) provide market efficiency signal - spreads/totals
-    capture expected team performance. Research shows home field advantage
-    averages +2.5-3 points across NFL.
+    Vegas lines provide market efficiency signal - spreads/totals from nflreadpy
+    schedule data capture expected team performance.
 
     Args:
         seasons: List of seasons to process (e.g., [2023, 2024]).
@@ -194,63 +192,10 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     # Count total weather features (existing + detailed)
     total_weather_cols = len(existing_weather_cols) + len(detailed_weather_cols)
 
-    # Step 7: Add matchup features (Vegas lines, divisional games)
+    # Step 7: Add matchup features (Vegas lines from schedule, divisional games)
     logger.info("Step 7: Adding matchup features...")
-    # Check if ODDS_API_KEY exists
-    odds_api_key = os.getenv("ODDS_API_KEY")
-    if odds_api_key:
-        logger.info("ODDS_API_KEY found, will fetch Vegas spreads and totals")
-        try:
-            # Initialize Odds API client
-            odds_client = OddsClient(api_key=odds_api_key)
-
-            # Get unique game dates from schedules (already fetched in Step 4)
-            # The Odds API requires date format YYYY-MM-DD
-            if "gameday" in schedules_df.columns:
-                unique_dates = schedules_df.select("gameday").unique().sort("gameday")
-
-                # Fetch odds for each date
-                all_odds = []
-                for row in unique_dates.iter_rows(named=True):
-                    gameday = row["gameday"]
-                    # Convert to string format YYYY-MM-DD
-                    # Handle: str, datetime.datetime, datetime.date, or polars date types
-                    if isinstance(gameday, str):
-                        date_str = gameday  # Already in string format
-                    elif hasattr(gameday, "strftime"):
-                        date_str = gameday.strftime("%Y-%m-%d")  # Convert datetime to string
-                    else:
-                        date_str = str(gameday)  # Fallback: convert to string
-
-                    try:
-                        games = odds_client.get_historical_odds(date_str)
-                        all_odds.extend(games)
-                    except Exception as e:
-                        logger.warning(f"Failed to fetch odds for {date_str}: {e}")
-
-                # Parse odds into DataFrame
-                if all_odds:
-                    odds_df = odds_client.parse_odds(all_odds)
-                    logger.info(f"Fetched odds for {len(odds_df)} games")
-
-                    # Engineer matchup features with odds
-                    schedules_with_matchup = engineer_matchup_features(schedules_df, odds_df)
-                else:
-                    logger.warning("No odds data fetched, adding matchup features without Vegas lines")
-                    schedules_with_matchup = engineer_matchup_features(schedules_df, odds_df=None)
-            else:
-                logger.warning("No gameday column in schedules, skipping matchup features")
-                schedules_with_matchup = schedules_df
-        except Exception as e:
-            logger.error(f"Error fetching odds: {e}. Adding matchup features without Vegas lines.")
-            schedules_with_matchup = engineer_matchup_features(schedules_df, odds_df=None)
-    else:
-        logger.warning(
-            "ODDS_API_KEY not found - skipping Vegas features. "
-            "Set in .env for spreads/totals. Divisional flag will still be added."
-        )
-        # Still add divisional flag even without API key
-        schedules_with_matchup = engineer_matchup_features(schedules_df, odds_df=None)
+    # nflreadpy schedules include spread_line and total_line columns
+    schedules_with_matchup = engineer_matchup_features(schedules_df)
 
     # Join matchup features to player data via game_id
     if "game_id" in df.columns and "game_id" in schedules_with_matchup.columns:

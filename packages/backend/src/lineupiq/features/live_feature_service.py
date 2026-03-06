@@ -8,14 +8,12 @@ This module centralizes feature logic that was previously duplicated in:
 
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 
 import nflreadpy as nfl
 import polars as pl
 
 from lineupiq.data.fetchers import fetch_schedules, fetch_snap_counts
-from lineupiq.data.odds_cache import OddsClient
 from lineupiq.features.epa_features import get_epa_columns
 from lineupiq.features.matchup import engineer_matchup_features
 from lineupiq.features.weather import engineer_weather_features
@@ -209,23 +207,8 @@ def _compute_schedule_features(
         schedules = fetch_schedules([season])
         with_weather = engineer_weather_features(schedules)
 
-        odds_df = None
-        odds_key = os.getenv("ODDS_API_KEY")
-        if odds_key and "gameday" in schedules.columns:
-            odds_client = OddsClient(api_key=odds_key)
-            odds_rows = []
-            unique_days = schedules.select("gameday").drop_nulls().unique().sort("gameday")
-            for row in unique_days.iter_rows(named=True):
-                gameday = row["gameday"]
-                date_str = gameday if isinstance(gameday, str) else gameday.strftime("%Y-%m-%d")
-                try:
-                    odds_rows.extend(odds_client.get_historical_odds(date_str))
-                except Exception:
-                    continue
-            if odds_rows:
-                odds_df = odds_client.parse_odds(odds_rows)
-
-        with_matchup = engineer_matchup_features(with_weather, odds_df=odds_df)
+        # nflreadpy schedules include spread_line/total_line columns
+        with_matchup = engineer_matchup_features(with_weather)
 
         team_games = with_matchup.filter(
             (pl.col("home_team") == team) | (pl.col("away_team") == team)
