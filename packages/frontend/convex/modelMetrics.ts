@@ -1,11 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getLastCompletedSeason } from "../lib/season";
 
 // Query: Get overall model confidence for display in UI
 export const getOverallMetrics = query({
   args: { season: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const season = args.season ?? 2025;
+    const season = args.season ?? getLastCompletedSeason();
     return await ctx.db
       .query("overallMetrics")
       .withIndex("by_season", (q) => q.eq("season", season))

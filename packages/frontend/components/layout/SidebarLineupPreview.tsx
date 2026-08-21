@@ -5,14 +5,18 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
+import { getCurrentSeason } from "@/lib/season";
 import { useSidebar } from "./sidebar-context";
 
 export function SidebarLineupPreview() {
   const [isOpen, setIsOpen] = useState(true);
   const { isCollapsed } = useSidebar();
 
-  // Get current lineup (hardcoded week/season for now - will be dynamic later)
-  const lineup = useQuery(api.lineups.getByWeek, { week: 1, season: 2025 });
+  // Week is still pinned to 1 - will be dynamic later
+  const lineup = useQuery(api.lineups.getByWeek, {
+    week: 1,
+    season: getCurrentSeason(),
+  });
 
   if (isCollapsed) {
     return null;

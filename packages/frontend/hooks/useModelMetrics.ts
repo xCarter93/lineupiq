@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../convex/_generated/api";
 import { fetchValidationMetrics, ValidationResponse } from "@/lib/prediction-api";
+import { getLastCompletedSeason } from "@/lib/season";
 
 interface UseModelMetricsResult {
   overallAccuracy: number | null;
@@ -19,9 +20,12 @@ interface UseModelMetricsResult {
  * First checks Convex cache, falls back to API fetch if not available.
  */
 export function useModelMetrics(): UseModelMetricsResult {
+  // Metrics are validated against the last season with complete actuals
+  const validationSeason = getLastCompletedSeason();
+
   // Try Convex first (cached data)
   const convexMetrics = useQuery(api.modelMetrics.getOverallMetrics, {
-    season: 2025,
+    season: validationSeason,
   });
   const allModelMetrics = useQuery(api.modelMetrics.getAllMetrics, {});
 
@@ -37,10 +41,10 @@ export function useModelMetrics(): UseModelMetricsResult {
     if (apiData || apiError) return; // Already have API result
 
     // Start fetch - state updates happen in callbacks
-    void fetchValidationMetrics(2025)
+    void fetchValidationMetrics(validationSeason)
       .then(setApiData)
       .catch(setApiError);
-  }, [convexMetrics, apiData, apiError]);
+  }, [convexMetrics, apiData, apiError, validationSeason]);
 
   // Determine overall metrics source
   const overallAccuracy =

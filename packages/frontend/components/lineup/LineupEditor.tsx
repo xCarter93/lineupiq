@@ -8,13 +8,17 @@ import { LineupSlot } from "./LineupSlot";
 import { LineupSummary } from "./LineupSummary";
 import { AddPlayerSheet } from "./AddPlayerSheet";
 import { Loader2, Users } from "lucide-react";
+import { getCurrentSeason } from "@/lib/season";
 
 interface LineupEditorProps {
   week?: number;
   season?: number;
 }
 
-export function LineupEditor({ week = 1, season = 2025 }: LineupEditorProps) {
+export function LineupEditor({
+  week = 1,
+  season = getCurrentSeason(),
+}: LineupEditorProps) {
   const [addingToSlot, setAddingToSlot] = useState<{
     index: number;
     position: string;

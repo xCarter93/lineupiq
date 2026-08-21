@@ -6,9 +6,11 @@ import { api } from "@/convex/_generated/api";
 import { useRosterSync } from "@/hooks/useRosterSync";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentSeason } from "@/lib/season";
 
 export default function AdminPage() {
   const { status, syncRoster } = useRosterSync();
+  const currentSeason = getCurrentSeason();
   const players = useQuery(api.players.list);
   const [lastResult, setLastResult] = useState<string | null>(null);
 
@@ -61,7 +63,7 @@ export default function AdminPage() {
               disabled={status.isLoading}
               className="w-full"
             >
-              {status.isLoading ? "Syncing..." : "Sync 2025 Roster"}
+              {status.isLoading ? "Syncing..." : `Sync ${currentSeason} Roster`}
             </Button>
 
             {status.isLoading && (
@@ -94,7 +96,7 @@ export default function AdminPage() {
           <CardContent className="prose prose-sm max-w-none">
             <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
               <li>Ensure Python API is running: <code className="bg-muted px-1 py-0.5 rounded">cd packages/backend && uv run uvicorn lineupiq.api.main:app</code></li>
-              <li>Click &quot;Sync 2025 Roster&quot; to import ~500 fantasy-relevant players</li>
+              <li>Click &quot;Sync {currentSeason} Roster&quot; to import ~500 fantasy-relevant players</li>
               <li>Players will be available in the matchup player selector</li>
               <li>Historical stats are synced on-demand when viewing player details</li>
             </ol>

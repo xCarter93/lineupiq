@@ -58,7 +58,7 @@ export default function Page() {
     ? simulation.completedWeeks === 0
       ? simulation.trainingSeasons.filter(s => s < simulation.targetSeason).join("-")
       : `${simulation.trainingSeasons[0]}-${simulation.targetSeason} (through Wk ${simulation.completedWeeks})`
-    : "2016-2025";
+    : `${simulation.trainingSeasons[0]}-${simulation.trainingSeasons[simulation.trainingSeasons.length - 1]}`;
 
   return (
     <div className="min-h-screen bg-background">

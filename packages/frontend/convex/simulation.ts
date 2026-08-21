@@ -1,5 +1,6 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { getCurrentSeason } from "../lib/season";
 
 // Queries
 
@@ -10,7 +11,7 @@ import { v } from "convex/values";
 export const getSimulationState = query({
   args: { targetSeason: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const season = args.targetSeason ?? 2025;
+    const season = args.targetSeason ?? getCurrentSeason();
     const simulation = await ctx.db
       .query("simulationState")
       .withIndex("by_target_season", (q) => q.eq("targetSeason", season))

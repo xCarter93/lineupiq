@@ -20,6 +20,7 @@ import { useValidationPredictions } from "@/hooks/useValidationPredictions";
 import { useSimulation } from "@/hooks/useSimulation";
 import { useSimulationPredictions } from "@/hooks/useSimulationPredictions";
 import { useGameInfo } from "@/hooks/useGameInfo";
+import { getLastCompletedSeason } from "@/lib/season";
 import { ValidationChart } from "./ValidationChart";
 import { ConsolidatedPredictionChart } from "./ConsolidatedPredictionChart";
 import { ProjectedPointsBreakdown } from "./ProjectedPointsBreakdown";
@@ -134,6 +135,10 @@ export function PlayerDetailDrawer({
   const [imageError, setImageError] = useState(false);
   const simulation = useSimulation();
   const season = simulation.targetSeason;
+  // Predicted-vs-actual needs a season with actuals; a live simulation supplies its own
+  const validationSeason = simulation.isActive
+    ? simulation.targetSeason
+    : getLastCompletedSeason();
 
   // Get the current week for game info (week 1 if pre-season, otherwise completedWeeks + 1)
   const currentGameWeek = simulation.isActive
@@ -156,7 +161,7 @@ export function PlayerDetailDrawer({
   // Get validation data (actuals vs predicted) - filtered by simulation state
   const { groupedByTarget: validationGrouped, isLoading: validationLoading } = useValidationPredictions(
     playerId,
-    season,
+    validationSeason,
     simulationFilter
   );
 

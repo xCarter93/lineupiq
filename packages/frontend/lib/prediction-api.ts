@@ -3,6 +3,8 @@
  * Provides typed functions for fetching stat predictions by position.
  */
 
+import { getLastCompletedSeason } from "./season";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_PREDICTION_API_URL || "http://localhost:8000";
 
@@ -526,7 +528,7 @@ export interface ValidationResponse {
  * Used to display model confidence indicators in the UI.
  */
 export async function fetchValidationMetrics(
-  season: number = 2025
+  season: number = getLastCompletedSeason()
 ): Promise<ValidationResponse> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);

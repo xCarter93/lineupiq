@@ -38,6 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { getCurrentSeason, getDefaultTrainingSeasons } from "@/lib/season";
 
 // Backend API base URL
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -74,6 +75,7 @@ interface Prediction {
 }
 
 export default function SimulationPage() {
+  const targetSeason = getCurrentSeason();
   const [status, setStatus] = useState<SimulationStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export default function SimulationPage() {
 
   // Convex state
   const convexState = useQuery(api.simulation.getSimulationState, {
-    targetSeason: 2025,
+    targetSeason,
   });
 
   // Fetch status from backend
@@ -164,15 +166,15 @@ export default function SimulationPage() {
     try {
       // Create in Convex first
       await initializeSimulation({
-        targetSeason: 2025,
-        trainingSeasons: [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024],
+        targetSeason,
+        trainingSeasons: getDefaultTrainingSeasons(targetSeason),
       });
 
       // Then trigger backend
       const res = await fetch(`${API_BASE}/api/simulation/init`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_season: 2025, quick }),
+        body: JSON.stringify({ target_season: targetSeason, quick }),
       });
       if (res.ok) {
         await fetchStatus();
@@ -200,7 +202,7 @@ export default function SimulationPage() {
       if (res.ok) {
         // Update Convex
         try {
-          await advanceWeek({ targetSeason: 2025, toWeek });
+          await advanceWeek({ targetSeason, toWeek });
         } catch {
           // Ignore sync errors
         }
@@ -225,7 +227,7 @@ export default function SimulationPage() {
       });
       if (res.ok) {
         try {
-          await resetSimulation({ targetSeason: 2025 });
+          await resetSimulation({ targetSeason });
         } catch {
           // Ignore sync errors
         }
@@ -246,6 +248,11 @@ export default function SimulationPage() {
 
   // The "app week" is the current week we're predicting
   const appWeek = currentWeek;
+
+  // Prefer the season/training set the running simulation actually reports
+  const simSeason = state?.target_season ?? targetSeason;
+  const trainingSeasons =
+    state?.training_seasons ?? getDefaultTrainingSeasons(targetSeason);
 
   // Status badge variant
   const getStatusVariant = (s: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -306,7 +313,7 @@ export default function SimulationPage() {
                     <p className="font-medium">
                       {state.training_seasons.join(", ")}
                       {completedWeeks > 0 && (
-                        <span className="text-primary"> + 2025 W1-{completedWeeks}</span>
+                        <span className="text-primary"> + {simSeason} W1-{completedWeeks}</span>
                       )}
                     </p>
                   </div>
@@ -344,7 +351,7 @@ export default function SimulationPage() {
               </div>
             ) : (
               <p className="text-muted-foreground">
-                Initialize a simulation to begin backtesting the 2025 season.
+                Initialize a simulation to begin backtesting the {targetSeason} season.
               </p>
             )}
           </CardContent>
@@ -367,7 +374,9 @@ export default function SimulationPage() {
                   className="w-full"
                   size="lg"
                 >
-                  {isLoading ? "Initializing..." : "Initialize 2025 Simulation"}
+                  {isLoading
+                    ? "Initializing..."
+                    : `Initialize ${targetSeason} Simulation`}
                 </Button>
                 <Button
                   onClick={() => handleInit(true)}
@@ -451,8 +460,9 @@ export default function SimulationPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
-            <strong>Predicting Week {currentWeek}:</strong> Models are trained on 2022-2024
-            {completedWeeks > 0 && ` + weeks 1-${completedWeeks} of 2025`}.
+            <strong>Predicting Week {currentWeek}:</strong> Models are trained on{" "}
+            {trainingSeasons[0]}-{trainingSeasons[trainingSeasons.length - 1]}
+            {completedWeeks > 0 && ` + weeks 1-${completedWeeks} of ${simSeason}`}.
             The app displays predictions for week {currentWeek}.
           </p>
           <p>

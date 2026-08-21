@@ -1,6 +1,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useEffect, useMemo } from "react";
+import { getLastCompletedSeason } from "@/lib/season";
 
 interface SimulationFilter {
   /** When true, filter predictions based on simulation state */
@@ -13,12 +14,12 @@ interface SimulationFilter {
  * Hook to get validation predictions (predicted vs actual) for a player.
  *
  * @param playerId - The player's ID
- * @param season - The season to fetch (default: 2025)
+ * @param season - The season to fetch (default: last completed season)
  * @param simulationFilter - Optional filter to only show completed weeks during simulation
  */
 export function useValidationPredictions(
   playerId: string,
-  season: number = 2025,
+  season: number = getLastCompletedSeason(),
   simulationFilter?: SimulationFilter
 ) {
   const predictions = useQuery(

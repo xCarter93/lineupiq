@@ -1,6 +1,7 @@
 "use client";
 
 import { LineupEditor } from "@/components/lineup/LineupEditor";
+import { getCurrentSeason } from "@/lib/season";
 
 export default function LineupPage() {
   return (
@@ -15,7 +16,7 @@ export default function LineupPage() {
         </div>
 
         {/* Lineup Editor */}
-        <LineupEditor week={1} season={2025} />
+        <LineupEditor week={1} season={getCurrentSeason()} />
       </div>
     </div>
   );

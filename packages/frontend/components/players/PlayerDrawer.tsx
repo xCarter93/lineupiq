@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { SectionLabel } from "@/components/ui/section-label";
 import { useValidationPredictions } from "@/hooks/useValidationPredictions";
 import { useSimulation } from "@/hooks/useSimulation";
+import { getLastCompletedSeason } from "@/lib/season";
 import { ValidationChart } from "./ValidationChart";
 
 // Lazy load PlayerHistory from existing component
@@ -72,7 +73,11 @@ export function PlayerDrawer({
   const [activeTab, setActiveTab] = useState<Tab>("Accuracy");
   const [imageError, setImageError] = useState(false);
   const simulation = useSimulation();
-  const season = simulation.targetSeason;
+  // This drawer only shows predicted-vs-actual, which needs a season with actuals;
+  // a live simulation supplies its own.
+  const season = simulation.isActive
+    ? simulation.targetSeason
+    : getLastCompletedSeason();
 
   // Create simulation filter for validation predictions
   const simulationFilter = useMemo(() => ({
