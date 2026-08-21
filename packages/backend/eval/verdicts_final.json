@@ -1,0 +1,351 @@
+{
+ "rule": "SHIP_MODEL iff rubric (model_mae < naive_mae AND r2 > 0) passed in BOTH the pre-fix and post-fix 2025 walk-forward runs; knife-edge single-run passes ship baseline for stability",
+ "runs": [
+  "eval/honest_2025_pre_vegas_fix.json",
+  "eval/honest_2025.json"
+ ],
+ "ship_model_count": 13,
+ "results": [
+  {
+   "position": "QB",
+   "target": "passing_yards",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 63.3387509049767,
+   "naive_mae": 72.95250987027637,
+   "model_r2": 0.32105902703005007,
+   "naive_r2": 0.1066557726847428,
+   "n_eval_rows": 591
+  },
+  {
+   "position": "QB",
+   "target": "passing_tds",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 0.8906452936146081,
+   "naive_mae": 0.9942470389170898,
+   "model_r2": 0.141886214239901,
+   "naive_r2": -0.0615837210809147,
+   "n_eval_rows": 591
+  },
+  {
+   "position": "QB",
+   "target": "interceptions",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.6529278423566838,
+   "naive_mae": 0.7034122955442752,
+   "model_r2": -0.012832157032083291,
+   "naive_r2": -0.20625503821131796,
+   "n_eval_rows": 591
+  },
+  {
+   "position": "QB",
+   "target": "rushing_yards",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 11.727940376205686,
+   "naive_mae": 11.65882684715172,
+   "model_r2": 0.16817648902158844,
+   "naive_r2": 0.14985623111622326,
+   "n_eval_rows": 591
+  },
+  {
+   "position": "QB",
+   "target": "rushing_tds",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.2589706216319491,
+   "naive_mae": 0.2619007332205302,
+   "model_r2": -0.003491132103699446,
+   "naive_r2": -0.16047730271232208,
+   "n_eval_rows": 591
+  },
+  {
+   "position": "QB",
+   "target": "fumbles_lost",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.30794524937841916,
+   "naive_mae": 0.30414551607445006,
+   "model_r2": -0.05986586405387628,
+   "naive_r2": -0.22775349420829927,
+   "n_eval_rows": 591
+  },
+  {
+   "position": "RB",
+   "target": "rushing_yards",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 22.747751643957937,
+   "naive_mae": 23.789160939289808,
+   "model_r2": 0.30855215761824484,
+   "naive_r2": 0.2487943159987488,
+   "n_eval_rows": 1164
+  },
+  {
+   "position": "RB",
+   "target": "rushing_tds",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 0.4221237985698099,
+   "naive_mae": 0.4299255441008018,
+   "model_r2": 0.07324533252949339,
+   "naive_r2": -0.07303440827363694,
+   "n_eval_rows": 1164
+  },
+  {
+   "position": "RB",
+   "target": "carries",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 3.7245698784974,
+   "naive_mae": 3.966380297823597,
+   "model_r2": 0.48232935050216263,
+   "naive_r2": 0.4185334669313898,
+   "n_eval_rows": 1164
+  },
+  {
+   "position": "RB",
+   "target": "receiving_yards",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 11.43757440897951,
+   "naive_mae": 11.991008018327605,
+   "model_r2": 0.21850322217387097,
+   "naive_r2": 0.10466099355101155,
+   "n_eval_rows": 1164
+  },
+  {
+   "position": "RB",
+   "target": "receptions",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 1.1584918129149462,
+   "naive_mae": 1.2401202749140894,
+   "model_r2": 0.32245697415469254,
+   "naive_r2": 0.21826577697046778,
+   "n_eval_rows": 1164
+  },
+  {
+   "position": "RB",
+   "target": "receiving_tds",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "passed only post-fix run; margin within rerun noise (stability rule)",
+   "model_mae": 0.1389330245671501,
+   "naive_mae": 0.13990549828178694,
+   "model_r2": 0.009183239827452283,
+   "naive_r2": -0.10146905891091951,
+   "n_eval_rows": 1164
+  },
+  {
+   "position": "RB",
+   "target": "fumbles_lost",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.0942428838582685,
+   "naive_mae": 0.08868843069873998,
+   "model_r2": -0.000885723786688164,
+   "naive_r2": -0.20341918313243035,
+   "n_eval_rows": 1164
+  },
+  {
+   "position": "WR",
+   "target": "receiving_yards",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 26.021297328151405,
+   "naive_mae": 27.138646986469865,
+   "model_r2": 0.19250252719073724,
+   "naive_r2": 0.1295461312613071,
+   "n_eval_rows": 1355
+  },
+  {
+   "position": "WR",
+   "target": "receiving_tds",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.4059161682433411,
+   "naive_mae": 0.39849938499384996,
+   "model_r2": 0.046051139248961426,
+   "naive_r2": -0.09443595606303612,
+   "n_eval_rows": 1355
+  },
+  {
+   "position": "WR",
+   "target": "receptions",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 1.7157829859018048,
+   "naive_mae": 1.7417589175891757,
+   "model_r2": 0.19754923434030858,
+   "naive_r2": 0.1970177347944947,
+   "n_eval_rows": 1355
+  },
+  {
+   "position": "WR",
+   "target": "fumbles_lost",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.03481337622884106,
+   "naive_mae": 0.031143911439114394,
+   "model_r2": -0.03452821826849295,
+   "naive_r2": -0.2769633507853402,
+   "n_eval_rows": 1355
+  },
+  {
+   "position": "TE",
+   "target": "receiving_yards",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 21.122399004538067,
+   "naive_mae": 22.252830733679954,
+   "model_r2": 0.09711969968061873,
+   "naive_r2": -0.007665112369782845,
+   "n_eval_rows": 577
+  },
+  {
+   "position": "TE",
+   "target": "receiving_tds",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "passed only post-fix run; margin within rerun noise (stability rule)",
+   "model_mae": 0.3981187854296731,
+   "naive_mae": 0.4072790294627383,
+   "model_r2": 0.00976416304391825,
+   "naive_r2": -0.13137717934026383,
+   "n_eval_rows": 577
+  },
+  {
+   "position": "TE",
+   "target": "receptions",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 1.6752780235340345,
+   "naive_mae": 1.781744656268053,
+   "model_r2": 0.10607609575812249,
+   "naive_r2": 0.019468362207610945,
+   "n_eval_rows": 577
+  },
+  {
+   "position": "TE",
+   "target": "fumbles_lost",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.06105096227254574,
+   "naive_mae": 0.03613518197573657,
+   "model_r2": -0.18636748648056667,
+   "naive_r2": -0.15126606167683931,
+   "n_eval_rows": 577
+  },
+  {
+   "position": "K",
+   "target": "fg_att",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 0.9824380399833881,
+   "naive_mae": 1.1425266903914588,
+   "model_r2": 0.004563182303678248,
+   "naive_r2": -0.19525624249060858,
+   "n_eval_rows": 562
+  },
+  {
+   "position": "K",
+   "target": "fg_att_0_39",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.7494087355870868,
+   "naive_mae": 0.8236061684460261,
+   "model_r2": -0.011164584196412752,
+   "naive_r2": -0.18937057483442876,
+   "n_eval_rows": 562
+  },
+  {
+   "position": "K",
+   "target": "fg_att_40_49",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.6240252866943474,
+   "naive_mae": 0.6315836298932385,
+   "model_r2": -0.07582263204096984,
+   "naive_r2": -0.19898086569447182,
+   "n_eval_rows": 562
+  },
+  {
+   "position": "K",
+   "target": "fg_att_50_plus",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.5668005748974976,
+   "naive_mae": 0.5908362989323842,
+   "model_r2": -0.05136759176949712,
+   "naive_r2": -0.15959175556803307,
+   "n_eval_rows": 562
+  },
+  {
+   "position": "K",
+   "target": "pat_att",
+   "final_verdict": "SHIP_MODEL",
+   "rationale": "passed rubric in both eval runs (stable)",
+   "model_mae": 1.1514098817657112,
+   "naive_mae": 1.198873072360617,
+   "model_r2": 0.005019265340196255,
+   "naive_r2": -0.09326305337050167,
+   "n_eval_rows": 562
+  },
+  {
+   "position": "DEF",
+   "target": "points_allowed",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 8.287175306824032,
+   "naive_mae": 8.086666666666666,
+   "model_r2": -0.07054349777083968,
+   "naive_r2": -0.061514306030972854,
+   "n_eval_rows": 570
+  },
+  {
+   "position": "DEF",
+   "target": "def_sacks",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 1.4593483885379785,
+   "naive_mae": 1.4936842105263157,
+   "model_r2": -0.045876794762201634,
+   "naive_r2": -0.12581735947217165,
+   "n_eval_rows": 570
+  },
+  {
+   "position": "DEF",
+   "target": "def_interceptions",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.8525230106188565,
+   "naive_mae": 0.6978947368421052,
+   "model_r2": -0.6279175955905938,
+   "naive_r2": -0.14260945320373764,
+   "n_eval_rows": 570
+  },
+  {
+   "position": "DEF",
+   "target": "def_fumbles",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.2139145260556739,
+   "naive_mae": 0.1694736842105263,
+   "model_r2": -0.07820226223136473,
+   "naive_r2": -0.27838867719107263,
+   "n_eval_rows": 570
+  },
+  {
+   "position": "DEF",
+   "target": "total_def_tds",
+   "final_verdict": "SHIP_BASELINE",
+   "rationale": "failed rubric on production features",
+   "model_mae": 0.1992555350930145,
+   "naive_mae": 0.18105263157894738,
+   "model_r2": -0.14937670294756744,
+   "naive_r2": -0.1853834530821179,
+   "n_eval_rows": 570
+  }
+ ]
+}
