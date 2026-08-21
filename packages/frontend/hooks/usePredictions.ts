@@ -1,42 +1,24 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { getCurrentSeason, getCurrentNFLWeek } from "@/lib/season";
 
 /**
- * Hook to get a prediction for a player
- * If week/season provided, gets specific prediction
- * Otherwise gets most recent by createdAt
+ * Every prediction for a season/week — one query for the whole weekly grid.
+ * Defaults to the current season/week.
  *
  * @example
- * const { prediction, isLoading } = usePrediction("player-123");
- * const { prediction, isLoading } = usePrediction("player-123", 10, 2024);
+ * const { predictions, isLoading } = useWeekPredictions();
+ * const { predictions, isLoading } = useWeekPredictions(2026, 3);
  */
-export function usePrediction(
-  playerId: string,
-  week?: number,
-  season?: number
-) {
-  const prediction = useQuery(api.predictions.getByPlayer, {
-    playerId,
-    week,
-    season,
+export function useWeekPredictions(season?: number, week?: number) {
+  const resolvedSeason = season ?? getCurrentSeason();
+  const predictions = useQuery(api.predictions.byWeek, {
+    season: resolvedSeason,
+    week: week ?? getCurrentNFLWeek(resolvedSeason),
   });
-  return {
-    prediction,
-    isLoading: prediction === undefined,
-  };
-}
 
-/**
- * Hook to get recent predictions
- *
- * @example
- * const { predictions, isLoading } = useRecentPredictions();
- * const { predictions, isLoading } = useRecentPredictions(20);
- */
-export function useRecentPredictions(limit = 10) {
-  const predictions = useQuery(api.predictions.listRecent, { limit });
   return {
     predictions,
     isLoading: predictions === undefined,
@@ -44,34 +26,26 @@ export function useRecentPredictions(limit = 10) {
 }
 
 /**
- * Hook returning mutation functions for prediction operations
+ * Every target predicted for one player in one week.
+ * Defaults to the current season/week.
  *
  * @example
- * const { store, remove, clearOld } = usePredictionMutations();
- *
- * // Store a prediction
- * await store({
- *   playerId: "player-123",
- *   position: "QB",
- *   week: 10,
- *   season: 2024,
- *   predictions: { passing_yards: 280.5, passing_tds: 2.1 },
- * });
- *
- * // Remove a prediction
- * await remove({ id: predictionId });
- *
- * // Clear old predictions (default 7 days)
- * const count = await clearOld({ daysOld: 14 });
+ * const { predictions, isLoading } = usePlayerWeekPredictions("00-0034796");
  */
-export function usePredictionMutations() {
-  const store = useMutation(api.predictions.store);
-  const remove = useMutation(api.predictions.remove);
-  const clearOld = useMutation(api.predictions.clearOld);
+export function usePlayerWeekPredictions(
+  playerId: string,
+  season?: number,
+  week?: number
+) {
+  const resolvedSeason = season ?? getCurrentSeason();
+  const predictions = useQuery(api.predictions.byPlayerWeek, {
+    playerId,
+    season: resolvedSeason,
+    week: week ?? getCurrentNFLWeek(resolvedSeason),
+  });
 
   return {
-    store,
-    remove,
-    clearOld,
+    predictions,
+    isLoading: predictions === undefined,
   };
 }

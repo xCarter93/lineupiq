@@ -47,17 +47,28 @@ export default defineSchema({
     })),
   }).index("by_default", ["isDefault"]),
 
-  // Cached predictions from Python ML API
+  // Weekly batch predictions, one row per (player, season, week, target).
+  // Written only by the Python batch job via the /ingest-predictions HTTP action.
   cachedPredictions: defineTable({
-    playerId: v.string(), // Player identifier
-    position: v.string(), // "QB", "RB", "WR", "TE"
-    week: v.number(), // NFL week number
-    season: v.number(), // NFL season year
-    predictions: v.any(), // Position-specific predictions (flexible structure)
-    createdAt: v.number(), // Timestamp for cache invalidation
+    playerId: v.string(), // gsis_id, or "DEF_{TEAM}" for team defense
+    playerName: v.string(), // denormalized so the weekly grid needs no join
+    position: v.string(), // "QB", "RB", "WR", "TE", "K", "DEF"
+    team: v.string(),
+    opponent: v.optional(v.string()),
+    isHome: v.optional(v.boolean()),
+    season: v.number(),
+    week: v.number(),
+    target: v.string(), // "passing_yards", "receiving_tds", etc.
+    predictedValue: v.number(),
+    source: v.union(v.literal("model"), v.literal("baseline")),
+    modelVersion: v.optional(v.string()), // absent for baseline predictions
+    runId: v.string(), // one id per generate_predictions.py run
+    generatedAt: v.number(),
   })
-    .index("by_player", ["playerId"])
-    .index("by_player_week", ["playerId", "week", "season"]),
+    .index("by_season_week", ["season", "week"])
+    .index("by_player_week", ["playerId", "season", "week"])
+    .index("by_position_week", ["position", "season", "week"])
+    .index("by_run", ["runId"]),
 
   // Player metadata for selection UI
   players: defineTable({

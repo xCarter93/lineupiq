@@ -1,149 +1,102 @@
-import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { query, internalMutation } from "./_generated/server";
 
-// Get most recent prediction for a player
-// If week/season provided, get specific prediction; otherwise get most recent
-export const getByPlayer = query({
-  args: {
-    playerId: v.string(),
-    week: v.optional(v.number()),
-    season: v.optional(v.number()),
-  },
+// Query: All predictions for a season/week (the weekly grid reads this once and
+// groups by playerId client-side)
+export const byWeek = query({
+  args: { season: v.number(), week: v.number() },
   handler: async (ctx, args) => {
-    if (args.week !== undefined && args.season !== undefined) {
-      // Get specific prediction
-      return await ctx.db
-        .query("cachedPredictions")
-        .withIndex("by_player_week", (q) =>
-          q
-            .eq("playerId", args.playerId)
-            .eq("week", args.week!)
-            .eq("season", args.season!)
-        )
-        .first();
-    }
-
-    // Get most recent by createdAt
-    const predictions = await ctx.db
+    return await ctx.db
       .query("cachedPredictions")
-      .withIndex("by_player", (q) => q.eq("playerId", args.playerId))
+      .withIndex("by_season_week", (q) =>
+        q.eq("season", args.season).eq("week", args.week)
+      )
       .collect();
-
-    if (predictions.length === 0) return null;
-
-    // Sort by createdAt descending and return first
-    return predictions.sort((a, b) => b.createdAt - a.createdAt)[0];
   },
 });
 
-// Get prediction for specific player/week/season
-export const getByPlayerWeek = query({
-  args: {
-    playerId: v.string(),
-    week: v.number(),
-    season: v.number(),
-  },
+// Query: Every target predicted for one player in one week
+export const byPlayerWeek = query({
+  args: { playerId: v.string(), season: v.number(), week: v.number() },
   handler: async (ctx, args) => {
     return await ctx.db
       .query("cachedPredictions")
       .withIndex("by_player_week", (q) =>
         q
           .eq("playerId", args.playerId)
-          .eq("week", args.week)
           .eq("season", args.season)
+          .eq("week", args.week)
       )
-      .first();
+      .collect();
   },
 });
 
-// Get N most recent predictions
-export const listRecent = query({
+// Internal mutation: idempotent upsert on the natural key
+// (playerId, season, week, target). Reached only through the
+// /ingest-predictions HTTP action. The batch job sends chunks of 100 rows.
+export const upsertBatch = internalMutation({
   args: {
-    limit: v.optional(v.number()),
+    rows: v.array(
+      v.object({
+        playerId: v.string(),
+        playerName: v.string(),
+        position: v.string(),
+        team: v.string(),
+        opponent: v.optional(v.string()),
+        isHome: v.optional(v.boolean()),
+        season: v.number(),
+        week: v.number(),
+        target: v.string(),
+        predictedValue: v.number(),
+        source: v.union(v.literal("model"), v.literal("baseline")),
+        modelVersion: v.optional(v.string()),
+        runId: v.string(),
+      })
+    ),
   },
   handler: async (ctx, args) => {
-    const limit = args.limit ?? 10;
+    let inserted = 0;
+    let updated = 0;
+    const generatedAt = Date.now();
 
-    const predictions = await ctx.db.query("cachedPredictions").collect();
+    for (const row of args.rows) {
+      const existing = await ctx.db
+        .query("cachedPredictions")
+        .withIndex("by_player_week", (q) =>
+          q
+            .eq("playerId", row.playerId)
+            .eq("season", row.season)
+            .eq("week", row.week)
+        )
+        .filter((q) => q.eq(q.field("target"), row.target))
+        .first();
 
-    // Sort by createdAt descending and return limited results
-    return predictions.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
-  },
-});
-
-// Store or update a prediction
-export const store = mutation({
-  args: {
-    playerId: v.string(),
-    position: v.string(),
-    week: v.number(),
-    season: v.number(),
-    predictions: v.any(),
-  },
-  handler: async (ctx, args) => {
-    // Check if prediction exists for this player/week/season
-    const existing = await ctx.db
-      .query("cachedPredictions")
-      .withIndex("by_player_week", (q) =>
-        q
-          .eq("playerId", args.playerId)
-          .eq("week", args.week)
-          .eq("season", args.season)
-      )
-      .first();
-
-    const now = Date.now();
-
-    if (existing) {
-      // Update existing prediction
-      await ctx.db.patch(existing._id, {
-        predictions: args.predictions,
-        createdAt: now,
-        position: args.position,
-      });
-      return existing._id;
+      if (existing) {
+        await ctx.db.patch(existing._id, { ...row, generatedAt });
+        updated++;
+      } else {
+        await ctx.db.insert("cachedPredictions", { ...row, generatedAt });
+        inserted++;
+      }
     }
 
-    // Insert new prediction
-    return await ctx.db.insert("cachedPredictions", {
-      playerId: args.playerId,
-      position: args.position,
-      week: args.week,
-      season: args.season,
-      predictions: args.predictions,
-      createdAt: now,
-    });
+    return { inserted, updated };
   },
 });
 
-// Delete a prediction
-export const remove = mutation({
-  args: {
-    id: v.id("cachedPredictions"),
-  },
+// Internal mutation: drop every row a single run wrote, for rolling back a bad run
+export const deleteByRun = internalMutation({
+  args: { runId: v.string() },
   handler: async (ctx, args) => {
-    await ctx.db.delete(args.id);
-  },
-});
-
-// Clear predictions older than N days
-export const clearOld = mutation({
-  args: {
-    daysOld: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const daysOld = args.daysOld ?? 7;
-    const cutoffTime = Date.now() - daysOld * 24 * 60 * 60 * 1000;
-
-    const oldPredictions = await ctx.db
+    const rows = await ctx.db
       .query("cachedPredictions")
-      .filter((q) => q.lt(q.field("createdAt"), cutoffTime))
+      .withIndex("by_run", (q) => q.eq("runId", args.runId))
       .collect();
 
-    for (const prediction of oldPredictions) {
-      await ctx.db.delete(prediction._id);
+    for (const row of rows) {
+      await ctx.db.delete(row._id);
     }
 
-    return oldPredictions.length;
+    return rows.length;
   },
 });

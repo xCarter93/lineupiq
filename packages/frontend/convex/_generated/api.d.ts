@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as http from "../http.js";
 import type * as lineupSettings from "../lineupSettings.js";
 import type * as lineups from "../lineups.js";
 import type * as modelMetrics from "../modelMetrics.js";
@@ -28,6 +29,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  http: typeof http;
   lineupSettings: typeof lineupSettings;
   lineups: typeof lineups;
   modelMetrics: typeof modelMetrics;
