@@ -23,6 +23,36 @@ SKILL_POSITIONS: frozenset[str] = frozenset({"QB", "RB", "WR", "TE"})
 FANTASY_POSITIONS: frozenset[str] = frozenset({"QB", "RB", "WR", "TE", "K"})
 
 
+def latest_stats_season() -> int:
+    """Return the most recent season that has published weekly player stats.
+
+    nflreadpy's stats season flips on the Thursday after Labor Day, but nflverse only
+    publishes that season's parquet once Week 1 games finish, so the current season
+    404s for the days in between. Falls back to the prior season during that window.
+
+    Raises:
+        ImportError: If nflreadpy is not installed.
+        RuntimeError: If neither the current nor the prior season has data.
+    """
+    try:
+        import nflreadpy as nfl
+    except ImportError as e:
+        logger.error("nflreadpy not installed. Run: uv add nflreadpy")
+        raise ImportError("nflreadpy is required but not installed") from e
+
+    current = int(nfl.get_current_season())
+
+    for season in (current, current - 1):
+        try:
+            if not nfl.load_player_stats(seasons=[season], summary_level="week").is_empty():
+                return season
+            logger.info(f"Player stats for {season} are published but empty, trying earlier")
+        except Exception as e:
+            logger.info(f"Player stats for {season} not published yet: {e}")
+
+    raise RuntimeError(f"No published player stats for {current} or {current - 1}")
+
+
 def fetch_player_stats(
     seasons: SeasonList = None,
     summary_level: Literal["week", "reg", "post", "reg+post"] = "week",
@@ -289,7 +319,7 @@ def fetch_rosters(seasons: list[int] | None = None) -> pl.DataFrame:
 
     Args:
         seasons: Year(s) to fetch.
-            - None: Current season (via nfl.get_current_season())
+            - None: Current roster season (via nfl.get_current_season(roster=True))
             - list[int]: Specific seasons (e.g., [2025])
 
     Returns:
@@ -322,10 +352,9 @@ def fetch_rosters(seasons: list[int] | None = None) -> pl.DataFrame:
         logger.error("nflreadpy not installed. Run: uv add nflreadpy")
         raise ImportError("nflreadpy is required but not installed") from e
 
-    # Default to current season if not specified
+    # Rosters roll over to the new season in March, months before stats data does
     if seasons is None:
-        current = nfl.get_current_season()
-        seasons = [current]
+        seasons = [int(nfl.get_current_season(roster=True))]
 
     logger.info(f"Fetching rosters: seasons={seasons}")
 
@@ -373,7 +402,7 @@ def fetch_player_history(
     Args:
         player_id: Player's gsis_id (e.g., "00-0033873" for Mahomes).
         seasons: Years to fetch.
-            - None: Last 3 seasons (current, current-1, current-2)
+            - None: Last 3 seasons with published stats (via latest_stats_season())
             - list[int]: Specific seasons (e.g., [2023, 2024, 2025])
 
     Returns:
@@ -404,10 +433,10 @@ def fetch_player_history(
         logger.error("nflreadpy not installed. Run: uv add nflreadpy")
         raise ImportError("nflreadpy is required but not installed") from e
 
-    # Default to last 3 seasons if not specified
+    # Default to last 3 seasons that actually have published stats
     if seasons is None:
-        current = nfl.get_current_season()
-        seasons = list(range(current - 2, current + 1))
+        latest = latest_stats_season()
+        seasons = list(range(latest - 2, latest + 1))
 
     logger.info(f"Fetching player history: player_id={player_id}, seasons={seasons}")
 

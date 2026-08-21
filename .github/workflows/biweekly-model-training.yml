@@ -22,6 +22,11 @@ on:
         required: false
         default: 'all'
 
+# A top-level block drops every permission not listed, so contents:read must be explicit
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   check-schedule:
     runs-on: ubuntu-latest
@@ -77,27 +82,20 @@ jobs:
 
       - name: Determine training seasons
         id: seasons
+        working-directory: packages/backend
         run: |
           if [ "${{ github.event.inputs.seasons }}" != "" ] && [ "${{ github.event.inputs.seasons }}" != "auto" ]; then
             SEASONS="${{ github.event.inputs.seasons }}"
             echo "Using manual seasons: $SEASONS"
           else
-            CURRENT_YEAR=$(date +%Y)
-            CURRENT_MONTH=$(date +%m)
-
-            # Use sliding 3-season window during season (Sep-Jan)
-            if [ "$CURRENT_MONTH" -ge 9 ] || [ "$CURRENT_MONTH" -le 1 ]; then
-              # During season: use last 2 complete seasons + current partial season
-              SEASONS="$((CURRENT_YEAR-2)) $((CURRENT_YEAR-1)) $CURRENT_YEAR"
-              echo "In-season training: $SEASONS"
-            else
-              # Off-season: use last 3 complete seasons
-              SEASONS="$((CURRENT_YEAR-3)) $((CURRENT_YEAR-2)) $((CURRENT_YEAR-1))"
-              echo "Off-season training: $SEASONS"
-            fi
+            # Anchor on the newest season nflverse actually publishes stats for, not the
+            # calendar year: the current season 404s until its Week 1 games finish.
+            LATEST=$(uv run python -c "from lineupiq.data.fetchers import latest_stats_season; print(latest_stats_season())")
+            SEASONS="$((LATEST-2)) $((LATEST-1)) $LATEST"
+            echo "Sliding 3-season window ending at $LATEST: $SEASONS"
           fi
 
-          echo "seasons=$SEASONS" >> $GITHUB_OUTPUT
+          echo "seasons=$SEASONS" >> "$GITHUB_OUTPUT"
           echo "Training on seasons: $SEASONS"
 
       - name: Determine positions
