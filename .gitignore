@@ -58,3 +58,5 @@ packages/backend/models/
 
 # GSD
 .claude/
+# Training byproducts
+packages/backend/catboost_info/
