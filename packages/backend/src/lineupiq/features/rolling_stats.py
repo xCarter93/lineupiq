@@ -209,3 +209,44 @@ def get_volatility_columns(stat_columns: list[str], window: int = 5) -> list[str
         cols.append(f"{col}_std{window}")
         cols.append(f"{col}_cv{window}")
     return cols
+
+
+def add_lagged_rolling(
+    df: pl.DataFrame,
+    columns: list[str],
+    window: int = 5,
+) -> pl.DataFrame:
+    """Replace same-week stat columns with lagged rolling averages.
+
+    Same shift(1)-then-roll idiom as compute_rolling_stats, for stats joined in
+    from external sources (NGS, PFR, xFP) whose current-week values are outcomes
+    of the game being predicted. Raw columns are dropped so no unlagged value
+    can reach a model. Sorting happens here because callers join first and
+    Polars joins do not guarantee row order.
+
+    Args:
+        df: Frame with player_id, season, week and the raw stat columns.
+        columns: Raw stat columns to lag (missing ones are ignored).
+        window: Number of prior games to average (default: 5).
+
+    Returns:
+        DataFrame with each raw column replaced by {col}_roll{window}.
+    """
+    existing = [c for c in columns if c in df.columns]
+    if not existing:
+        return df
+
+    result = df.sort(["player_id", "season", "week"]).with_columns(
+        [
+            pl.col(col)
+            .shift(1)
+            .rolling_mean(window_size=window, min_samples=1)
+            .over("player_id")
+            .fill_null(0.0)
+            .alias(f"{col}_roll{window}")
+            for col in existing
+        ]
+    )
+
+    logger.info(f"Lagged {len(existing)} columns into {window}-game rolling means")
+    return result.drop(existing)

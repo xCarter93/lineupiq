@@ -14,39 +14,44 @@ QB_CONNECTION_COLUMNS = ["qb_cpoe_roll5", "qb_target_share_to_player_roll5", "re
 def add_qb_connection_features(df: pl.DataFrame, window: int = 5) -> pl.DataFrame:
     """Add receiver-facing QB quality and connection features.
 
-    Uses already-joined nextgen CPOE (`ngs_cpoe`) where available.
+    Uses the already-lagged nextgen CPOE (`ngs_cpoe_roll{window}`) where available.
     """
     out = df
 
-    # Team-level proxy for current QB quality (rolling CPOE).
-    if "ngs_cpoe" in out.columns:
-        out = out.sort(["team", "season", "week"]).with_columns(
-            pl.col("ngs_cpoe")
-            .shift(1)
-            .rolling_mean(window_size=window, min_samples=1)
-            .over("team")
-            .fill_null(0.0)
-            .alias("qb_cpoe_roll5")
+    # Team QB quality: the team's quarterbacks' lagged CPOE, shared with their receivers.
+    cpoe_col = f"ngs_cpoe_roll{window}"
+    if cpoe_col in out.columns and "position" in out.columns:
+        team_cpoe = (
+            out.filter(pl.col("position") == "QB")
+            .group_by(["team", "season", "week"])
+            .agg(pl.col(cpoe_col).mean().alias("qb_cpoe_roll5"))
         )
+        out = out.join(team_cpoe, on=["team", "season", "week"], how="left")
     else:
         out = out.with_columns(pl.lit(0.0).alias("qb_cpoe_roll5"))
 
     # Share of team targets directed to this player.
     if "targets" in out.columns:
         team_targets = out.group_by(["team", "season", "week"]).agg(pl.col("targets").sum().alias("_team_targets"))
-        out = out.join(team_targets, on=["team", "season", "week"], how="left").with_columns(
-            pl.when(pl.col("_team_targets") > 0)
-            .then(pl.col("targets") / pl.col("_team_targets"))
-            .otherwise(0.0)
-            .alias("_target_share_raw")
-        ).with_columns(
-            pl.col("_target_share_raw")
-            .shift(1)
-            .rolling_mean(window_size=window, min_samples=1)
-            .over("player_id")
-            .fill_null(0.0)
-            .alias("qb_target_share_to_player_roll5")
-        ).drop(["_team_targets", "_target_share_raw"])
+        out = (
+            out.join(team_targets, on=["team", "season", "week"], how="left")
+            .sort(["player_id", "season", "week"])
+            .with_columns(
+                pl.when(pl.col("_team_targets") > 0)
+                .then(pl.col("targets") / pl.col("_team_targets"))
+                .otherwise(0.0)
+                .alias("_target_share_raw")
+            )
+            .with_columns(
+                pl.col("_target_share_raw")
+                .shift(1)
+                .rolling_mean(window_size=window, min_samples=1)
+                .over("player_id")
+                .fill_null(0.0)
+                .alias("qb_target_share_to_player_roll5")
+            )
+            .drop(["_team_targets", "_target_share_raw"])
+        )
     else:
         out = out.with_columns(pl.lit(0.0).alias("qb_target_share_to_player_roll5"))
 
@@ -56,19 +61,25 @@ def add_qb_connection_features(df: pl.DataFrame, window: int = 5) -> pl.DataFram
         team_rec_tds = out.group_by(["team", "season", "week"]).agg(
             pl.col("receiving_tds").sum().alias("_team_receiving_tds")
         )
-        out = out.join(team_rec_tds, on=["team", "season", "week"], how="left").with_columns(
-            pl.when(pl.col("_team_receiving_tds") > 0)
-            .then(pl.col("receiving_tds") / pl.col("_team_receiving_tds"))
-            .otherwise(0.0)
-            .alias("_red_zone_share_proxy")
-        ).with_columns(
-            pl.col("_red_zone_share_proxy")
-            .shift(1)
-            .rolling_mean(window_size=window, min_samples=1)
-            .over("player_id")
-            .fill_null(0.0)
-            .alias("red_zone_target_share_roll5")
-        ).drop(["_team_receiving_tds", "_red_zone_share_proxy"])
+        out = (
+            out.join(team_rec_tds, on=["team", "season", "week"], how="left")
+            .sort(["player_id", "season", "week"])
+            .with_columns(
+                pl.when(pl.col("_team_receiving_tds") > 0)
+                .then(pl.col("receiving_tds") / pl.col("_team_receiving_tds"))
+                .otherwise(0.0)
+                .alias("_red_zone_share_proxy")
+            )
+            .with_columns(
+                pl.col("_red_zone_share_proxy")
+                .shift(1)
+                .rolling_mean(window_size=window, min_samples=1)
+                .over("player_id")
+                .fill_null(0.0)
+                .alias("red_zone_target_share_roll5")
+            )
+            .drop(["_team_receiving_tds", "_red_zone_share_proxy"])
+        )
     else:
         out = out.with_columns(pl.lit(0.0).alias("red_zone_target_share_roll5"))
 

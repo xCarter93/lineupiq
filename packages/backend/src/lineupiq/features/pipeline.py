@@ -228,26 +228,26 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
 
     # Step 11.5: Add depth chart features
     logger.info("Step 11.5: Computing depth chart features...")
-    df = add_depth_chart_features(df, seasons)
+    df = add_depth_chart_features(df, seasons, schedules_df)
     depth_cols = get_depth_chart_columns()
     logger.info(f"Added {len(depth_cols)} depth chart features")
 
     # Step 11.6: Add Next Gen Stats features
     logger.info("Step 11.6: Computing Next Gen Stats features...")
-    df = add_nextgen_features(df, seasons)
-    nextgen_cols = get_nextgen_columns()
+    df = add_nextgen_features(df, seasons, window=rolling_window)
+    nextgen_cols = get_nextgen_columns(rolling_window)
     logger.info(f"Added {len(nextgen_cols)} Next Gen Stats features")
 
     # Step 11.7: Add expected fantasy point opportunity features (xFP)
     logger.info("Step 11.7: Computing xFP features...")
-    df = add_opportunity_features(df, seasons)
-    opportunity_cols = get_opportunity_columns()
+    df = add_opportunity_features(df, seasons, window=rolling_window)
+    opportunity_cols = get_opportunity_columns(rolling_window)
     logger.info(f"Added {len(opportunity_cols)} xFP features")
 
     # Step 11.8: Add PFR advanced features
     logger.info("Step 11.8: Computing PFR advanced features...")
-    df = add_pfr_features(df, seasons)
-    pfr_cols = get_pfr_columns()
+    df = add_pfr_features(df, seasons, window=rolling_window)
+    pfr_cols = get_pfr_columns(rolling_window)
     logger.info(f"Added {len(pfr_cols)} PFR features")
 
     # Step 11.9: Add QB connection + TD opportunity features

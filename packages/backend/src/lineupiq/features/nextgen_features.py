@@ -1,4 +1,8 @@
-"""Next Gen Stats feature engineering."""
+"""Next Gen Stats feature engineering.
+
+NGS values describe how a player performed *in* a game, so they are joined on the
+current week and then lagged into prior-game rolling averages before use.
+"""
 
 from __future__ import annotations
 
@@ -7,11 +11,13 @@ import logging
 import polars as pl
 
 from lineupiq.data.fetchers import fetch_nextgen_stats
+from lineupiq.data.normalization import prepare_weekly_join
+from lineupiq.features.rolling_stats import add_lagged_rolling
 
 logger = logging.getLogger(__name__)
 
 
-NEXTGEN_FEATURES = [
+NEXTGEN_STATS = [
     "ngs_cpoe",
     "ngs_avg_time_to_throw",
     "ngs_avg_intended_air_yards",
@@ -27,30 +33,31 @@ NEXTGEN_FEATURES = [
 ]
 
 
-def add_nextgen_features(df: pl.DataFrame, seasons: list[int]) -> pl.DataFrame:
-    """Join Next Gen Stats features for passing, receiving, and rushing."""
+def add_nextgen_features(df: pl.DataFrame, seasons: list[int], window: int = 5) -> pl.DataFrame:
+    """Join Next Gen Stats for passing, receiving and rushing as lagged rolling means."""
     try:
         passing = fetch_nextgen_stats(seasons, "passing")
         receiving = fetch_nextgen_stats(seasons, "receiving")
         rushing = fetch_nextgen_stats(seasons, "rushing")
     except Exception as exc:
         logger.warning("Failed to fetch nextgen stats: %s", exc)
-        return _add_defaults(df)
+        return _add_defaults(df, window)
 
     out = df
     out = _join_ngs(out, passing, _passing_map())
     out = _join_ngs(out, receiving, _receiving_map())
     out = _join_ngs(out, rushing, _rushing_map())
-    for col in NEXTGEN_FEATURES:
-        if col not in out.columns:
-            out = out.with_columns(pl.lit(0.0).alias(col))
-        else:
-            out = out.with_columns(pl.col(col).fill_null(0.0))
-    return out
+
+    # Keep the schema stable when a source is missing a stat entirely.
+    missing = [c for c in NEXTGEN_STATS if c not in out.columns]
+    if missing:
+        out = out.with_columns([pl.lit(None, dtype=pl.Float64).alias(c) for c in missing])
+
+    return add_lagged_rolling(out, NEXTGEN_STATS, window)
 
 
-def get_nextgen_columns() -> list[str]:
-    return NEXTGEN_FEATURES
+def get_nextgen_columns(window: int = 5) -> list[str]:
+    return [f"{col}_roll{window}" for col in NEXTGEN_STATS]
 
 
 def _join_ngs(df: pl.DataFrame, ngs: pl.DataFrame, feature_map: dict[str, str]) -> pl.DataFrame:
@@ -65,19 +72,21 @@ def _join_ngs(df: pl.DataFrame, ngs: pl.DataFrame, feature_map: dict[str, str]) 
     if id_col is None:
         return df
 
-    cols = [id_col, "season", "week"] + [c for c in feature_map.keys() if c in ngs.columns]
-    if len(cols) <= 3:
+    present = {k: v for k, v in feature_map.items() if k in ngs.columns}
+    if not present:
         return df
 
-    join_df = ngs.select(cols).rename({id_col: "player_id", **{k: v for k, v in feature_map.items() if k in ngs.columns}})
-    return df.join(join_df, on=["player_id", "season", "week"], how="left")
+    join_df = (
+        ngs.select([id_col, "season", "week", *present.keys()])
+        .rename({id_col: "player_id", **present})
+        # Week 0 rows are season aggregates, not games.
+        .filter(pl.col("week") > 0)
+    )
+    return df.join(prepare_weekly_join(join_df, df), on=["player_id", "season", "week"], how="left")
 
 
-def _add_defaults(df: pl.DataFrame) -> pl.DataFrame:
-    out = df
-    for col in NEXTGEN_FEATURES:
-        out = out.with_columns(pl.lit(0.0).alias(col))
-    return out
+def _add_defaults(df: pl.DataFrame, window: int) -> pl.DataFrame:
+    return df.with_columns([pl.lit(0.0).alias(col) for col in get_nextgen_columns(window)])
 
 
 def _passing_map() -> dict[str, str]:

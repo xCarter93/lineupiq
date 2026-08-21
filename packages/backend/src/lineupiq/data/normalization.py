@@ -290,3 +290,31 @@ def normalize_player_data(df: pl.DataFrame) -> pl.DataFrame:
 
     logger.info(f"Player data normalization complete: {df.shape}")
     return df
+
+
+def prepare_weekly_join(
+    right: pl.DataFrame,
+    left: pl.DataFrame,
+    id_col: str = "player_id",
+) -> pl.DataFrame:
+    """Make a weekly source frame safe to join onto player rows.
+
+    Aligns season/week dtypes to the left frame and drops duplicate keys so a
+    left join can never multiply rows.
+
+    Args:
+        right: Weekly source frame with id_col, season, week.
+        left: Frame being joined onto (provides the season/week dtypes).
+        id_col: Join id column in the right frame.
+
+    Returns:
+        Right frame with aligned key dtypes and unique (id, season, week) rows.
+    """
+    return (
+        right.drop_nulls(id_col)
+        .with_columns(
+            pl.col("season").cast(left.schema["season"]),
+            pl.col("week").cast(left.schema["week"]),
+        )
+        .unique(subset=[id_col, "season", "week"], keep="first", maintain_order=True)
+    )

@@ -16,6 +16,8 @@ import logging
 import polars as pl
 
 from lineupiq.data.fetchers import fetch_snap_counts
+from lineupiq.data.ids import add_gsis_player_id
+from lineupiq.data.normalization import prepare_weekly_join
 
 logger = logging.getLogger(__name__)
 
@@ -37,58 +39,24 @@ def compute_usage_features(
     """
     logger.info(f"Computing usage features for seasons {seasons}")
 
-    # Fetch snap count data
+    # Fetch snap count data. Snap counts are keyed on pfr_player_id only, so they
+    # need the crosswalk to reach GSIS-keyed player stats.
     try:
         snaps_df = fetch_snap_counts(seasons)
-    except Exception:
-        logger.warning("Failed to fetch snap counts, adding default usage features")
-        return _add_default_usage_features(df, window)
-
-    if snaps_df.is_empty():
-        logger.warning("Empty snap count data, adding defaults")
-        return _add_default_usage_features(df, window)
-
-    # Ensure player_id column exists in snap counts (may be named differently)
-    player_id_col = None
-    for col_name in ["player_id", "pfr_player_id", "gsis_id", "pfr_id"]:
-        if col_name in snaps_df.columns:
-            player_id_col = col_name
-            break
-
-    if player_id_col is None:
-        logger.warning("No player_id column found in snap counts, using defaults")
-        return _add_default_usage_features(df, window)
-
-    # Rename to player_id if needed
-    if player_id_col != "player_id":
-        snaps_df = snaps_df.rename({player_id_col: "player_id"})
-
-    # Extract offense snap percentage
-    snap_pct_col = "offense_pct" if "offense_pct" in snaps_df.columns else None
-    if snap_pct_col is None:
-        # Try to compute from snaps
-        if "offense_snaps" in snaps_df.columns:
-            # We'd need team total snaps to compute percentage
-            logger.warning("No offense_pct column, using defaults")
+        if snaps_df.is_empty() or "offense_pct" not in snaps_df.columns:
+            logger.warning("No snap percentage data available, using defaults")
             return _add_default_usage_features(df, window)
-        logger.warning("No snap percentage data available, using defaults")
+        snap_data = add_gsis_player_id(snaps_df).select([
+            "player_id", "season", "week",
+            pl.col("offense_pct").alias("snap_pct"),
+        ])
+    except Exception as exc:
+        logger.warning("Failed to fetch snap counts (%s), adding default usage features", exc)
         return _add_default_usage_features(df, window)
 
-    # Select relevant snap data
-    snap_data = snaps_df.select([
-        "player_id", "season", "week",
-        pl.col(snap_pct_col).alias("snap_pct"),
-    ])
-
-    # Join snap data to player data
-    df = df.join(snap_data, on=["player_id", "season", "week"], how="left")
-
-    # Fill missing snap percentages with position defaults
-    df = df.with_columns(
-        pl.col("snap_pct").fill_null(0.5)
-    )
-
-    # Sort for rolling calculations
+    # Join snap data, then sort: Polars joins do not guarantee row order and the
+    # rolling calls below depend on player/season/week ordering.
+    df = df.join(prepare_weekly_join(snap_data, df), on=["player_id", "season", "week"], how="left")
     df = df.sort(["player_id", "season", "week"])
 
     # Compute rolling snap percentage with shift to avoid leakage
@@ -121,7 +89,9 @@ def compute_usage_features(
         team_targets = df.group_by(["team", "season", "week"]).agg(
             pl.col("targets").sum().alias("team_targets")
         )
-        df = df.join(team_targets, on=["team", "season", "week"], how="left")
+        df = df.join(team_targets, on=["team", "season", "week"], how="left").sort(
+            ["player_id", "season", "week"]
+        )
 
         df = df.with_columns(
             pl.when(pl.col("team_targets") > 0)
@@ -149,7 +119,9 @@ def compute_usage_features(
         team_carries = df.group_by(["team", "season", "week"]).agg(
             pl.col("carries").sum().alias("team_carries")
         )
-        df = df.join(team_carries, on=["team", "season", "week"], how="left")
+        df = df.join(team_carries, on=["team", "season", "week"], how="left").sort(
+            ["player_id", "season", "week"]
+        )
 
         df = df.with_columns(
             pl.when(pl.col("team_carries") > 0)
