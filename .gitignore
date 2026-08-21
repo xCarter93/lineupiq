@@ -57,5 +57,4 @@ data/processed/
 packages/backend/models/
 
 # GSD
-.claude/commands/gsd/
-.claude/get-shit-done/
+.claude/
