@@ -10,7 +10,6 @@ ML-ready data.
 """
 
 import logging
-import os
 from pathlib import Path
 
 import polars as pl
@@ -149,39 +148,25 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     logger.info(f"Added {len(vol_cols)} volatility columns")
 
     # Step 6: Add detailed weather features
+    # engineer_weather_features uses temp/wind/roof from nflreadpy schedules (no API needed)
     logger.info("Step 6: Adding detailed weather features...")
-    # Check if VISUAL_CROSSING_API_KEY exists
-    api_key = os.getenv("VISUAL_CROSSING_API_KEY")
-    if api_key:
-        logger.info("VISUAL_CROSSING_API_KEY found, will add detailed weather features")
-        # Engineer detailed weather features from schedule data
-        # Note: schedules_df already fetched in Step 4
-        schedules_with_weather = engineer_weather_features(schedules_df)
+    schedules_with_weather = engineer_weather_features(schedules_df)
 
-        # Join weather features to player data via game_id
-        # First, create game_id in player data if not present
-        if "game_id" not in df.columns:
-            logger.warning("No game_id in player data, skipping detailed weather features")
-        else:
-            # Select only weather feature columns from schedules
-            weather_feature_cols = [
-                "game_id", "extreme_cold", "freezing", "extreme_heat",
-                "temp_filled", "high_wind", "very_high_wind", "wind_filled",
-                "has_precip", "precip_amount"
-            ]
-            existing_weather_cols = [c for c in weather_feature_cols if c in schedules_with_weather.columns]
-            weather_features = schedules_with_weather.select(existing_weather_cols)
-
-            # Join to player data
-            df = df.join(weather_features, on="game_id", how="left")
-            detailed_weather_cols = [c for c in existing_weather_cols if c != "game_id"]
-            logger.info(f"Added {len(detailed_weather_cols)} detailed weather columns")
-    else:
-        logger.warning(
-            "VISUAL_CROSSING_API_KEY not found - skipping detailed weather features. "
-            "Set environment variable to enable temperature bins, wind thresholds, and precipitation features."
-        )
+    if "game_id" not in df.columns:
+        logger.warning("No game_id in player data, skipping detailed weather features")
         detailed_weather_cols = []
+    else:
+        weather_feature_cols = [
+            "game_id", "extreme_cold", "freezing", "extreme_heat",
+            "temp_filled", "high_wind", "very_high_wind", "wind_filled",
+            "has_precip", "precip_amount"
+        ]
+        existing_weather_cols = [c for c in weather_feature_cols if c in schedules_with_weather.columns]
+        weather_features = schedules_with_weather.select(existing_weather_cols)
+
+        df = df.join(weather_features, on="game_id", how="left")
+        detailed_weather_cols = [c for c in existing_weather_cols if c != "game_id"]
+        logger.info(f"Added {len(detailed_weather_cols)} detailed weather columns")
 
     # Verify existing weather features
     existing_weather_cols = ["temp_normalized", "wind_normalized"]

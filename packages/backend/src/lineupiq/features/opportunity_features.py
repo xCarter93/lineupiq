@@ -46,6 +46,12 @@ def add_opportunity_features(df: pl.DataFrame, seasons: list[int]) -> pl.DataFra
         ]
     ).rename({id_col: "player_id", "rec_fantasy_points_exp": "xfp_rec", "rush_fantasy_points_exp": "xfp_rush"})
 
+    # Ensure join key types match (nflreadpy may return season/week as strings)
+    base = base.with_columns(
+        pl.col("season").cast(pl.Int32),
+        pl.col("week").cast(pl.Int32),
+    )
+
     out = df.join(base, on=["player_id", "season", "week"], how="left")
     out = out.with_columns(
         (pl.col("xfp_rush").fill_null(0.0) + pl.col("xfp_rec").fill_null(0.0)).alias("xfp_total")
