@@ -212,7 +212,8 @@ def defense_scoring_frame(
     )
     names = team_names()
     upcoming = _upcoming(frame, season, week, "team").with_columns(
-        entity_id=pl.format("DEF_{}", pl.col("team")),
+        # Convex players holds DEF_LAR for the Rams (roster.py legacy); pipeline uses LA
+        entity_id=pl.format("DEF_{}", pl.col("team").replace({"LA": "LAR"})),
         entity_name=pl.col("team").replace_strict(names, default=pl.col("team") + " Defense")
         + " D/ST",
         position=pl.lit("DEF"),
