@@ -36,9 +36,11 @@
   },
   "notes": [
     "Postseason weeks (19-22) are not filtered out; the pipeline keeps them.",
-    "K/DEF pipeline features backfill rolling nulls with a global column mean computed over all seasons, a mild train/eval leak in their favour."
+    "K/DEF pipeline features backfill rolling nulls with a global column mean computed over all seasons, a mild train/eval leak in their favour.",
+    "Run split in two: QB/RB/WR/TE/K plus a first DEF pass took 3583s under heavy CPU contention (a concurrent train_all.py and pytest run, load average 13-16); the DEF block was then recomputed in a separate 273s run on an idle machine, and those 5 DEF rows are the ones reported here.",
+    "Optuna TPESampler is unseeded, so re-running a target gives slightly different numbers."
   ],
-  "elapsed_seconds": 3551.2,
+  "elapsed_seconds": 3856.4,
   "results": [
     {
       "position": "QB",
@@ -384,12 +386,12 @@
       "n_train_rows": 4414,
       "n_eval_rows": 570,
       "threshold": "played that week (team-game row exists)",
-      "model_mae": 8.4527800629535,
+      "model_mae": 8.144809211803361,
       "naive_mae": 8.086666666666666,
-      "model_r2": -0.10572396848311949,
+      "model_r2": -0.039917744346936734,
       "naive_r2": -0.061514306030972854,
       "verdict": "SHIP_BASELINE",
-      "seconds": 48.8
+      "seconds": 55.5
     },
     {
       "position": "DEF",
@@ -397,12 +399,12 @@
       "n_train_rows": 4414,
       "n_eval_rows": 570,
       "threshold": "played that week (team-game row exists)",
-      "model_mae": 1.4366761487632778,
+      "model_mae": 1.533890641217347,
       "naive_mae": 1.4936842105263157,
-      "model_r2": -0.010845930561102612,
+      "model_r2": -0.1596543821836809,
       "naive_r2": -0.12581735947217165,
       "verdict": "SHIP_BASELINE",
-      "seconds": 62.0
+      "seconds": 84.6
     },
     {
       "position": "DEF",
@@ -410,12 +412,12 @@
       "n_train_rows": 4414,
       "n_eval_rows": 570,
       "threshold": "played that week (team-game row exists)",
-      "model_mae": 0.7464556712910587,
+      "model_mae": 0.7156127955053281,
       "naive_mae": 0.6978947368421052,
-      "model_r2": -0.17503725810285387,
+      "model_r2": -0.05565120760529019,
       "naive_r2": -0.14260945320373764,
       "verdict": "SHIP_BASELINE",
-      "seconds": 44.2
+      "seconds": 52.4
     },
     {
       "position": "DEF",
@@ -423,12 +425,25 @@
       "n_train_rows": 4414,
       "n_eval_rows": 570,
       "threshold": "played that week (team-game row exists)",
-      "model_mae": 0.21978153755921187,
+      "model_mae": 0.21330959158926746,
       "naive_mae": 0.1694736842105263,
-      "model_r2": -0.1310860030270713,
+      "model_r2": -0.07566045572713809,
       "naive_r2": -0.27838867719107263,
       "verdict": "SHIP_BASELINE",
-      "seconds": 46.5
+      "seconds": 36.4
+    },
+    {
+      "position": "DEF",
+      "target": "total_def_tds",
+      "n_train_rows": 4414,
+      "n_eval_rows": 570,
+      "threshold": "played that week (team-game row exists)",
+      "model_mae": 0.19445254763807243,
+      "naive_mae": 0.18105263157894738,
+      "model_r2": -0.11074363327249048,
+      "naive_r2": -0.1853834530821179,
+      "verdict": "SHIP_BASELINE",
+      "seconds": 42.5
     }
   ]
 }
