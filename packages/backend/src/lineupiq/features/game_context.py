@@ -26,55 +26,39 @@ def compute_rest_features(df: pl.DataFrame, schedules_df: pl.DataFrame) -> pl.Da
 
     Args:
         df: Player stats DataFrame with season, week, team columns.
-        schedules_df: Schedules DataFrame with gameday, season, week, home/away teams.
+        schedules_df: Schedules DataFrame with season, week, home/away teams and
+            nflreadpy's native home_rest/away_rest columns.
 
     Returns:
         DataFrame with added columns: days_since_last_game, is_post_bye.
     """
     logger.info("Computing rest/bye week features")
 
-    # Build team-game dates from schedules
+    # nflreadpy carries native per-team rest days; a hand-rolled diff over consecutive
+    # games has no season boundary and mislabels every Week 1 row as a ~207-day post-bye.
     home_games = schedules_df.select([
         pl.col("season"),
         pl.col("week"),
         pl.col("home_team").alias("team"),
-        pl.col("gameday"),
+        pl.col("home_rest").cast(pl.Float64).alias("days_since_last_game"),
     ])
     away_games = schedules_df.select([
         pl.col("season"),
         pl.col("week"),
         pl.col("away_team").alias("team"),
-        pl.col("gameday"),
+        pl.col("away_rest").cast(pl.Float64).alias("days_since_last_game"),
     ])
     team_games = pl.concat([home_games, away_games])
 
-    # Convert gameday to date if it's a string
-    if team_games["gameday"].dtype == pl.Utf8:
-        team_games = team_games.with_columns(
-            pl.col("gameday").str.to_date("%Y-%m-%d").alias("gameday")
-        )
-
-    # Sort and compute days since last game per team
-    team_games = team_games.sort(["team", "season", "week"])
-
-    team_games = team_games.with_columns(
-        (pl.col("gameday") - pl.col("gameday").shift(1).over("team"))
-        .dt.total_days()
-        .alias("days_since_last_game")
-    )
-
-    # Flag post-bye: days_since_last_game >= 12 (bye = no game for ~13-14 days)
-    team_games = team_games.with_columns(
-        (pl.col("days_since_last_game") >= 12).fill_null(False).alias("is_post_bye")
-    )
-
-    # Fill first game of season with league average (7 days)
+    # Fill any missing rest with the league-average week (7 days)
     team_games = team_games.with_columns(
         pl.col("days_since_last_game").fill_null(7.0)
     )
 
-    # Select only rest features to join
-    rest_features = team_games.select([
+    # Flag post-bye: days_since_last_game >= 12 (bye = no game for ~13-14 days)
+    rest_features = team_games.with_columns(
+        (pl.col("days_since_last_game") >= 12).alias("is_post_bye")
+    ).select([
         "season", "week", "team",
         "days_since_last_game", "is_post_bye",
     ])
@@ -100,6 +84,9 @@ def compute_implied_team_total(df: pl.DataFrame) -> pl.DataFrame:
     Implied team total = (total_points +/- home_spread) / 2
     This is THE strongest predictor of fantasy production in DFS.
 
+    home_spread follows the nflverse spread_line convention: positive means the
+    home team is favored, so the home team's implied total adds the spread.
+
     Also computes game_script_lean (expected pass/rush split from spread).
 
     Args:
@@ -119,24 +106,24 @@ def compute_implied_team_total(df: pl.DataFrame) -> pl.DataFrame:
         ])
 
     # Implied team total:
-    # For home team: (total + spread) / 2 (negative spread = home favored = higher total)
+    # nflverse convention: home_spread > 0 means the HOME team is favored.
+    # For home team: (total + spread) / 2
     # For away team: (total - spread) / 2
-    # Note: home_spread is negative when home team is favored
     result = df.with_columns(
         pl.when(pl.col("is_home"))
-        .then((pl.col("total_points") - pl.col("home_spread")) / 2)
-        .otherwise((pl.col("total_points") + pl.col("home_spread")) / 2)
+        .then((pl.col("total_points") + pl.col("home_spread")) / 2)
+        .otherwise((pl.col("total_points") - pl.col("home_spread")) / 2)
         .fill_null(22.5)  # League average if missing
         .alias("implied_team_total")
     )
 
     # Game script lean: positive = expected to trail (more passing)
     # negative = expected to lead (more rushing)
-    # Based on spread from the player's perspective
+    # Sign is inverted from home_spread, which is positive when the home team is favored.
     result = result.with_columns(
         pl.when(pl.col("is_home"))
-        .then(pl.col("home_spread"))  # Positive spread = home underdog = more passing
-        .otherwise(-pl.col("home_spread"))  # Flip for away team
+        .then(-pl.col("home_spread"))
+        .otherwise(pl.col("home_spread"))
         .fill_null(0.0)
         .alias("game_script_lean")
     )

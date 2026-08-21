@@ -38,7 +38,7 @@
     "Postseason weeks (19-22) are not filtered out; the pipeline keeps them.",
     "K/DEF pipeline features backfill rolling nulls with a global column mean computed over all seasons, a mild train/eval leak in their favour."
   ],
-  "elapsed_seconds": 2904.0,
+  "elapsed_seconds": 3551.2,
   "results": [
     {
       "position": "QB",
@@ -46,12 +46,12 @@
       "n_train_rows": 4793,
       "n_eval_rows": 591,
       "threshold": "lagged 5-game mean pass attempts >= 10",
-      "model_mae": 63.3387509049767,
+      "model_mae": 62.73344702598258,
       "naive_mae": 72.95250987027637,
-      "model_r2": 0.32105902703005007,
+      "model_r2": 0.3395761253611804,
       "naive_r2": 0.1066557726847428,
       "verdict": "SHIP_MODEL",
-      "seconds": 190.9
+      "seconds": 221.2
     },
     {
       "position": "QB",
@@ -59,12 +59,12 @@
       "n_train_rows": 4793,
       "n_eval_rows": 591,
       "threshold": "lagged 5-game mean pass attempts >= 10",
-      "model_mae": 0.8906452936146081,
+      "model_mae": 0.9074153135860887,
       "naive_mae": 0.9942470389170898,
-      "model_r2": 0.141886214239901,
+      "model_r2": 0.12131701974962839,
       "naive_r2": -0.0615837210809147,
       "verdict": "SHIP_MODEL",
-      "seconds": 104.1
+      "seconds": 177.9
     },
     {
       "position": "QB",
@@ -72,12 +72,12 @@
       "n_train_rows": 4793,
       "n_eval_rows": 591,
       "threshold": "lagged 5-game mean pass attempts >= 10",
-      "model_mae": 0.6529278423566838,
+      "model_mae": 0.6519331564663179,
       "naive_mae": 0.7034122955442752,
-      "model_r2": -0.012832157032083291,
+      "model_r2": -0.014635960336603082,
       "naive_r2": -0.20625503821131796,
       "verdict": "SHIP_BASELINE",
-      "seconds": 126.1
+      "seconds": 125.4
     },
     {
       "position": "QB",
@@ -85,12 +85,12 @@
       "n_train_rows": 4793,
       "n_eval_rows": 591,
       "threshold": "lagged 5-game mean pass attempts >= 10",
-      "model_mae": 11.727940376205686,
+      "model_mae": 12.159486774353038,
       "naive_mae": 11.65882684715172,
-      "model_r2": 0.16817648902158844,
+      "model_r2": 0.11190015914802487,
       "naive_r2": 0.14985623111622326,
       "verdict": "SHIP_BASELINE",
-      "seconds": 149.2
+      "seconds": 118.2
     },
     {
       "position": "QB",
@@ -98,12 +98,12 @@
       "n_train_rows": 4793,
       "n_eval_rows": 591,
       "threshold": "lagged 5-game mean pass attempts >= 10",
-      "model_mae": 0.2589706216319491,
+      "model_mae": 0.25234093960694304,
       "naive_mae": 0.2619007332205302,
-      "model_r2": -0.003491132103699446,
+      "model_r2": 0.02674081749782431,
       "naive_r2": -0.16047730271232208,
-      "verdict": "SHIP_BASELINE",
-      "seconds": 162.7
+      "verdict": "SHIP_MODEL",
+      "seconds": 110.4
     },
     {
       "position": "QB",
@@ -111,12 +111,12 @@
       "n_train_rows": 4793,
       "n_eval_rows": 591,
       "threshold": "lagged 5-game mean pass attempts >= 10",
-      "model_mae": 0.30794524937841916,
+      "model_mae": 0.31038500555291826,
       "naive_mae": 0.30414551607445006,
-      "model_r2": -0.05986586405387628,
+      "model_r2": -0.05250093662669553,
       "naive_r2": -0.22775349420829927,
       "verdict": "SHIP_BASELINE",
-      "seconds": 67.0
+      "seconds": 104.4
     },
     {
       "position": "RB",
@@ -124,12 +124,12 @@
       "n_train_rows": 11425,
       "n_eval_rows": 1164,
       "threshold": "lagged 5-game mean (carries + targets) >= 3",
-      "model_mae": 22.747751643957937,
+      "model_mae": 22.38353003023024,
       "naive_mae": 23.789160939289808,
-      "model_r2": 0.30855215761824484,
+      "model_r2": 0.32356565269565196,
       "naive_r2": 0.2487943159987488,
       "verdict": "SHIP_MODEL",
-      "seconds": 135.0
+      "seconds": 216.6
     },
     {
       "position": "RB",
@@ -137,12 +137,12 @@
       "n_train_rows": 11425,
       "n_eval_rows": 1164,
       "threshold": "lagged 5-game mean (carries + targets) >= 3",
-      "model_mae": 0.4221237985698099,
+      "model_mae": 0.4255508409210894,
       "naive_mae": 0.4299255441008018,
-      "model_r2": 0.07324533252949339,
+      "model_r2": 0.05281584671151762,
       "naive_r2": -0.07303440827363694,
       "verdict": "SHIP_MODEL",
-      "seconds": 63.2
+      "seconds": 139.1
     },
     {
       "position": "RB",
@@ -150,12 +150,12 @@
       "n_train_rows": 11425,
       "n_eval_rows": 1164,
       "threshold": "lagged 5-game mean (carries + targets) >= 3",
-      "model_mae": 3.7245698784974,
+      "model_mae": 3.7319516678874676,
       "naive_mae": 3.966380297823597,
-      "model_r2": 0.48232935050216263,
+      "model_r2": 0.481175910930421,
       "naive_r2": 0.4185334669313898,
       "verdict": "SHIP_MODEL",
-      "seconds": 162.7
+      "seconds": 168.7
     },
     {
       "position": "RB",
@@ -163,12 +163,12 @@
       "n_train_rows": 11425,
       "n_eval_rows": 1164,
       "threshold": "lagged 5-game mean (carries + targets) >= 3",
-      "model_mae": 11.43757440897951,
+      "model_mae": 11.629462645496448,
       "naive_mae": 11.991008018327605,
-      "model_r2": 0.21850322217387097,
+      "model_r2": 0.19186790591870218,
       "naive_r2": 0.10466099355101155,
       "verdict": "SHIP_MODEL",
-      "seconds": 86.4
+      "seconds": 153.3
     },
     {
       "position": "RB",
@@ -176,12 +176,12 @@
       "n_train_rows": 11425,
       "n_eval_rows": 1164,
       "threshold": "lagged 5-game mean (carries + targets) >= 3",
-      "model_mae": 1.1584918129149462,
+      "model_mae": 1.162573012865395,
       "naive_mae": 1.2401202749140894,
-      "model_r2": 0.32245697415469254,
+      "model_r2": 0.3143696267190188,
       "naive_r2": 0.21826577697046778,
       "verdict": "SHIP_MODEL",
-      "seconds": 190.8
+      "seconds": 171.9
     },
     {
       "position": "RB",
@@ -189,12 +189,12 @@
       "n_train_rows": 11425,
       "n_eval_rows": 1164,
       "threshold": "lagged 5-game mean (carries + targets) >= 3",
-      "model_mae": 0.1389330245671501,
+      "model_mae": 0.14011256827269847,
       "naive_mae": 0.13990549828178694,
-      "model_r2": 0.009183239827452283,
+      "model_r2": 0.015969457636099138,
       "naive_r2": -0.10146905891091951,
-      "verdict": "SHIP_MODEL",
-      "seconds": 60.4
+      "verdict": "SHIP_BASELINE",
+      "seconds": 108.7
     },
     {
       "position": "RB",
@@ -202,12 +202,12 @@
       "n_train_rows": 11425,
       "n_eval_rows": 1164,
       "threshold": "lagged 5-game mean (carries + targets) >= 3",
-      "model_mae": 0.0942428838582685,
+      "model_mae": 0.09591742009882015,
       "naive_mae": 0.08868843069873998,
-      "model_r2": -0.000885723786688164,
+      "model_r2": -0.010786171332128447,
       "naive_r2": -0.20341918313243035,
       "verdict": "SHIP_BASELINE",
-      "seconds": 110.5
+      "seconds": 199.6
     },
     {
       "position": "WR",
@@ -215,12 +215,12 @@
       "n_train_rows": 18205,
       "n_eval_rows": 1355,
       "threshold": "lagged 5-game mean targets >= 3",
-      "model_mae": 26.021297328151405,
+      "model_mae": 26.062108434834204,
       "naive_mae": 27.138646986469865,
-      "model_r2": 0.19250252719073724,
+      "model_r2": 0.1888556524749524,
       "naive_r2": 0.1295461312613071,
       "verdict": "SHIP_MODEL",
-      "seconds": 99.7
+      "seconds": 231.5
     },
     {
       "position": "WR",
@@ -228,12 +228,12 @@
       "n_train_rows": 18205,
       "n_eval_rows": 1355,
       "threshold": "lagged 5-game mean targets >= 3",
-      "model_mae": 0.4059161682433411,
+      "model_mae": 0.41049780193008273,
       "naive_mae": 0.39849938499384996,
-      "model_r2": 0.046051139248961426,
+      "model_r2": 0.039650980940556524,
       "naive_r2": -0.09443595606303612,
       "verdict": "SHIP_BASELINE",
-      "seconds": 87.2
+      "seconds": 169.1
     },
     {
       "position": "WR",
@@ -241,12 +241,12 @@
       "n_train_rows": 18205,
       "n_eval_rows": 1355,
       "threshold": "lagged 5-game mean targets >= 3",
-      "model_mae": 1.7157829859018048,
+      "model_mae": 1.6684233656340248,
       "naive_mae": 1.7417589175891757,
-      "model_r2": 0.19754923434030858,
+      "model_r2": 0.251811029026349,
       "naive_r2": 0.1970177347944947,
       "verdict": "SHIP_MODEL",
-      "seconds": 173.6
+      "seconds": 228.9
     },
     {
       "position": "WR",
@@ -254,12 +254,12 @@
       "n_train_rows": 18205,
       "n_eval_rows": 1355,
       "threshold": "lagged 5-game mean targets >= 3",
-      "model_mae": 0.03481337622884106,
+      "model_mae": 0.032383640389078046,
       "naive_mae": 0.031143911439114394,
-      "model_r2": -0.03452821826849295,
+      "model_r2": -0.0025954453861039006,
       "naive_r2": -0.2769633507853402,
       "verdict": "SHIP_BASELINE",
-      "seconds": 93.9
+      "seconds": 131.9
     },
     {
       "position": "TE",
@@ -267,12 +267,12 @@
       "n_train_rows": 8966,
       "n_eval_rows": 577,
       "threshold": "lagged 5-game mean targets >= 3",
-      "model_mae": 21.122399004538067,
+      "model_mae": 21.09376625270752,
       "naive_mae": 22.252830733679954,
-      "model_r2": 0.09711969968061873,
+      "model_r2": 0.08272977479928523,
       "naive_r2": -0.007665112369782845,
       "verdict": "SHIP_MODEL",
-      "seconds": 80.1
+      "seconds": 78.7
     },
     {
       "position": "TE",
@@ -280,12 +280,12 @@
       "n_train_rows": 8966,
       "n_eval_rows": 577,
       "threshold": "lagged 5-game mean targets >= 3",
-      "model_mae": 0.3981187854296731,
+      "model_mae": 0.401254921406715,
       "naive_mae": 0.4072790294627383,
-      "model_r2": 0.00976416304391825,
+      "model_r2": -0.0343775792817953,
       "naive_r2": -0.13137717934026383,
-      "verdict": "SHIP_MODEL",
-      "seconds": 74.5
+      "verdict": "SHIP_BASELINE",
+      "seconds": 72.7
     },
     {
       "position": "TE",
@@ -293,12 +293,12 @@
       "n_train_rows": 8966,
       "n_eval_rows": 577,
       "threshold": "lagged 5-game mean targets >= 3",
-      "model_mae": 1.6752780235340345,
+      "model_mae": 1.679150522073472,
       "naive_mae": 1.781744656268053,
-      "model_r2": 0.10607609575812249,
+      "model_r2": 0.1049604458716672,
       "naive_r2": 0.019468362207610945,
       "verdict": "SHIP_MODEL",
-      "seconds": 138.5
+      "seconds": 134.4
     },
     {
       "position": "TE",
@@ -306,12 +306,12 @@
       "n_train_rows": 8966,
       "n_eval_rows": 577,
       "threshold": "lagged 5-game mean targets >= 3",
-      "model_mae": 0.06105096227254574,
+      "model_mae": 0.06264764029831837,
       "naive_mae": 0.03613518197573657,
-      "model_r2": -0.18636748648056667,
+      "model_r2": -0.19927928848528476,
       "naive_r2": -0.15126606167683931,
       "verdict": "SHIP_BASELINE",
-      "seconds": 60.3
+      "seconds": 57.9
     },
     {
       "position": "K",
@@ -319,12 +319,12 @@
       "n_train_rows": 4411,
       "n_eval_rows": 562,
       "threshold": "played that week (kicker-game row exists)",
-      "model_mae": 0.9824380399833881,
+      "model_mae": 0.9894920563560677,
       "naive_mae": 1.1425266903914588,
-      "model_r2": 0.004563182303678248,
+      "model_r2": 0.0005059277342555069,
       "naive_r2": -0.19525624249060858,
       "verdict": "SHIP_MODEL",
-      "seconds": 42.0
+      "seconds": 41.0
     },
     {
       "position": "K",
@@ -332,12 +332,12 @@
       "n_train_rows": 4411,
       "n_eval_rows": 562,
       "threshold": "played that week (kicker-game row exists)",
-      "model_mae": 0.7494087355870868,
+      "model_mae": 0.7288173620576751,
       "naive_mae": 0.8236061684460261,
-      "model_r2": -0.011164584196412752,
+      "model_r2": 0.0018747187682915945,
       "naive_r2": -0.18937057483442876,
-      "verdict": "SHIP_BASELINE",
-      "seconds": 39.6
+      "verdict": "SHIP_MODEL",
+      "seconds": 32.6
     },
     {
       "position": "K",
@@ -345,12 +345,12 @@
       "n_train_rows": 4411,
       "n_eval_rows": 562,
       "threshold": "played that week (kicker-game row exists)",
-      "model_mae": 0.6240252866943474,
+      "model_mae": 0.6476824633249195,
       "naive_mae": 0.6315836298932385,
-      "model_r2": -0.07582263204096984,
+      "model_r2": -0.25623642533721114,
       "naive_r2": -0.19898086569447182,
       "verdict": "SHIP_BASELINE",
-      "seconds": 38.2
+      "seconds": 31.9
     },
     {
       "position": "K",
@@ -358,12 +358,12 @@
       "n_train_rows": 4411,
       "n_eval_rows": 562,
       "threshold": "played that week (kicker-game row exists)",
-      "model_mae": 0.5668005748974976,
+      "model_mae": 0.5733163909529315,
       "naive_mae": 0.5908362989323842,
-      "model_r2": -0.05136759176949712,
+      "model_r2": -0.15503040305545412,
       "naive_r2": -0.15959175556803307,
       "verdict": "SHIP_BASELINE",
-      "seconds": 25.7
+      "seconds": 48.3
     },
     {
       "position": "K",
@@ -371,12 +371,12 @@
       "n_train_rows": 4411,
       "n_eval_rows": 562,
       "threshold": "played that week (kicker-game row exists)",
-      "model_mae": 1.1514098817657112,
+      "model_mae": 1.145969810600674,
       "naive_mae": 1.198873072360617,
-      "model_r2": 0.005019265340196255,
+      "model_r2": 0.02759890414732946,
       "naive_r2": -0.09326305337050167,
       "verdict": "SHIP_MODEL",
-      "seconds": 42.0
+      "seconds": 51.9
     },
     {
       "position": "DEF",
@@ -384,12 +384,12 @@
       "n_train_rows": 4414,
       "n_eval_rows": 570,
       "threshold": "played that week (team-game row exists)",
-      "model_mae": 8.287175306824032,
+      "model_mae": 8.4527800629535,
       "naive_mae": 8.086666666666666,
-      "model_r2": -0.07054349777083968,
+      "model_r2": -0.10572396848311949,
       "naive_r2": -0.061514306030972854,
       "verdict": "SHIP_BASELINE",
-      "seconds": 49.5
+      "seconds": 48.8
     },
     {
       "position": "DEF",
@@ -397,12 +397,12 @@
       "n_train_rows": 4414,
       "n_eval_rows": 570,
       "threshold": "played that week (team-game row exists)",
-      "model_mae": 1.4593483885379785,
+      "model_mae": 1.4366761487632778,
       "naive_mae": 1.4936842105263157,
-      "model_r2": -0.045876794762201634,
+      "model_r2": -0.010845930561102612,
       "naive_r2": -0.12581735947217165,
       "verdict": "SHIP_BASELINE",
-      "seconds": 52.5
+      "seconds": 62.0
     },
     {
       "position": "DEF",
@@ -410,12 +410,12 @@
       "n_train_rows": 4414,
       "n_eval_rows": 570,
       "threshold": "played that week (team-game row exists)",
-      "model_mae": 0.8525230106188565,
+      "model_mae": 0.7464556712910587,
       "naive_mae": 0.6978947368421052,
-      "model_r2": -0.6279175955905938,
+      "model_r2": -0.17503725810285387,
       "naive_r2": -0.14260945320373764,
       "verdict": "SHIP_BASELINE",
-      "seconds": 70.9
+      "seconds": 44.2
     },
     {
       "position": "DEF",
@@ -423,25 +423,12 @@
       "n_train_rows": 4414,
       "n_eval_rows": 570,
       "threshold": "played that week (team-game row exists)",
-      "model_mae": 0.2139145260556739,
+      "model_mae": 0.21978153755921187,
       "naive_mae": 0.1694736842105263,
-      "model_r2": -0.07820226223136473,
+      "model_r2": -0.1310860030270713,
       "naive_r2": -0.27838867719107263,
       "verdict": "SHIP_BASELINE",
-      "seconds": 60.1
-    },
-    {
-      "position": "DEF",
-      "target": "total_def_tds",
-      "n_train_rows": 4414,
-      "n_eval_rows": 570,
-      "threshold": "played that week (team-game row exists)",
-      "model_mae": 0.1992555350930145,
-      "naive_mae": 0.18105263157894738,
-      "model_r2": -0.14937670294756744,
-      "naive_r2": -0.1853834530821179,
-      "verdict": "SHIP_BASELINE",
-      "seconds": 43.2
+      "seconds": 46.5
     }
   ]
 }

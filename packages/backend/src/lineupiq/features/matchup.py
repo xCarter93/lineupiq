@@ -23,10 +23,10 @@ def engineer_matchup_features(
     games, home field advantage, and market signals.
 
     Vegas line features (when spread_line/total_line available in schedule):
-    - home_spread: Spread from schedule (negative = home favored)
+    - home_spread: Spread from schedule (positive = home favored)
     - total_points: Over/under total from schedule
     - vegas_strength_diff: abs(home_spread) as proxy for game competitiveness
-    - home_favored: Binary flag (1 if home_spread < 0, 0 otherwise)
+    - home_favored: Binary flag (1 if home_spread > 0, 0 otherwise)
 
     Divisional game features (from nflreadpy teams data):
     - is_divisional: Binary flag (1 if opponent in same division, 0 otherwise)
@@ -81,9 +81,10 @@ def engineer_matchup_features(
             df = df.with_columns(pl.lit(45.0).alias("total_points"))
 
         # Compute derived Vegas features
+        # nflverse convention: spread_line > 0 means the HOME team is favored.
         df = df.with_columns([
             pl.col("home_spread").abs().alias("vegas_strength_diff"),
-            (pl.col("home_spread") < 0).cast(pl.Int8).alias("home_favored"),
+            (pl.col("home_spread") > 0).cast(pl.Int8).alias("home_favored"),
         ])
 
         logger.info("Added 4 Vegas features: home_spread, total_points, vegas_strength_diff, home_favored")

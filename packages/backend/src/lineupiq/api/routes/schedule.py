@@ -93,12 +93,11 @@ async def get_game_info(season: int, week: int, team: str) -> GameInfo:
     team_implied_total = None
 
     if total_line is not None and spread_line is not None:
-        # Spread is from home team perspective
-        # Team implied total = (total - spread) / 2 for home, (total + spread) / 2 for away
+        # nflverse convention: spread_line > 0 means the HOME team is favored.
         if is_home:
-            team_implied_total = (total_line - spread_line) / 2
-        else:
             team_implied_total = (total_line + spread_line) / 2
+        else:
+            team_implied_total = (total_line - spread_line) / 2
 
     return GameInfo(
         season=season,

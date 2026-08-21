@@ -261,8 +261,9 @@ def _compute_schedule_features(
         # implied team total / game script
         total = float(out.get("total_points", 45.0))
         spread = float(out.get("home_spread", 0.0))
-        implied = (total - spread) / 2 if is_home else (total + spread) / 2
-        game_script = spread if is_home else -spread
+        # nflverse convention: home_spread > 0 means the HOME team is favored.
+        implied = (total + spread) / 2 if is_home else (total - spread) / 2
+        game_script = -spread if is_home else spread
         out["implied_team_total"] = implied
         out["game_script_lean"] = game_script
     except Exception:

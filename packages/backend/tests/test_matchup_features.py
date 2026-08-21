@@ -44,15 +44,15 @@ def test_home_favored_flag() -> None:
         "week": [1, 1, 1],
         "home_team": ["KC", "BUF", "MIA"],
         "away_team": ["BUF", "NYJ", "NE"],
-        "spread_line": [-3.5, 2.5, 0.0],  # Home favored, away favored, pick'em
+        "spread_line": [-3.5, 2.5, 0.0],  # Away favored, home favored, pick'em
         "total_line": [50.0, 45.0, 42.0],
     })
 
     result = engineer_matchup_features(schedule)
 
-    # home_spread < 0 means home favored
-    assert result.filter(pl.col("game_id") == "game1")["home_favored"][0] == 1
-    assert result.filter(pl.col("game_id") == "game2")["home_favored"][0] == 0
+    # nflverse convention: home_spread > 0 means home favored
+    assert result.filter(pl.col("game_id") == "game1")["home_favored"][0] == 0
+    assert result.filter(pl.col("game_id") == "game2")["home_favored"][0] == 1
     assert result.filter(pl.col("game_id") == "game3")["home_favored"][0] == 0  # Pick'em = not favored
 
 
@@ -175,5 +175,5 @@ def test_all_features_together() -> None:
     assert result["home_spread"][0] == -5.5
     assert result["total_points"][0] == 49.0
     assert result["vegas_strength_diff"][0] == 5.5
-    assert result["home_favored"][0] == 1
+    assert result["home_favored"][0] == 0  # spread_line -5.5 = away favored
     assert result["is_divisional"][0] == 1  # KC vs LAC (both AFC West)
