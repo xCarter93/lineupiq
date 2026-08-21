@@ -9,5 +9,8 @@
     "dev:all": "pnpm -r dev",
     "build:all": "pnpm -r build",
     "lint:all": "pnpm -r lint"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }
