@@ -38,3 +38,4 @@ htmlcov/
 # Data files (large, regeneratable)
 data/raw/**/*.parquet
 !data/raw/*/.gitkeep
+eval/predictions_preview.json

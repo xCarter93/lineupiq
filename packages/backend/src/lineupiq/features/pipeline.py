@@ -49,7 +49,75 @@ logger = logging.getLogger(__name__)
 FEATURES_DIR = Path(__file__).parent.parent.parent.parent / "data" / "features"
 
 
-def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
+def build_future_player_rows(
+    rosters: pl.DataFrame,
+    schedules: pl.DataFrame,
+    season: int,
+    week: int,
+    positions: tuple[str, ...] = ("QB", "RB", "WR", "TE"),
+) -> pl.DataFrame:
+    """Build synthetic player-week rows for a game that has not been played yet.
+
+    Mirrors the tail of process_player_stats (game context, then weather context) so
+    the rows are indistinguishable from real ones apart from having null stats. Every
+    stat column is left absent, so the lagged rolling features reach back into the
+    player's prior games instead of seeing a fabricated value.
+
+    Args:
+        rosters: fetch_rosters() output for `season` (gsis_id / full_name / team).
+        schedules: cleaned, team-normalized schedule covering `season`.
+        season: Season of the upcoming game.
+        week: Week of the upcoming game.
+        positions: Positions to emit rows for.
+
+    Returns:
+        One row per rostered player with a game that week; byes are dropped.
+    """
+    from lineupiq.data.normalization import normalize_team_columns  # noqa: PLC0415
+    from lineupiq.data.processing import add_game_context, add_weather_context  # noqa: PLC0415
+
+    roster_week = (
+        rosters.filter(pl.col("position").is_in(positions))
+        .select(
+            pl.col("gsis_id").alias("player_id"),
+            pl.col("full_name").alias("player_name"),
+            pl.col("position"),
+            pl.col("team"),
+        )
+        .unique(subset="player_id", keep="first")
+        .with_columns(
+            pl.lit(season, dtype=pl.Int32).alias("season"),
+            pl.lit(week, dtype=pl.Int32).alias("week"),
+        )
+    )
+    roster_week = normalize_team_columns(roster_week)
+
+    future = add_weather_context(
+        add_game_context(roster_week, schedules.filter(pl.col("week") == week))
+    )
+    future = future.filter(pl.col("game_id").is_not_null())
+
+    logger.info(f"Built {len(future)} future player rows for {season} week {week}")
+    return future
+
+
+def _append_future_team_stats(team_stats: pl.DataFrame, future_rows: pl.DataFrame) -> pl.DataFrame:
+    """Add stat-less team rows so team strength rolls forward onto the future week.
+
+    compute_team_strength keys its output on (season, week, team), so without a row
+    for the upcoming week the left join onto the player frame yields nulls.
+    """
+    future_teams = future_rows.select("season", "week", "team").unique()
+    future_teams = future_teams.cast({c: team_stats.schema[c] for c in future_teams.columns})
+    return pl.concat([team_stats, future_teams], how="diagonal")
+
+
+def build_features(
+    seasons: list[int],
+    rolling_window: int = 5,
+    future_rows: pl.DataFrame | None = None,
+    context_seasons: list[int] | None = None,
+) -> pl.DataFrame:
     """Build ML-ready feature dataset from raw NFL data.
 
     This is the main entry point for feature engineering. It orchestrates:
@@ -68,8 +136,16 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     schedule data capture expected team performance.
 
     Args:
-        seasons: List of seasons to process (e.g., [2023, 2024]).
+        seasons: List of seasons to process (e.g., [2023, 2024]). Drives every stat,
+            play-by-play and advanced-metric fetch, so it must only contain seasons
+            that have published data.
         rolling_window: Number of games for rolling averages (default: 5).
+        future_rows: Optional synthetic player-week rows for games not yet played
+            (see build_future_player_rows). Appended before the rolling step so they
+            inherit each player's lagged history, including across a season boundary.
+        context_seasons: Seasons to fetch schedules for (default: `seasons`). Split
+            from `seasons` so an upcoming season's schedule can be joined while the
+            stat fetches stay on seasons that have data.
 
     Returns:
         Complete feature DataFrame ready for ML training, with:
@@ -90,11 +166,17 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
         True
     """
     logger.info(f"Building features for seasons {seasons} with rolling_window={rolling_window}")
+    context_seasons = context_seasons or seasons
 
     # Step 1: Load and process base data
     logger.info("Step 1: Loading processed player data...")
     df = process_player_stats(seasons)
     logger.info(f"Loaded {len(df)} rows, {len(df.columns)} columns")
+
+    if future_rows is not None:
+        shared = pl.Schema({c: df.schema[c] for c in future_rows.columns if c in df.columns})
+        df = pl.concat([df, future_rows.cast(shared)], how="diagonal")
+        logger.info(f"Appended {len(future_rows)} future rows -> {len(df)} rows")
 
     # Step 2: Add rolling stats
     logger.info("Step 2: Computing rolling statistics...")
@@ -132,7 +214,9 @@ def build_features(seasons: list[int], rolling_window: int = 5) -> pl.DataFrame:
     import nflreadpy as nfl  # noqa: PLC0415
 
     team_stats_df = nfl.load_team_stats(seasons)
-    schedules_df = fetch_schedules(seasons)
+    schedules_df = fetch_schedules(context_seasons)
+    if future_rows is not None:
+        team_stats_df = _append_future_team_stats(team_stats_df, future_rows)
     team_strength = compute_team_strength(team_stats_df, schedules_df, window=rolling_window)
 
     # Join team strength to player data

@@ -382,12 +382,15 @@ def clean_schedules(df: pl.DataFrame) -> pl.DataFrame:
     df = df.select(existing_columns)
     logger.debug(f"Selected {len(existing_columns)} schedule columns")
 
-    # Create is_dome boolean from roof column
+    # Create is_dome boolean from roof column.
+    # Retractable-roof stadiums carry a null roof until the roof state is decided, so
+    # unscheduled games fall back to the same False default used when roof is absent.
     if "roof" in df.columns:
         df = df.with_columns(
             pl.col("roof")
             .str.to_lowercase()
             .is_in(DOME_ROOF_VALUES)
+            .fill_null(False)
             .alias("is_dome")
         )
     else:

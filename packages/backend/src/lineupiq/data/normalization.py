@@ -15,6 +15,8 @@ logger = logging.getLogger(__name__)
 # Historical team abbreviation mapping to current abbreviations
 # NFL team relocations and name changes since 1999
 TEAM_MAPPING: dict[str, str] = {
+    # nflverse roster feed abbreviates Arizona as AZ; every other feed uses ARI
+    "AZ": "ARI",
     # Relocations
     "STL": "LA",    # St. Louis Rams -> LA Rams (2016)
     "SD": "LAC",    # San Diego Chargers -> LA Chargers (2017)
