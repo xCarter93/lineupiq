@@ -1,8 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import {
+  type ColumnDef,
+  type SortingState,
+  useTable,
+} from "@tanstack/react-table";
 import {
   Sheet,
   SheetContent,
@@ -12,18 +17,17 @@ import {
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DataGrid,
+  DataGridContainer,
+  dataGridFeatures,
+  type DataGridFeatures,
+} from "@/components/reui/data-grid/data-grid";
+import { DataGridColumnHeader } from "@/components/reui/data-grid/data-grid-column-header";
+import { DataGridTable } from "@/components/reui/data-grid/data-grid-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Search, Plus, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface AddPlayerSheetProps {
   isOpen: boolean;
@@ -54,6 +58,9 @@ export function AddPlayerSheet({
   onSelectPlayer,
 }: AddPlayerSheetProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "projected", desc: true },
+  ]);
 
   const allPlayersQuery = useQuery(api.players.list);
   const allPlayers = useMemo(() => allPlayersQuery ?? [], [allPlayersQuery]);
@@ -96,11 +103,97 @@ export function AddPlayerSheet({
     }));
   }, [allPlayers, eligiblePositions, searchQuery, rosteredPlayerIds]);
 
-  const handleSelect = (playerId: string) => {
-    onSelectPlayer(playerId);
-    onClose();
-    setSearchQuery("");
-  };
+  const handleSelect = useCallback(
+    (playerId: string) => {
+      onSelectPlayer(playerId);
+      onClose();
+      setSearchQuery("");
+    },
+    [onSelectPlayer, onClose]
+  );
+
+  const columns = useMemo<ColumnDef<DataGridFeatures, PlayerWithProjection>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        id: "name",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Player" column={column} />
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3">
+            <Avatar
+              src={row.original.headshotUrl}
+              alt={row.original.name}
+              fallback={row.original.initials}
+              size="sm"
+            />
+            <div>
+              <div className="font-medium">{row.original.name}</div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <Badge variant="secondary" className="text-[10px] px-1">
+                  {row.original.position}
+                </Badge>
+                <span>{row.original.team}</span>
+              </div>
+            </div>
+          </div>
+        ),
+        minSize: 180,
+        meta: { autoSize: true },
+      },
+      {
+        accessorKey: "projected",
+        id: "projected",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Proj" column={column} />
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.projected.toFixed(1)}</span>
+        ),
+        size: 80,
+        meta: {
+          headerClassName: "text-right *:justify-end",
+          cellClassName: "text-right",
+        },
+      },
+      {
+        id: "action",
+        header: () => null,
+        cell: ({ row }) =>
+          row.original.isRostered ? (
+            <Badge variant="secondary" className="text-xs" data-rostered="">
+              <Check className="h-3 w-3 mr-1" />
+              In Lineup
+            </Badge>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={`Add ${row.original.name} to lineup`}
+              onClick={() => handleSelect(row.original.playerId)}
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            </Button>
+          ),
+        size: 90,
+        enableSorting: false,
+      },
+    ],
+    [handleSelect]
+  );
+
+  const table = useTable({
+    features: dataGridFeatures,
+    // Every eligible player is rendered in one list, so opt out of the bundled
+    // paginated row model that would otherwise slice to 10 rows.
+    manualPagination: true,
+    columns,
+    data: eligiblePlayers,
+    getRowId: (row: PlayerWithProjection) => row.playerId,
+    state: { sorting },
+    onSortingChange: setSorting,
+  });
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -128,74 +221,21 @@ export function AddPlayerSheet({
         </div>
 
         {/* Player List */}
-        <div className="rounded-lg border">
-          <Table aria-label="Available players" className="[--gutter:--spacing(3)]">
-            <TableHeader className="bg-muted/30">
-              <TableColumn isRowHeader>Player</TableColumn>
-              <TableColumn className="w-[80px] text-right">Proj</TableColumn>
-              <TableColumn className="w-[60px]" />
-            </TableHeader>
-            <TableBody
-              items={eligiblePlayers}
-              renderEmptyState={() => (
-                <div className="flex items-center justify-center py-8 text-muted-foreground">
-                  No eligible players found
-                </div>
-              )}
-            >
-              {(player) => (
-                <TableRow
-                  id={player.playerId}
-                  className={cn(player.isRostered && "opacity-50 bg-muted/30")}
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        src={player.headshotUrl}
-                        alt={player.name}
-                        fallback={player.initials}
-                        size="sm"
-                      />
-                      <div>
-                        <div className="font-medium">{player.name}</div>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Badge
-                            variant="secondary"
-                            className="text-[10px] px-1"
-                          >
-                            {player.position}
-                          </Badge>
-                          <span>{player.team}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className="font-medium">
-                      {player.projected.toFixed(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {player.isRostered ? (
-                      <Badge variant="secondary" className="text-xs">
-                        <Check className="h-3 w-3 mr-1" />
-                        In Lineup
-                      </Badge>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSelect(player.playerId)}
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <DataGrid
+          table={table}
+          recordCount={eligiblePlayers.length}
+          isLoading={allPlayersQuery === undefined}
+          emptyMessage="No eligible players found"
+          tableLayout={{ dense: true, width: "auto" }}
+          tableClassNames={{
+            bodyRow:
+              "has-[[data-rostered]]:bg-muted/30 has-[[data-rostered]]:opacity-50",
+          }}
+        >
+          <DataGridContainer className="rounded-lg border">
+            <DataGridTable />
+          </DataGridContainer>
+        </DataGrid>
       </SheetContent>
     </Sheet>
   );

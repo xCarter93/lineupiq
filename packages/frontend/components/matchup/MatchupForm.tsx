@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  NumberField,
+  NumberFieldDecrement,
+  NumberFieldGroup,
+  NumberFieldIncrement,
+  NumberFieldInput,
+} from "@/components/reui/number-field";
 import { SectionLabel } from "@/components/ui/section-label";
 import { PositionFilter } from "@/components/matchup/PositionFilter";
 import { PlayerSelect, Player } from "@/components/matchup/PlayerSelect";
@@ -159,19 +165,18 @@ export function MatchupForm({ onSubmit, onPlayerChange, isLoading = false }: Mat
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Week
               </label>
-              <Input
-                type="number"
+              <NumberField
+                value={week}
+                onValueChange={(next) => setWeek(next ?? 1)}
                 min={1}
                 max={18}
-                value={week}
-                onChange={(e) =>
-                  setWeek(Math.max(1, Math.min(18, parseInt(e.target.value) || 1)))
-                }
-                className={cn(
-                  "bg-white rounded-lg border-border/50 shadow-sm h-11",
-                  "focus:ring-2 focus:ring-primary/20"
-                )}
-              />
+              >
+                <NumberFieldGroup className="h-11 rounded-lg border-border/50 bg-card shadow-sm">
+                  <NumberFieldDecrement />
+                  <NumberFieldInput />
+                  <NumberFieldIncrement />
+                </NumberFieldGroup>
+              </NumberField>
               <p className="text-xs text-muted-foreground mt-1">
                 NFL regular season week (1-18)
               </p>
@@ -182,19 +187,19 @@ export function MatchupForm({ onSubmit, onPlayerChange, isLoading = false }: Mat
               <label className="text-sm font-medium text-foreground mb-2 block">
                 Season
               </label>
-              <Input
-                type="number"
+              <NumberField
+                value={season}
+                onValueChange={(next) => setSeason(next ?? new Date().getFullYear())}
                 min={2019}
                 max={2030}
-                value={season}
-                onChange={(e) =>
-                  setSeason(parseInt(e.target.value) || new Date().getFullYear())
-                }
-                className={cn(
-                  "bg-white rounded-lg border-border/50 shadow-sm h-11",
-                  "focus:ring-2 focus:ring-primary/20"
-                )}
-              />
+                format={{ useGrouping: false }}
+              >
+                <NumberFieldGroup className="h-11 rounded-lg border-border/50 bg-card shadow-sm">
+                  <NumberFieldDecrement />
+                  <NumberFieldInput />
+                  <NumberFieldIncrement />
+                </NumberFieldGroup>
+              </NumberField>
               <p className="text-xs text-muted-foreground mt-1">
                 NFL season year
               </p>

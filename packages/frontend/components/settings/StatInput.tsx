@@ -1,7 +1,13 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  NumberField,
+  NumberFieldDecrement,
+  NumberFieldGroup,
+  NumberFieldIncrement,
+  NumberFieldInput,
+  NumberFieldScrubArea,
+} from "@/components/reui/number-field";
 import { cn } from "@/lib/utils";
 
 interface StatInputProps {
@@ -28,23 +34,26 @@ export function StatInput({
   disabled = false,
 }: StatInputProps) {
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+    <NumberField
+      value={value}
+      onValueChange={(next) => onChange(next ?? 0)}
+      min={min}
+      max={max}
+      step={step}
+      disabled={disabled}
+      className={cn("gap-1.5", className)}
+    >
+      <NumberFieldScrubArea label={label} className="text-muted-foreground" />
       <div className="flex items-center gap-2">
-        <Input
-          type="number"
-          value={value}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-          min={min}
-          max={max}
-          step={step}
-          disabled={disabled}
-          className="w-20 h-8 text-sm"
-        />
+        <NumberFieldGroup className="w-28">
+          <NumberFieldDecrement />
+          <NumberFieldInput />
+          <NumberFieldIncrement />
+        </NumberFieldGroup>
         {suffix && (
           <span className="text-xs text-muted-foreground">{suffix}</span>
         )}
       </div>
-    </div>
+    </NumberField>
   );
 }

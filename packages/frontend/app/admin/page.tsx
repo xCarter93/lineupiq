@@ -6,7 +6,25 @@ import { api } from "@/convex/_generated/api";
 import { useRosterSync } from "@/hooks/useRosterSync";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/reui/alert";
+import {
+  Stepper,
+  StepperIndicator,
+  StepperItem,
+  StepperNav,
+  StepperSeparator,
+  StepperTitle,
+  StepperTrigger,
+} from "@/components/reui/stepper";
+import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { getCurrentSeason } from "@/lib/season";
+
+// useRosterSync reports progress 0 -> 10 (fetch) -> 10..100 (batched upsert) -> 100 (done).
+const SYNC_STEPS = [
+  { step: 1, title: "Fetch roster" },
+  { step: 2, title: "Import to Convex" },
+  { step: 3, title: "Complete" },
+] as const;
 
 export default function AdminPage() {
   const { status, syncRoster } = useRosterSync();
@@ -15,6 +33,7 @@ export default function AdminPage() {
   const [lastResult, setLastResult] = useState<string | null>(null);
 
   const handleSyncRoster = async () => {
+    setLastResult(null);
     try {
       const result = await syncRoster();
       setLastResult(`Imported ${result.playersImported} players. Errors: ${result.errors.length}`);
@@ -22,6 +41,8 @@ export default function AdminPage() {
       setLastResult(`Error: ${e instanceof Error ? e.message : "Unknown"}`);
     }
   };
+
+  const syncStep = status.progress >= 100 ? 3 : status.progress >= 10 ? 2 : 1;
 
   const playerCount = players?.length ?? 0;
   const positions = players?.reduce((acc, p) => {
@@ -66,24 +87,46 @@ export default function AdminPage() {
               {status.isLoading ? "Syncing..." : `Sync ${currentSeason} Roster`}
             </Button>
 
-            {status.isLoading && (
+            {(status.isLoading || status.progress > 0) && (
               <div className="space-y-2">
-                <div className="w-full bg-secondary rounded-full h-2.5">
-                  <div
-                    className="bg-primary h-2.5 rounded-full transition-all duration-300"
-                    style={{ width: `${status.progress}%` }}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">{status.message}</p>
+                <Stepper value={syncStep} indicators={{ loading: <Loader2 className="size-3 animate-spin" /> }}>
+                  <StepperNav>
+                    {SYNC_STEPS.map(({ step, title }, index) => (
+                      <StepperItem
+                        key={step}
+                        step={step}
+                        loading={status.isLoading && step === syncStep}
+                        completed={step === 3 && !status.isLoading && status.progress >= 100}
+                      >
+                        <StepperTrigger>
+                          <StepperIndicator>{step}</StepperIndicator>
+                          <StepperTitle>{title}</StepperTitle>
+                        </StepperTrigger>
+                        {index < SYNC_STEPS.length - 1 && <StepperSeparator />}
+                      </StepperItem>
+                    ))}
+                  </StepperNav>
+                </Stepper>
+                {status.message && (
+                  <p className="text-sm text-muted-foreground">{status.message}</p>
+                )}
               </div>
             )}
 
             {status.error && (
-              <p className="text-sm text-red-600">{status.error}</p>
+              <Alert variant="destructive">
+                <AlertTriangle />
+                <AlertTitle>Roster sync failed</AlertTitle>
+                <AlertDescription>{status.error}</AlertDescription>
+              </Alert>
             )}
 
-            {lastResult && !status.isLoading && (
-              <p className="text-sm text-green-600">{lastResult}</p>
+            {lastResult && !status.isLoading && !status.error && (
+              <Alert variant="success">
+                <CheckCircle2 />
+                <AlertTitle>Roster sync finished</AlertTitle>
+                <AlertDescription>{lastResult}</AlertDescription>
+              </Alert>
             )}
           </CardContent>
         </Card>

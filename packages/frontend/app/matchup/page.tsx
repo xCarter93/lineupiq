@@ -3,6 +3,14 @@
 import { useState, useRef } from "react";
 import dynamic from "next/dynamic";
 import { SectionLabel } from "@/components/ui/section-label";
+import {
+  Alert,
+  AlertAction,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/reui/alert";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 import { CollapsibleSection } from "@/components/ui/collapsible-section";
 import { MatchupForm, MatchupData } from "@/components/matchup/MatchupForm";
 import { StatProjection } from "@/components/matchup/StatProjection";
@@ -270,20 +278,25 @@ export default function MatchupPage() {
 
             {/* Error State */}
             {error && !isLoading && (
-              <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-destructive animate-in fade-in duration-300">
+              <div className="animate-in fade-in duration-300">
                 <SectionLabel className="mb-3 block">ERROR</SectionLabel>
-                <p className="text-destructive font-medium mb-2">
-                  Failed to get prediction
-                </p>
-                <p className="text-sm text-muted-foreground mb-4 font-mono bg-muted/30 p-3 rounded-lg overflow-x-auto">
-                  {error}
-                </p>
-                <button
-                  onClick={() => matchupData && handleSubmit(matchupData)}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-                >
-                  Try Again
-                </button>
+                <Alert variant="destructive">
+                  <AlertTriangle />
+                  <AlertTitle>Failed to get prediction</AlertTitle>
+                  <AlertDescription>
+                    <span className="block overflow-x-auto rounded-lg bg-muted/30 p-3">
+                      {error}
+                    </span>
+                  </AlertDescription>
+                  <AlertAction>
+                    <Button
+                      size="xs"
+                      onClick={() => matchupData && handleSubmit(matchupData)}
+                    >
+                      Try Again
+                    </Button>
+                  </AlertAction>
+                </Alert>
               </div>
             )}
 
@@ -308,7 +321,7 @@ export default function MatchupPage() {
             {hasResults && matchupData && !error && (
               <>
                 {/* Model Confidence - always visible */}
-                <div className="bg-white rounded-xl shadow-sm px-4 py-3 flex items-center justify-between animate-in fade-in duration-300">
+                <div className="bg-card rounded-xl shadow-sm px-4 py-3 flex items-center justify-between animate-in fade-in duration-300">
                   <span className="text-sm text-muted-foreground">
                     Model Performance
                   </span>
@@ -382,7 +395,7 @@ export default function MatchupPage() {
 
             {/* Empty state for right column when no results */}
             {!hasResults && (
-              <div className="hidden lg:block bg-white/50 rounded-xl border-2 border-dashed border-muted p-8 text-center animate-in fade-in duration-300">
+              <div className="hidden lg:block bg-card/50 rounded-xl border-2 border-dashed border-muted p-8 text-center animate-in fade-in duration-300">
                 <p className="text-muted-foreground">
                   Select a player and get a prediction to see detailed analysis
                 </p>

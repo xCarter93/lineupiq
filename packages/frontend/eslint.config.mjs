@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored shadcn-registry output (`shadcn add @reui/*`); regenerated, never hand-edited.
+    "components/reui/**",
   ]),
 ]);
 

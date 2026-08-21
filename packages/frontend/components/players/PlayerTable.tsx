@@ -1,26 +1,30 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import type { SortDescriptor } from "react-aria-components";
+import {
+  type ColumnDef,
+  type SortingState,
+  useTable,
+} from "@tanstack/react-table";
+import {
+  DataGrid,
+  DataGridContainer,
+  dataGridFeatures,
+  type DataGridFeatures,
+} from "@/components/reui/data-grid/data-grid";
+import { DataGridColumnHeader } from "@/components/reui/data-grid/data-grid-column-header";
+import { DataGridScrollArea } from "@/components/reui/data-grid/data-grid-scroll-area";
+import { DataGridTableVirtual } from "@/components/reui/data-grid/data-grid-table-virtual";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { PositionTabs } from "./PositionTabs";
 import { PlayerTableFilters } from "./PlayerTableFilters";
-import {
-  Plus,
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Loader2,
-} from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useSimulation } from "@/hooks/useSimulation";
 import { usePlayerTablePredictions } from "@/hooks/usePlayerTablePredictions";
-
-const INITIAL_LOAD_COUNT = 50;
-const LOAD_MORE_COUNT = 30;
 
 interface PlayerTableProps {
   onPlayerClick: (player: {
@@ -49,27 +53,26 @@ interface PlayerWithStats {
 // Trend icon component (defined outside to avoid recreating during render)
 function TrendIcon({ trend }: { trend: "up" | "down" | "flat" }) {
   if (trend === "up") {
-    return <TrendingUp className="h-4 w-4 text-green-600" />;
+    return <TrendingUp className="h-4 w-4 text-success" />;
   }
   if (trend === "down") {
-    return <TrendingDown className="h-4 w-4 text-red-500" />;
+    return <TrendingDown className="h-4 w-4 text-destructive" />;
   }
   return <Minus className="h-4 w-4 text-muted-foreground" />;
 }
+
+const NUMERIC_COLUMN_META = {
+  headerClassName: "text-right *:justify-end",
+  cellClassName: "text-right",
+} as const;
 
 export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) {
   const [selectedPosition, setSelectedPosition] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
-  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: "thisWeekProj",
-    direction: "descending",
-  });
-  const [visibleCount, setVisibleCount] = useState(INITIAL_LOAD_COUNT);
-
-  // Refs for infinite scroll
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "thisWeekProj", desc: true },
+  ]);
 
   // Fetch players
   const allPlayersQuery = useQuery(api.players.list);
@@ -174,21 +177,18 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
     });
   }, [allPlayers, simulation.isActive, playerStats, playerStatsByName]);
 
-  // Filter and sort players
+  // Filter players (sorting is owned by the grid)
   const filteredPlayers = useMemo(() => {
     let filtered = playersWithStats;
 
-    // Position filter
     if (selectedPosition) {
       filtered = filtered.filter((p) => p.position === selectedPosition);
     }
 
-    // Team filter
     if (selectedTeam) {
       filtered = filtered.filter((p) => p.team === selectedTeam);
     }
 
-    // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -198,376 +198,226 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
       );
     }
 
-    // Sort based on sortDescriptor
-    if (sortDescriptor.column) {
-      filtered = [...filtered].sort((a, b) => {
-        const column = sortDescriptor.column as keyof PlayerWithStats;
-        const aVal = a[column];
-        const bVal = b[column];
+    return filtered;
+  }, [playersWithStats, selectedPosition, selectedTeam, searchQuery]);
 
-        if (typeof aVal === "string" && typeof bVal === "string") {
-          return sortDescriptor.direction === "ascending"
-            ? aVal.localeCompare(bVal)
-            : bVal.localeCompare(aVal);
-        }
+  const handlePlayerClick = useCallback(
+    async (player: PlayerWithStats) => {
+      // Track in recent players
+      await addRecentPlayer({ playerId: player.playerId });
 
-        if (typeof aVal === "number" && typeof bVal === "number") {
-          return sortDescriptor.direction === "ascending"
-            ? aVal - bVal
-            : bVal - aVal;
-        }
+      onPlayerClick({
+        playerId: player.playerId,
+        playerName: player.name,
+        position: player.position,
+        team: player.team,
+        headshotUrl: player.headshotUrl,
+      });
+    },
+    [addRecentPlayer, onPlayerClick]
+  );
 
-        return 0;
+  const lastWeekHeader =
+    simulation.isActive && simulation.completedWeeks > 0
+      ? `Wk ${simulation.completedWeeks}`
+      : "Last Wk";
+  const thisWeekHeader = simulation.isActive ? `Wk ${currentWeek} Proj` : "This Wk";
+  const hideLastWeek = simulation.isActive && simulation.completedWeeks === 0;
+
+  const columns = useMemo<ColumnDef<DataGridFeatures, PlayerWithStats>[]>(() => {
+    const defs: ColumnDef<DataGridFeatures, PlayerWithStats>[] = [
+      {
+        accessorKey: "name",
+        id: "name",
+        header: ({ column }) => <DataGridColumnHeader title="Player" column={column} />,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-3">
+            <Avatar
+              src={row.original.headshotUrl}
+              alt={row.original.name}
+              fallback={row.original.name
+                .split(" ")
+                .map((n) => n[0])
+                .join("")}
+              size="sm"
+            />
+            <div>
+              <div className="font-medium">{row.original.name}</div>
+              <Badge variant="secondary" className="text-[10px] mt-0.5">
+                {row.original.position}
+              </Badge>
+            </div>
+          </div>
+        ),
+        size: 250,
+        minSize: 180,
+        meta: { autoSize: true },
+      },
+      {
+        accessorKey: "team",
+        id: "team",
+        header: ({ column }) => <DataGridColumnHeader title="Team" column={column} />,
+        cell: ({ row }) => <span className="text-sm">{row.original.team}</span>,
+        size: 90,
+      },
+      {
+        accessorKey: "lastWeekActual",
+        id: "lastWeekActual",
+        header: ({ column }) => (
+          <DataGridColumnHeader title={lastWeekHeader} column={column} />
+        ),
+        cell: ({ row }) => {
+          if (hideLastWeek || row.original.lastWeekActual <= 0) {
+            return <span className="text-muted-foreground">—</span>;
+          }
+          return (
+            <div className="space-y-0.5">
+              <div className="font-medium">{row.original.lastWeekActual.toFixed(1)}</div>
+              {row.original.lastWeekPred > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  ({row.original.lastWeekPred.toFixed(1)})
+                </div>
+              )}
+            </div>
+          );
+        },
+        size: 110,
+        meta: NUMERIC_COLUMN_META,
+      },
+      {
+        accessorKey: "thisWeekProj",
+        id: "thisWeekProj",
+        header: ({ column }) => (
+          <DataGridColumnHeader title={thisWeekHeader} column={column} />
+        ),
+        cell: ({ row }) =>
+          row.original.thisWeekProj > 0 ? (
+            <span className="font-semibold text-primary">
+              {row.original.thisWeekProj.toFixed(1)}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+        size: 110,
+        meta: NUMERIC_COLUMN_META,
+      },
+      {
+        accessorKey: "seasonAvg",
+        id: "seasonAvg",
+        header: ({ column }) => <DataGridColumnHeader title="Proj Avg" column={column} />,
+        cell: ({ row }) =>
+          row.original.seasonAvg > 0 ? (
+            <span className="text-sm">{row.original.seasonAvg.toFixed(1)}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+        size: 110,
+        meta: NUMERIC_COLUMN_META,
+      },
+      {
+        id: "trend",
+        header: ({ column }) => <DataGridColumnHeader title="Trend" column={column} />,
+        cell: ({ row }) => <TrendIcon trend={row.original.trend} />,
+        size: 80,
+        enableSorting: false,
+        meta: {
+          headerClassName: "text-center *:justify-center",
+          cellClassName: "text-center [&>*]:mx-auto",
+        },
+      },
+    ];
+
+    if (onAddToLineup) {
+      defs.push({
+        id: "add",
+        header: () => null,
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToLineup(row.original.playerId);
+            }}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Add
+          </Button>
+        ),
+        size: 100,
+        enableSorting: false,
       });
     }
 
-    return filtered;
-  }, [playersWithStats, selectedPosition, selectedTeam, searchQuery, sortDescriptor]);
+    return defs;
+  }, [lastWeekHeader, thisWeekHeader, hideLastWeek, onAddToLineup]);
 
-  // Paginate filtered players for display
-  const visiblePlayers = useMemo(() => {
-    return filteredPlayers.slice(0, visibleCount);
-  }, [filteredPlayers, visibleCount]);
-
-  const hasMore = visibleCount < filteredPlayers.length;
-
-  // Load more callback
-  const loadMore = useCallback(() => {
-    if (hasMore) {
-      setVisibleCount((prev) => Math.min(prev + LOAD_MORE_COUNT, filteredPlayers.length));
-    }
-  }, [hasMore, filteredPlayers.length]);
-
-  // Intersection observer for infinite scroll
-  useEffect(() => {
-    const loadMoreElement = loadMoreRef.current;
-    const scrollContainer = scrollContainerRef.current;
-    if (!loadMoreElement || !scrollContainer) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          loadMore();
-        }
-      },
-      {
-        root: scrollContainer,
-        threshold: 0.1,
-        rootMargin: "100px"
-      }
-    );
-
-    observer.observe(loadMoreElement);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [hasMore, loadMore]);
-
-  // Handle filter changes - reset visible count
-  const handlePositionSelect = useCallback((position: string | null) => {
-    setSelectedPosition(position);
-    setVisibleCount(INITIAL_LOAD_COUNT);
-  }, []);
-
-  const handleSearchChange = useCallback((query: string) => {
-    setSearchQuery(query);
-    setVisibleCount(INITIAL_LOAD_COUNT);
-  }, []);
-
-  const handleTeamChange = useCallback((team: string | null) => {
-    setSelectedTeam(team);
-    setVisibleCount(INITIAL_LOAD_COUNT);
-  }, []);
-
-  const handleSortChange = useCallback((descriptor: SortDescriptor) => {
-    setSortDescriptor(descriptor);
-    setVisibleCount(INITIAL_LOAD_COUNT);
-  }, []);
-
-  const handlePlayerClick = async (player: PlayerWithStats) => {
-    // Track in recent players
-    await addRecentPlayer({ playerId: player.playerId });
-
-    onPlayerClick({
-      playerId: player.playerId,
-      playerName: player.name,
-      position: player.position,
-      team: player.team,
-      headshotUrl: player.headshotUrl,
-    });
-  };
+  const table = useTable({
+    features: dataGridFeatures,
+    // The grid renders every filtered row through the virtualizer, so opt out of
+    // the bundled paginated row model that would otherwise slice to 10 rows.
+    manualPagination: true,
+    columns,
+    data: filteredPlayers,
+    getRowId: (row: PlayerWithStats) => row.playerId,
+    state: { sorting },
+    onSortingChange: setSorting,
+  });
 
   return (
     <div className="space-y-4">
       {/* Position Tabs */}
       <PositionTabs
         selectedPosition={selectedPosition}
-        onPositionSelect={handlePositionSelect}
+        onPositionSelect={setSelectedPosition}
         playerCounts={playerCounts}
       />
 
       {/* Filters */}
       <PlayerTableFilters
         searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
+        onSearchChange={setSearchQuery}
         selectedTeam={selectedTeam}
-        onTeamChange={handleTeamChange}
+        onTeamChange={setSelectedTeam}
         teams={teams}
       />
 
       {/* Results Count */}
       <div className="text-sm text-muted-foreground flex items-center gap-2">
-        <span>
-          {visiblePlayers.length} of {filteredPlayers.length} players
-        </span>
+        <span>{filteredPlayers.length} players</span>
         {simulation.isActive && predictionsLoading && (
           <span className="text-xs text-muted-foreground animate-pulse">
             Loading predictions...
           </span>
         )}
         {simulation.isActive && !predictionsLoading && playerStats.size > 0 && (
-          <span className="text-xs text-blue-600">
+          <span className="text-xs text-info">
             Week {currentWeek} projections loaded
           </span>
         )}
       </div>
 
-      {/* Table with sticky header and infinite scroll */}
-      <div
-        ref={scrollContainerRef}
-        className="rounded-lg border bg-card overflow-auto"
-        style={{ maxHeight: "calc(100vh - 420px)", minHeight: "300px" }}
+      <DataGrid
+        table={table}
+        recordCount={filteredPlayers.length}
+        isLoading={allPlayersQuery === undefined}
+        onRowClick={handlePlayerClick}
+        emptyMessage="No players found matching your criteria."
+        tableLayout={{ headerSticky: true, columnsResizable: true }}
+        tableClassNames={{
+          headerSticky: "sticky top-0 z-10 bg-card",
+          bodyRow: "cursor-pointer",
+        }}
       >
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 z-10 bg-card border-b">
-            <tr>
-              <th
-                className="text-left font-medium text-muted-foreground px-4 py-2 cursor-pointer hover:bg-muted/50 w-[250px]"
-                onClick={() =>
-                  handleSortChange({
-                    column: "name",
-                    direction:
-                      sortDescriptor.column === "name" &&
-                      sortDescriptor.direction === "ascending"
-                        ? "descending"
-                        : "ascending",
-                  })
-                }
-              >
-                <span className="inline-flex items-center gap-1">
-                  Player
-                  {sortDescriptor.column === "name" && (
-                    <span className="text-xs">
-                      {sortDescriptor.direction === "ascending" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </span>
-              </th>
-              <th
-                className="text-left font-medium text-muted-foreground px-4 py-2 cursor-pointer hover:bg-muted/50 w-[80px]"
-                onClick={() =>
-                  handleSortChange({
-                    column: "team",
-                    direction:
-                      sortDescriptor.column === "team" &&
-                      sortDescriptor.direction === "ascending"
-                        ? "descending"
-                        : "ascending",
-                  })
-                }
-              >
-                <span className="inline-flex items-center gap-1">
-                  Team
-                  {sortDescriptor.column === "team" && (
-                    <span className="text-xs">
-                      {sortDescriptor.direction === "ascending" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </span>
-              </th>
-              <th
-                className="text-right font-medium text-muted-foreground px-4 py-2 cursor-pointer hover:bg-muted/50 w-[100px]"
-                onClick={() =>
-                  handleSortChange({
-                    column: "lastWeekActual",
-                    direction:
-                      sortDescriptor.column === "lastWeekActual" &&
-                      sortDescriptor.direction === "descending"
-                        ? "ascending"
-                        : "descending",
-                  })
-                }
-              >
-                <span className="inline-flex items-center justify-end gap-1 w-full">
-                  {simulation.isActive && simulation.completedWeeks > 0
-                    ? `Wk ${simulation.completedWeeks}`
-                    : "Last Wk"}
-                  {sortDescriptor.column === "lastWeekActual" && (
-                    <span className="text-xs">
-                      {sortDescriptor.direction === "ascending" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </span>
-              </th>
-              <th
-                className="text-right font-medium text-muted-foreground px-4 py-2 cursor-pointer hover:bg-muted/50 w-[100px]"
-                onClick={() =>
-                  handleSortChange({
-                    column: "thisWeekProj",
-                    direction:
-                      sortDescriptor.column === "thisWeekProj" &&
-                      sortDescriptor.direction === "descending"
-                        ? "ascending"
-                        : "descending",
-                  })
-                }
-              >
-                <span className="inline-flex items-center justify-end gap-1 w-full">
-                  {simulation.isActive ? `Wk ${currentWeek} Proj` : "This Wk"}
-                  {sortDescriptor.column === "thisWeekProj" && (
-                    <span className="text-xs">
-                      {sortDescriptor.direction === "ascending" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </span>
-              </th>
-              <th
-                className="text-right font-medium text-muted-foreground px-4 py-2 cursor-pointer hover:bg-muted/50 w-[100px]"
-                onClick={() =>
-                  handleSortChange({
-                    column: "seasonAvg",
-                    direction:
-                      sortDescriptor.column === "seasonAvg" &&
-                      sortDescriptor.direction === "descending"
-                        ? "ascending"
-                        : "descending",
-                  })
-                }
-              >
-                <span className="inline-flex items-center justify-end gap-1 w-full">
-                  Proj Avg
-                  {sortDescriptor.column === "seasonAvg" && (
-                    <span className="text-xs">
-                      {sortDescriptor.direction === "ascending" ? "↑" : "↓"}
-                    </span>
-                  )}
-                </span>
-              </th>
-              <th className="text-center font-medium text-muted-foreground px-4 py-2 w-[60px]">
-                Trend
-              </th>
-              {onAddToLineup && <th className="w-[100px]" />}
-            </tr>
-          </thead>
-          <tbody>
-            {visiblePlayers.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={onAddToLineup ? 7 : 6}
-                  className="text-center py-12 text-muted-foreground"
-                >
-                  No players found matching your criteria.
-                </td>
-              </tr>
-            ) : (
-              visiblePlayers.map((player) => (
-                <tr
-                  key={player.playerId}
-                  onClick={() => handlePlayerClick(player)}
-                  className="cursor-pointer hover:bg-muted/50 border-b last:border-b-0"
-                >
-                  <td className="px-4 py-2 w-[250px]">
-                    <div className="flex items-center gap-3">
-                      <Avatar
-                        src={player.headshotUrl}
-                        alt={player.name}
-                        fallback={player.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                        size="sm"
-                      />
-                      <div>
-                        <div className="font-medium">{player.name}</div>
-                        <Badge variant="secondary" className="text-[10px] mt-0.5">
-                          {player.position}
-                        </Badge>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-2 w-[80px]">
-                    <span className="text-sm">{player.team}</span>
-                  </td>
-                  <td className="px-4 py-2 w-[100px] text-right">
-                    {simulation.isActive && simulation.completedWeeks === 0 ? (
-                      <span className="text-muted-foreground">—</span>
-                    ) : player.lastWeekActual > 0 ? (
-                      <div className="space-y-0.5">
-                        <div className="font-medium">
-                          {player.lastWeekActual.toFixed(1)}
-                        </div>
-                        {player.lastWeekPred > 0 && (
-                          <div className="text-xs text-muted-foreground">
-                            ({player.lastWeekPred.toFixed(1)})
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 w-[100px] text-right">
-                    {player.thisWeekProj > 0 ? (
-                      <span className="font-semibold text-primary">
-                        {player.thisWeekProj.toFixed(1)}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 w-[100px] text-right">
-                    {player.seasonAvg > 0 ? (
-                      <span className="text-sm">{player.seasonAvg.toFixed(1)}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 w-[60px] text-center">
-                    <TrendIcon trend={player.trend} />
-                  </td>
-                  {onAddToLineup && (
-                    <td className="px-4 py-2 w-[100px]">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onAddToLineup(player.playerId);
-                        }}
-                      >
-                        <Plus className="h-3.5 w-3.5 mr-1" />
-                        Add
-                      </Button>
-                    </td>
-                  )}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-
-        {/* Load more trigger */}
-        {hasMore && (
-          <div
-            ref={loadMoreRef}
-            className="flex items-center justify-center py-4 text-muted-foreground border-t"
+        <DataGridContainer className="rounded-lg border bg-card">
+          <DataGridScrollArea
+            className="min-h-[300px] max-h-[calc(100vh-420px)]"
+            orientation="vertical"
           >
-            <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            <span className="text-sm">Loading more players...</span>
-          </div>
-        )}
-      </div>
+            <DataGridTableVirtual estimateSize={58} />
+          </DataGridScrollArea>
+        </DataGridContainer>
+      </DataGrid>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,25 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  type ColumnDef,
+  type SortingState,
+  useTable,
+} from "@tanstack/react-table";
+import {
+  DataGrid,
+  DataGridContainer,
+  dataGridFeatures,
+  type DataGridFeatures,
+} from "@/components/reui/data-grid/data-grid";
+import { DataGridColumnHeader } from "@/components/reui/data-grid/data-grid-column-header";
+import { DataGridScrollArea } from "@/components/reui/data-grid/data-grid-scroll-area";
+import { DataGridTableVirtual } from "@/components/reui/data-grid/data-grid-table-virtual";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/reui/alert";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -83,6 +95,7 @@ export default function SimulationPage() {
   const [selectedPosition, setSelectedPosition] = useState<string>("all");
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loadingPredictions, setLoadingPredictions] = useState(false);
+  const [predictionSorting, setPredictionSorting] = useState<SortingState>([]);
 
   // Convex mutations to sync state
   const initializeSimulation = useMutation(api.simulation.initializeSimulation);
@@ -268,12 +281,125 @@ export default function SimulationPage() {
     }
   };
 
+  const predictionColumns = useMemo<
+    ColumnDef<DataGridFeatures, Prediction>[]
+  >(() => {
+    const numericMeta = {
+      headerClassName: "text-right *:justify-end",
+      cellClassName: "text-right",
+    };
+    return [
+      {
+        accessorKey: "player_name",
+        id: "player_name",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Player" column={column} />
+        ),
+        cell: ({ row }) => (
+          <span className="font-medium">{row.original.player_name}</span>
+        ),
+        minSize: 160,
+        meta: { autoSize: true },
+      },
+      {
+        accessorKey: "position",
+        id: "position",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Pos" column={column} />
+        ),
+        cell: ({ row }) => row.original.position,
+        size: 80,
+      },
+      {
+        accessorKey: "team",
+        id: "team",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Team" column={column} />
+        ),
+        cell: ({ row }) => row.original.team,
+        size: 80,
+      },
+      {
+        accessorKey: "opponent",
+        id: "opponent",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Opp" column={column} />
+        ),
+        cell: ({ row }) => row.original.opponent,
+        size: 80,
+      },
+      {
+        accessorKey: "passing_yards",
+        id: "passing_yards",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Pass Yds" column={column} />
+        ),
+        cell: ({ row }) => row.original.passing_yards ?? "-",
+        size: 100,
+        meta: numericMeta,
+      },
+      {
+        accessorKey: "rushing_yards",
+        id: "rushing_yards",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Rush Yds" column={column} />
+        ),
+        cell: ({ row }) => row.original.rushing_yards ?? "-",
+        size: 100,
+        meta: numericMeta,
+      },
+      {
+        accessorKey: "receiving_yards",
+        id: "receiving_yards",
+        header: ({ column }) => (
+          <DataGridColumnHeader title="Rec Yds" column={column} />
+        ),
+        cell: ({ row }) => row.original.receiving_yards ?? "-",
+        size: 100,
+        meta: numericMeta,
+      },
+      {
+        id: "total_tds",
+        accessorFn: (row: Prediction) =>
+          (Number(row.passing_tds) || 0) +
+          (Number(row.rushing_tds) || 0) +
+          (Number(row.receiving_tds) || 0),
+        header: ({ column }) => (
+          <DataGridColumnHeader title="TDs" column={column} />
+        ),
+        cell: ({ row }) => {
+          const totalTds =
+            (Number(row.original.passing_tds) || 0) +
+            (Number(row.original.rushing_tds) || 0) +
+            (Number(row.original.receiving_tds) || 0);
+          return totalTds > 0 ? totalTds.toFixed(1) : "-";
+        },
+        size: 80,
+        meta: numericMeta,
+      },
+    ];
+  }, []);
+
+  const predictionTable = useTable({
+    features: dataGridFeatures,
+    // The virtualizer renders every prediction, so opt out of the bundled
+    // paginated row model that would otherwise slice to 10 rows.
+    manualPagination: true,
+    columns: predictionColumns,
+    data: predictions,
+    getRowId: (row: Prediction) => `${row.player_id}-${row.week}`,
+    state: { sorting: predictionSorting },
+    onSortingChange: setPredictionSorting,
+  });
+
   return (
     <div className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertTriangle />
+          <AlertTitle>Simulation backend error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -443,11 +569,13 @@ export default function SimulationPage() {
             )}
 
             {isBusy && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
-                <p className="font-medium">Processing...</p>
-                <p>Status: {state?.status}</p>
-                <p className="text-xs mt-1">This may take several minutes. Page will auto-refresh.</p>
-              </div>
+              <Alert variant="info">
+                <Loader2 className="animate-spin" />
+                <AlertTitle>Processing — status: {state?.status}</AlertTitle>
+                <AlertDescription>
+                  This may take several minutes. Page will auto-refresh.
+                </AlertDescription>
+              </Alert>
             )}
           </CardContent>
         </Card>
@@ -522,70 +650,20 @@ export default function SimulationPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {loadingPredictions ? (
-              <p className="text-muted-foreground">Loading predictions...</p>
-            ) : predictions.length === 0 ? (
-              <p className="text-muted-foreground">
-                No predictions available. Initialize and run the simulation first.
-              </p>
-            ) : (
-              <div className="max-h-80 overflow-auto">
-                <Table aria-label="Predictions preview" className="[--gutter:--spacing(3)]">
-                  <TableHeader>
-                    <TableColumn isRowHeader>Player</TableColumn>
-                    <TableColumn>Pos</TableColumn>
-                    <TableColumn>Team</TableColumn>
-                    <TableColumn>Opp</TableColumn>
-                    <TableColumn className="text-right">Pass Yds</TableColumn>
-                    <TableColumn className="text-right">Rush Yds</TableColumn>
-                    <TableColumn className="text-right">Rec Yds</TableColumn>
-                    <TableColumn className="text-right">TDs</TableColumn>
-                  </TableHeader>
-                  <TableBody
-                    items={predictions.slice(0, 30)}
-                    renderEmptyState={() => (
-                      <div className="py-8 text-center text-muted-foreground">
-                        No predictions available
-                      </div>
-                    )}
-                  >
-                    {(pred) => {
-                      const totalTds =
-                        (Number(pred.passing_tds) || 0) +
-                        (Number(pred.rushing_tds) || 0) +
-                        (Number(pred.receiving_tds) || 0);
-                      return (
-                        <TableRow id={pred.player_id}>
-                          <TableCell className="font-medium">
-                            {pred.player_name}
-                          </TableCell>
-                          <TableCell>{pred.position}</TableCell>
-                          <TableCell>{pred.team}</TableCell>
-                          <TableCell>{pred.opponent}</TableCell>
-                          <TableCell className="text-right">
-                            {pred.passing_yards ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {pred.rushing_yards ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {pred.receiving_yards ?? "-"}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {totalTds > 0 ? totalTds.toFixed(1) : "-"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    }}
-                  </TableBody>
-                </Table>
-                {predictions.length > 30 && (
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    Showing 30 of {predictions.length} predictions
-                  </p>
-                )}
-              </div>
-            )}
+            <DataGrid
+              table={predictionTable}
+              recordCount={predictions.length}
+              isLoading={loadingPredictions}
+              emptyMessage="No predictions available. Initialize and run the simulation first."
+              tableLayout={{ dense: true, headerSticky: true }}
+              tableClassNames={{ headerSticky: "sticky top-0 z-10 bg-card" }}
+            >
+              <DataGridContainer className="rounded-lg border">
+                <DataGridScrollArea className="max-h-80" orientation="vertical">
+                  <DataGridTableVirtual estimateSize={37} />
+                </DataGridScrollArea>
+              </DataGridContainer>
+            </DataGrid>
           </CardContent>
         </Card>
       )}
