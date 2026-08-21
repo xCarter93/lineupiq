@@ -2,11 +2,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Minus, Target } from "lucide-react";
+import { Target } from "lucide-react";
 
 interface LineupSummaryProps {
   totalProjected: number;
-  lastWeekActual?: number;
+  /** How many filled slots actually have a prediction behind them. */
+  projectedPlayers: number;
+  isLoading?: boolean;
   positionBreakdown: Record<string, number>;
   filledSlots: number;
   totalSlots: number;
@@ -14,16 +16,12 @@ interface LineupSummaryProps {
 
 export function LineupSummary({
   totalProjected,
-  lastWeekActual,
+  projectedPlayers,
+  isLoading = false,
   positionBreakdown,
   filledSlots,
   totalSlots,
 }: LineupSummaryProps) {
-  const difference = lastWeekActual ? totalProjected - lastWeekActual : 0;
-  const percentChange = lastWeekActual
-    ? ((difference / lastWeekActual) * 100).toFixed(1)
-    : null;
-
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -37,38 +35,36 @@ export function LineupSummary({
         <div className="flex items-baseline justify-between">
           <span className="text-sm text-muted-foreground">Total Projected</span>
           <div className="text-right">
-            <span className="text-2xl font-bold text-primary">
-              {totalProjected.toFixed(1)}
-            </span>
-            <span className="text-sm text-muted-foreground ml-1">pts</span>
+            {projectedPlayers > 0 ? (
+              <>
+                <span className="text-2xl font-bold text-primary">
+                  {totalProjected.toFixed(1)}
+                </span>
+                <span className="text-sm text-muted-foreground ml-1">pts</span>
+              </>
+            ) : (
+              <span
+                className={`text-2xl font-bold text-muted-foreground${isLoading ? " animate-pulse" : ""}`}
+              >
+                &mdash;
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Comparison to Last Week */}
-        {lastWeekActual !== undefined && (
+        {/* Prediction coverage */}
+        {filledSlots > 0 && (
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">vs. Last Week</span>
-            <div className="flex items-center gap-1">
-              {difference > 0 ? (
-                <TrendingUp className="h-4 w-4 text-green-600" />
-              ) : difference < 0 ? (
-                <TrendingDown className="h-4 w-4 text-red-500" />
-              ) : (
-                <Minus className="h-4 w-4 text-muted-foreground" />
-              )}
-              <span
-                className={
-                  difference > 0
-                    ? "text-green-600"
-                    : difference < 0
-                      ? "text-red-500"
-                      : "text-muted-foreground"
-                }
-              >
-                {difference > 0 ? "+" : ""}
-                {difference.toFixed(1)} ({percentChange}%)
-              </span>
-            </div>
+            <span className="text-muted-foreground">With Predictions</span>
+            <span
+              className={
+                projectedPlayers === filledSlots
+                  ? "text-muted-foreground"
+                  : "text-foreground"
+              }
+            >
+              {projectedPlayers} / {filledSlots}
+            </span>
           </div>
         )}
 

@@ -9,6 +9,7 @@ import { LineupSummary } from "./LineupSummary";
 import { AddPlayerSheet } from "./AddPlayerSheet";
 import { Loader2, Users } from "lucide-react";
 import { getCurrentSeason } from "@/lib/season";
+import { usePlayersWeekProjections } from "@/hooks/usePredictions";
 
 interface LineupEditorProps {
   week?: number;
@@ -49,31 +50,36 @@ export function LineupEditor({
       .filter((id): id is string => !!id);
   }, [lineup]);
 
-  // Calculate totals (mock values - would come from real predictions)
-  const totalProjected = useMemo(() => {
-    return rosteredPlayerIds.length * 15; // Mock: 15 pts per player
-  }, [rosteredPlayerIds]);
+  const { projections, isLoading: projectionsLoading } =
+    usePlayersWeekProjections(rosteredPlayerIds, season, week);
+
+  const totalProjected = useMemo(
+    () =>
+      rosteredPlayerIds.reduce(
+        (sum, playerId) => sum + (projections.get(playerId)?.points ?? 0),
+        0
+      ),
+    [rosteredPlayerIds, projections]
+  );
 
   const positionBreakdown = useMemo(() => {
     if (!lineup?.slots) return {};
     const breakdown: Record<string, number> = {};
-    const mockPts: Record<string, number> = {
-      QB: 22.5,
-      RB: 15.0,
-      WR: 16.5,
-      TE: 12.0,
-      K: 8.5,
-      DEF: 7.0,
-      FLEX: 14.0,
-    };
     lineup.slots.forEach((slot) => {
-      if (slot.playerId) {
-        const pts = mockPts[slot.position] ?? 10;
-        breakdown[slot.position] = (breakdown[slot.position] ?? 0) + pts;
+      const points = slot.playerId
+        ? projections.get(slot.playerId)?.points
+        : undefined;
+      if (points !== undefined) {
+        breakdown[slot.position] = (breakdown[slot.position] ?? 0) + points;
       }
     });
     return breakdown;
-  }, [lineup]);
+  }, [lineup, projections]);
+
+  const projectedCount = useMemo(
+    () => rosteredPlayerIds.filter((id) => projections.has(id)).length,
+    [rosteredPlayerIds, projections]
+  );
 
   const handleAddPlayer = async (playerId: string) => {
     if (addingToSlot === null) return;
@@ -141,7 +147,9 @@ export function LineupEditor({
                 position={slot.position}
                 eligiblePositions={eligiblePositions}
                 playerId={slot.playerId}
-                projectedPoints={slot.playerId ? (positionBreakdown[slot.position] ?? 15) : 0}
+                projection={
+                  slot.playerId ? (projections.get(slot.playerId) ?? null) : null
+                }
                 onAddClick={() =>
                   setAddingToSlot({
                     index,
@@ -160,7 +168,8 @@ export function LineupEditor({
       <div className="lg:col-span-1">
         <LineupSummary
           totalProjected={totalProjected}
-          lastWeekActual={85.5}
+          projectedPlayers={projectedCount}
+          isLoading={projectionsLoading}
           positionBreakdown={positionBreakdown}
           filledSlots={rosteredPlayerIds.length}
           totalSlots={slots.length}
@@ -172,6 +181,8 @@ export function LineupEditor({
         <AddPlayerSheet
           isOpen={!!addingToSlot}
           onClose={() => setAddingToSlot(null)}
+          week={week}
+          season={season}
           eligiblePositions={addingToSlot.eligiblePositions}
           slotPosition={addingToSlot.position}
           rosteredPlayerIds={rosteredPlayerIds}

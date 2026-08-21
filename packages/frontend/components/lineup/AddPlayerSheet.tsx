@@ -27,7 +27,10 @@ import { DataGridTable } from "@/components/reui/data-grid/data-grid-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { PredictionSourceDot } from "@/components/ui/prediction-source";
 import { Search, Plus, Check } from "lucide-react";
+import { useWeekProjections } from "@/hooks/usePredictions";
+import type { SourceMix } from "@/lib/prediction-points";
 
 interface AddPlayerSheetProps {
   isOpen: boolean;
@@ -35,6 +38,8 @@ interface AddPlayerSheetProps {
   eligiblePositions: string[];
   slotPosition: string;
   rosteredPlayerIds: string[];
+  week: number;
+  season: number;
   onSelectPlayer: (playerId: string) => void;
 }
 
@@ -44,7 +49,10 @@ interface PlayerWithProjection {
   position: string;
   team: string | undefined;
   headshotUrl: string | undefined;
-  projected: number;
+  projected: number | null;
+  sourceMix: SourceMix | null;
+  modelCount: number;
+  baselineCount: number;
   isRostered: boolean;
   initials: string;
 }
@@ -55,6 +63,8 @@ export function AddPlayerSheet({
   eligiblePositions,
   slotPosition,
   rosteredPlayerIds,
+  week,
+  season,
   onSelectPlayer,
 }: AddPlayerSheetProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,6 +74,7 @@ export function AddPlayerSheet({
 
   const allPlayersQuery = useQuery(api.players.list);
   const allPlayers = useMemo(() => allPlayersQuery ?? [], [allPlayersQuery]);
+  const { projections } = useWeekProjections(season, week);
 
   // Filter to eligible positions and add projection data
   const eligiblePlayers: PlayerWithProjection[] = useMemo(() => {
@@ -81,27 +92,24 @@ export function AddPlayerSheet({
       );
     }
 
-    // Mock projected points - would come from real data
-    const positionPts: Record<string, number> = {
-      QB: 20.5,
-      RB: 14.5,
-      WR: 15.0,
-      TE: 11.5,
-      K: 8.0,
-      DEF: 7.5,
-    };
+    return filtered.map((player) => {
+      const projection = projections.get(player.playerId);
 
-    return filtered.map((player) => ({
-      playerId: player.playerId,
-      name: player.name,
-      position: player.position,
-      team: player.team,
-      headshotUrl: player.headshotUrl,
-      projected: positionPts[player.position] ?? 12,
-      isRostered: rosteredPlayerIds.includes(player.playerId),
-      initials: player.name.split(" ").map((n) => n[0]).join(""),
-    }));
-  }, [allPlayers, eligiblePositions, searchQuery, rosteredPlayerIds]);
+      return {
+        playerId: player.playerId,
+        name: player.name,
+        position: player.position,
+        team: player.team,
+        headshotUrl: player.headshotUrl,
+        projected: projection?.points ?? null,
+        sourceMix: projection?.sourceMix ?? null,
+        modelCount: projection?.modelCount ?? 0,
+        baselineCount: projection?.baselineCount ?? 0,
+        isRostered: rosteredPlayerIds.includes(player.playerId),
+        initials: player.name.split(" ").map((n) => n[0]).join(""),
+      };
+    });
+  }, [allPlayers, eligiblePositions, searchQuery, rosteredPlayerIds, projections]);
 
   const handleSelect = useCallback(
     (playerId: string) => {
@@ -143,15 +151,30 @@ export function AddPlayerSheet({
         meta: { autoSize: true },
       },
       {
-        accessorKey: "projected",
+        // Players without a prediction sort to the bottom of a descending sort
+        // rather than clumping at the top as nulls would.
+        accessorFn: (row: PlayerWithProjection) =>
+          row.projected ?? Number.NEGATIVE_INFINITY,
         id: "projected",
         header: ({ column }) => (
           <DataGridColumnHeader title="Proj" column={column} />
         ),
-        cell: ({ row }) => (
-          <span className="font-medium">{row.original.projected.toFixed(1)}</span>
-        ),
-        size: 80,
+        cell: ({ row }) =>
+          row.original.projected !== null && row.original.sourceMix ? (
+            <span className="inline-flex items-center justify-end gap-1.5">
+              <PredictionSourceDot
+                mix={row.original.sourceMix}
+                modelCount={row.original.modelCount}
+                baselineCount={row.original.baselineCount}
+              />
+              <span className="font-medium">
+                {row.original.projected.toFixed(1)}
+              </span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+        size: 100,
         meta: {
           headerClassName: "text-right *:justify-end",
           cellClassName: "text-right",

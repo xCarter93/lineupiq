@@ -20,7 +20,16 @@ import { useValidationPredictions } from "@/hooks/useValidationPredictions";
 import { useSimulation } from "@/hooks/useSimulation";
 import { useSimulationPredictions } from "@/hooks/useSimulationPredictions";
 import { useGameInfo } from "@/hooks/useGameInfo";
-import { getLastCompletedSeason } from "@/lib/season";
+import { usePlayerWeekProjection } from "@/hooks/usePredictions";
+import { useActiveScoringConfig } from "@/hooks/useScoringConfigs";
+import { getPointsBreakdown } from "@/lib/fantasy-points";
+import { formatMatchup } from "@/lib/prediction-points";
+import {
+  getCurrentNFLWeek,
+  getCurrentSeason,
+  getLastCompletedSeason,
+} from "@/lib/season";
+import { PredictionSourceDot } from "@/components/ui/prediction-source";
 import { ValidationChart } from "./ValidationChart";
 import { ConsolidatedPredictionChart } from "./ConsolidatedPredictionChart";
 import { ProjectedPointsBreakdown } from "./ProjectedPointsBreakdown";
@@ -134,23 +143,17 @@ export function PlayerDetailDrawer({
 }: PlayerDetailDrawerProps) {
   const [imageError, setImageError] = useState(false);
   const simulation = useSimulation();
-  const season = simulation.targetSeason;
   // Predicted-vs-actual needs a season with actuals; a live simulation supplies its own
   const validationSeason = simulation.isActive
     ? simulation.targetSeason
     : getLastCompletedSeason();
 
-  // Get the current week for game info (week 1 if pre-season, otherwise completedWeeks + 1)
-  const currentGameWeek = simulation.isActive
-    ? Math.max(1, simulation.completedWeeks + 1)
-    : 1;
+  // Predictions are cached per real season/week, independent of simulation state
+  const projectionSeason = getCurrentSeason();
+  const currentGameWeek = getCurrentNFLWeek(projectionSeason);
 
   // Fetch real game info from schedule API
-  const { gameInfo, isLoading: gameInfoLoading } = useGameInfo(
-    team,
-    currentGameWeek,
-    season
-  );
+  const { gameInfo } = useGameInfo(team, currentGameWeek, projectionSeason);
 
   // Create simulation filter for validation predictions
   const simulationFilter = useMemo(() => ({
@@ -167,10 +170,17 @@ export function PlayerDetailDrawer({
 
   // Get simulation predictions (predictions only, for pre-season display)
   const {
-    currentWeekPrediction,
     groupedByTarget: simulationGrouped,
     isLoading: simulationLoading,
   } = useSimulationPredictions(playerId, position);
+
+  // This week's cached prediction, rolled into fantasy points
+  const {
+    projection,
+    scoringName,
+    isLoading: projectionLoading,
+  } = usePlayerWeekProjection(playerId, projectionSeason, currentGameWeek);
+  const { scoring } = useActiveScoringConfig();
 
   // Determine which data to use for charts
   // During simulation mode, always use simulation predictions (which now include actuals for completed weeks)
@@ -208,15 +218,21 @@ export function PlayerDetailDrawer({
         },
       };
     }
-    // Fallback when loading or no data
+    // Fallback when the schedule API is unavailable: the prediction row still
+    // carries the matchup it was generated against.
+    const matchup = projection ? formatMatchup(projection) : null;
     return {
-      opponent: currentWeekPrediction ? `vs. ${currentWeekPrediction.opponent}` : "TBD",
+      opponent: matchup ?? "TBD",
       gameTime: "TBD",
-      location: "TBD",
+      location: projection?.isHome === undefined
+        ? "TBD"
+        : projection.isHome
+          ? "Home"
+          : "Away",
       stadium: "TBD",
       weather: { temp: null as number | null, wind: null as number | null, condition: "TBD", roof: null as string | null },
     };
-  }, [gameInfo, currentWeekPrediction]);
+  }, [gameInfo, projection]);
 
   // Vegas lines from schedule API
   const vegasLines = useMemo(() => {
@@ -236,36 +252,13 @@ export function PlayerDetailDrawer({
     };
   }, [gameInfo]);
 
-  // Calculate projected points from predictions
-  const projectedPoints = useMemo(() => {
-    if (!chartData || Object.keys(chartData).length === 0) return null;
-
-    // Standard PPR scoring values
-    const scoringValues: Record<string, number> = {
-      passing_yards: 0.04, // 1 point per 25 yards
-      passing_tds: 4,
-      interceptions: -2,
-      rushing_yards: 0.1,
-      rushing_tds: 6,
-      receiving_yards: 0.1,
-      receiving_tds: 6,
-      receptions: 1,
-      fumbles_lost: -2,
-    };
-
-    // Get the current week predictions
-    const targetWeek = currentGameWeek;
-    let totalPoints = 0;
-
-    Object.entries(chartData).forEach(([stat, data]) => {
-      const weekData = data.find((d) => d.week === targetWeek);
-      if (weekData && scoringValues[stat]) {
-        totalPoints += weekData.predicted * scoringValues[stat];
-      }
-    });
-
-    return totalPoints;
-  }, [chartData, currentGameWeek]);
+  const pointsBreakdown = useMemo(
+    () =>
+      projection
+        ? getPointsBreakdown(projection.position, projection.stats, scoring)
+        : null,
+    [projection, scoring]
+  );
 
   const imageUrl =
     headshotUrl ||
@@ -314,11 +307,27 @@ export function PlayerDetailDrawer({
 
                 {/* Projected Points */}
                 <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-bold text-primary">
-                      {projectedPoints !== null ? projectedPoints.toFixed(1) : "—"}
-                    </span>
-                    <span className="text-sm text-muted-foreground">pts</span>
+                  <div className="flex items-baseline gap-1.5">
+                    {projection ? (
+                      <>
+                        <PredictionSourceDot
+                          mix={projection.sourceMix}
+                          modelCount={projection.modelCount}
+                          baselineCount={projection.baselineCount}
+                        />
+                        <span className="text-2xl font-bold text-primary">
+                          {projection.points.toFixed(1)}
+                        </span>
+                        <span className="text-sm text-muted-foreground">pts</span>
+                      </>
+                    ) : (
+                      <span
+                        className={`text-2xl font-bold text-muted-foreground${projectionLoading ? " animate-pulse" : ""}`}
+                        title={projectionLoading ? "Loading projection" : `No prediction yet for Week ${currentGameWeek}`}
+                      >
+                        &mdash;
+                      </span>
+                    )}
                   </div>
                   {onAddToLineup && (
                     <Button
@@ -437,18 +446,21 @@ export function PlayerDetailDrawer({
             icon={<Calculator className="h-4 w-4 text-muted-foreground" />}
             defaultOpen={true}
           >
-            {isLoading ? (
+            {projectionLoading ? (
               <div className="h-48 rounded-lg bg-muted animate-pulse" />
-            ) : chartData && Object.keys(chartData).length > 0 ? (
+            ) : projection && pointsBreakdown ? (
               <ProjectedPointsBreakdown
-                groupedData={chartData}
+                breakdown={pointsBreakdown}
+                scoredRows={projection.scoredRows}
                 week={currentGameWeek}
-                position={position}
+                scoringName={scoringName}
               />
             ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <Calculator className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No projection data available</p>
+                <p className="text-sm">
+                  No prediction yet for Week {currentGameWeek}
+                </p>
               </div>
             )}
           </CollapsibleSection>

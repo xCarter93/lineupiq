@@ -69,9 +69,17 @@ export interface DefensePrediction {
 }
 
 // Points breakdown for detailed display
+export interface PointsCategory {
+  /** The cachedPredictions target this category scores, for joining back to its source. */
+  target: string;
+  label: string;
+  points: number;
+  detail: string;
+}
+
 export interface PointsBreakdown {
   total: number;
-  categories: { label: string; points: number; detail: string }[];
+  categories: PointsCategory[];
 }
 
 // Union type for all predictions
@@ -235,7 +243,7 @@ export function getPointsBreakdown(
   config: ScoringConfig | FullScoringConfig = DEFAULT_SCORING
 ): PointsBreakdown {
   const pos = position.toUpperCase();
-  const categories: { label: string; points: number; detail: string }[] = [];
+  const categories: PointsCategory[] = [];
 
   if (pos === "QB") {
     const qb = prediction as QBPrediction;
@@ -248,31 +256,37 @@ export function getPointsBreakdown(
     const fumblePoints = Math.round(qb.fumbles_lost * -2 * 10) / 10;
 
     categories.push({
+      target: "passing_yards",
       label: "Passing Yards",
       points: passYardPoints,
       detail: `${qb.passing_yards.toFixed(1)} yards`,
     });
     categories.push({
+      target: "passing_tds",
       label: "Passing TDs",
       points: passTdPoints,
       detail: `${qb.passing_tds.toFixed(1)} TDs x ${c.passing.tdPoints} pts`,
     });
     categories.push({
+      target: "interceptions",
       label: "Interceptions",
       points: intPoints,
       detail: `${qb.interceptions.toFixed(1)} INTs x ${c.passing.intPoints} pts`,
     });
     categories.push({
+      target: "rushing_yards",
       label: "Rushing Yards",
       points: rushYardPoints,
       detail: `${qb.rushing_yards.toFixed(1)} yards`,
     });
     categories.push({
+      target: "rushing_tds",
       label: "Rushing TDs",
       points: rushTdPoints,
       detail: `${qb.rushing_tds.toFixed(1)} TDs x ${c.rushing.tdPoints} pts`,
     });
     categories.push({
+      target: "fumbles_lost",
       label: "Fumbles Lost",
       points: fumblePoints,
       detail: `${qb.fumbles_lost.toFixed(1)} fumbles x -2 pts`,
@@ -288,33 +302,39 @@ export function getPointsBreakdown(
     const fumblePoints = Math.round(rb.fumbles_lost * -2 * 10) / 10;
 
     categories.push({
+      target: "rushing_yards",
       label: "Rushing Yards",
       points: rushYardPoints,
       detail: `${rb.rushing_yards.toFixed(1)} yards`,
     });
     categories.push({
+      target: "rushing_tds",
       label: "Rushing TDs",
       points: rushTdPoints,
       detail: `${rb.rushing_tds.toFixed(1)} TDs x ${c.rushing.tdPoints} pts`,
     });
     categories.push({
+      target: "receiving_yards",
       label: "Receiving Yards",
       points: recYardPoints,
       detail: `${rb.receiving_yards.toFixed(1)} yards`,
     });
     categories.push({
+      target: "receiving_tds",
       label: "Receiving TDs",
       points: recTdPoints,
       detail: `${rb.receiving_tds.toFixed(1)} TDs x ${c.receiving.tdPoints} pts`,
     });
     if (c.receiving.receptionPoints > 0) {
       categories.push({
+        target: "receptions",
         label: "Receptions",
         points: receptionPoints,
         detail: `${rb.receptions.toFixed(1)} rec x ${c.receiving.receptionPoints} pts`,
       });
     }
     categories.push({
+      target: "fumbles_lost",
       label: "Fumbles Lost",
       points: fumblePoints,
       detail: `${rb.fumbles_lost.toFixed(1)} fumbles x -2 pts`,
@@ -328,23 +348,27 @@ export function getPointsBreakdown(
     const fumblePoints = Math.round(rec.fumbles_lost * -2 * 10) / 10;
 
     categories.push({
+      target: "receiving_yards",
       label: "Receiving Yards",
       points: yardPoints,
       detail: `${rec.receiving_yards.toFixed(1)} yards`,
     });
     categories.push({
+      target: "receiving_tds",
       label: "Receiving TDs",
       points: tdPoints,
       detail: `${rec.receiving_tds.toFixed(1)} TDs x ${c.receiving.tdPoints} pts`,
     });
     if (c.receiving.receptionPoints > 0) {
       categories.push({
+        target: "receptions",
         label: "Receptions",
         points: receptionPoints,
         detail: `${rec.receptions.toFixed(1)} rec x ${c.receiving.receptionPoints} pts`,
       });
     }
     categories.push({
+      target: "fumbles_lost",
       label: "Fumbles Lost",
       points: fumblePoints,
       detail: `${rec.fumbles_lost.toFixed(1)} fumbles x -2 pts`,
@@ -357,6 +381,7 @@ export function getPointsBreakdown(
     if (k.fg_att_0_39 > 0) {
       const pts = Math.round(k.fg_att_0_39 * fgPct * kc.fgMade0_39 * 10) / 10;
       categories.push({
+        target: "fg_att_0_39",
         label: "FG 0-39",
         points: pts,
         detail: `${k.fg_att_0_39.toFixed(1)} att x ${kc.fgMade0_39} pts`,
@@ -366,6 +391,7 @@ export function getPointsBreakdown(
     if (k.fg_att_40_49 > 0) {
       const pts = Math.round(k.fg_att_40_49 * fgPct * kc.fgMade40_49 * 10) / 10;
       categories.push({
+        target: "fg_att_40_49",
         label: "FG 40-49",
         points: pts,
         detail: `${k.fg_att_40_49.toFixed(1)} att x ${kc.fgMade40_49} pts`,
@@ -375,6 +401,7 @@ export function getPointsBreakdown(
     if (k.fg_att_50_plus > 0) {
       const pts = Math.round(k.fg_att_50_plus * 0.75 * kc.fgMade50Plus * 10) / 10;
       categories.push({
+        target: "fg_att_50_plus",
         label: "FG 50+",
         points: pts,
         detail: `${k.fg_att_50_plus.toFixed(1)} att x ${kc.fgMade50Plus} pts`,
@@ -384,6 +411,7 @@ export function getPointsBreakdown(
     if (k.pat_att > 0) {
       const pts = Math.round(k.pat_att * (k.pat_pct ?? 0.94) * kc.xpMade * 10) / 10;
       categories.push({
+        target: "pat_att",
         label: "Extra Points",
         points: pts,
         detail: `${k.pat_att.toFixed(1)} att x ${kc.xpMade} pts`,
@@ -395,6 +423,7 @@ export function getPointsBreakdown(
 
     const paPoints = getPointsAllowedScore(d.points_allowed, dc);
     categories.push({
+      target: "points_allowed",
       label: "Points Allowed",
       points: paPoints,
       detail: `${d.points_allowed.toFixed(0)} pts allowed`,
@@ -402,6 +431,7 @@ export function getPointsBreakdown(
 
     if (d.def_sacks > 0) {
       categories.push({
+        target: "def_sacks",
         label: "Sacks",
         points: Math.round(d.def_sacks * dc.sack * 10) / 10,
         detail: `${d.def_sacks.toFixed(1)} sacks`,
@@ -410,6 +440,7 @@ export function getPointsBreakdown(
 
     if (d.def_interceptions > 0) {
       categories.push({
+        target: "def_interceptions",
         label: "Interceptions",
         points: Math.round(d.def_interceptions * dc.interception * 10) / 10,
         detail: `${d.def_interceptions.toFixed(1)} INTs`,
@@ -418,6 +449,7 @@ export function getPointsBreakdown(
 
     if (d.def_fumbles > 0) {
       categories.push({
+        target: "def_fumbles",
         label: "Fumble Rec",
         points: Math.round(d.def_fumbles * dc.fumbleRecovery * 10) / 10,
         detail: `${d.def_fumbles.toFixed(1)} fumbles`,
@@ -426,6 +458,7 @@ export function getPointsBreakdown(
 
     if (d.total_def_tds > 0) {
       categories.push({
+        target: "total_def_tds",
         label: "Def/ST TDs",
         points: Math.round(d.total_def_tds * dc.defensiveTd * 10) / 10,
         detail: `${d.total_def_tds.toFixed(1)} TDs`,
@@ -433,10 +466,11 @@ export function getPointsBreakdown(
     }
   }
 
-  const total = categories.reduce((sum, cat) => sum + cat.points, 0);
-
   return {
-    total: Math.round(total * 10) / 10,
+    // Summing the already-rounded categories drifts from the headline number by
+    // up to a tenth, so the total comes from the same calculator every other
+    // surface uses. Categories stay rounded for display.
+    total: calculateFantasyPoints(position, prediction, config),
     categories,
   };
 }

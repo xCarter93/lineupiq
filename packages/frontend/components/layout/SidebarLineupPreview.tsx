@@ -1,32 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { getCurrentSeason } from "@/lib/season";
+import { usePlayersWeekProjections } from "@/hooks/usePredictions";
 import { useSidebar } from "./sidebar-context";
+
+// Week is still pinned to 1 - will be dynamic later
+const PREVIEW_WEEK = 1;
 
 export function SidebarLineupPreview() {
   const [isOpen, setIsOpen] = useState(true);
   const { isCollapsed } = useSidebar();
+  const season = getCurrentSeason();
 
-  // Week is still pinned to 1 - will be dynamic later
   const lineup = useQuery(api.lineups.getByWeek, {
-    week: 1,
-    season: getCurrentSeason(),
+    week: PREVIEW_WEEK,
+    season,
   });
+
+  const rosteredPlayerIds = useMemo(
+    () =>
+      lineup?.slots
+        .map((slot) => slot.playerId)
+        .filter((id): id is string => !!id) ?? [],
+    [lineup]
+  );
+
+  // Derived from live predictions rather than the lineup's stored total, which
+  // would go stale the moment the scoring config or a prediction run changes.
+  const { projections, isLoading } = usePlayersWeekProjections(
+    rosteredPlayerIds,
+    season,
+    PREVIEW_WEEK
+  );
 
   if (isCollapsed) {
     return null;
   }
 
-  // Calculate filled slots and projected points
-  const filledSlots =
-    lineup?.slots.filter((slot) => slot.playerId).length ?? 0;
+  const filledSlots = rosteredPlayerIds.length;
   const totalSlots = lineup?.slots.length ?? 9;
-  const projectedPoints = lineup?.totalProjectedPoints ?? 0;
+  const projected = rosteredPlayerIds
+    .map((id) => projections.get(id))
+    .filter((projection) => projection !== undefined);
+  const projectedPoints = projected.reduce((sum, p) => sum + p.points, 0);
 
   // Get slot summary
   const slotSummary = lineup?.slots.reduce(
@@ -66,12 +87,23 @@ export function SidebarLineupPreview() {
           {/* Projected Points */}
           <div className="flex items-baseline justify-between mb-3">
             <span className="text-xs text-muted-foreground">Projected</span>
-            <span className="text-lg font-bold text-primary">
-              {projectedPoints.toFixed(1)}
-              <span className="text-xs font-normal text-muted-foreground ml-1">
-                pts
+            {projected.length > 0 ? (
+              <span className="text-lg font-bold text-primary">
+                {projectedPoints.toFixed(1)}
+                <span className="text-xs font-normal text-muted-foreground ml-1">
+                  pts
+                </span>
               </span>
-            </span>
+            ) : (
+              <span
+                className={cn(
+                  "text-lg font-bold text-muted-foreground",
+                  isLoading && "animate-pulse"
+                )}
+              >
+                &mdash;
+              </span>
+            )}
           </div>
 
           {/* Slot Summary */}

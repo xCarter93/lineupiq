@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { toFullScoringConfig } from "@/lib/scoring-config";
 
 /**
  * Hook returning all scoring configs
@@ -27,6 +29,23 @@ export function useDefaultScoringConfig() {
   const config = useQuery(api.scoringConfigs.getDefault);
   return {
     config,
+    isLoading: config === undefined,
+  };
+}
+
+/**
+ * The user's active scoring config, widened for every position's calculator.
+ * Falls back to ESPN standard scoring until Convex responds.
+ *
+ * @example
+ * const { scoring, name } = useActiveScoringConfig();
+ */
+export function useActiveScoringConfig() {
+  const config = useQuery(api.scoringConfigs.getDefault);
+
+  return {
+    scoring: useMemo(() => toFullScoringConfig(config), [config]),
+    name: config?.name ?? "Standard",
     isLoading: config === undefined,
   };
 }

@@ -6,14 +6,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { PredictionSourceDot } from "@/components/ui/prediction-source";
 import { Plus, X, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatMatchup, type PlayerProjection } from "@/lib/prediction-points";
 
 interface LineupSlotProps {
   position: string;
   eligiblePositions: string[];
   playerId?: string;
-  projectedPoints?: number;
+  /** This week's cached projection, or null when nothing was predicted. */
+  projection?: PlayerProjection | null;
   onAddClick: () => void;
   onRemoveClick: () => void;
 }
@@ -22,7 +25,7 @@ export function LineupSlot({
   position,
   eligiblePositions,
   playerId,
-  projectedPoints = 0,
+  projection,
   onAddClick,
   onRemoveClick,
 }: LineupSlotProps) {
@@ -75,6 +78,7 @@ export function LineupSlot({
     .split(" ")
     .map((n) => n[0])
     .join("");
+  const matchup = projection ? formatMatchup(projection) : null;
 
   return (
     <Card className="flex items-center justify-between p-4">
@@ -95,17 +99,30 @@ export function LineupSlot({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{player?.team ?? "---"}</span>
             <span>•</span>
-            <span>vs. OPP</span>
+            <span>{matchup ?? "—"}</span>
           </div>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
         <div className="text-right">
-          <div className="text-lg font-bold text-primary">
-            {projectedPoints.toFixed(1)}
+          {projection ? (
+            <div className="flex items-center justify-end gap-1.5">
+              <PredictionSourceDot
+                mix={projection.sourceMix}
+                modelCount={projection.modelCount}
+                baselineCount={projection.baselineCount}
+              />
+              <span className="text-lg font-bold text-primary">
+                {projection.points.toFixed(1)}
+              </span>
+            </div>
+          ) : (
+            <div className="text-lg font-bold text-muted-foreground">—</div>
+          )}
+          <div className="text-xs text-muted-foreground">
+            {projection ? "projected" : "no prediction yet"}
           </div>
-          <div className="text-xs text-muted-foreground">projected</div>
         </div>
         <Button
           variant="ghost"

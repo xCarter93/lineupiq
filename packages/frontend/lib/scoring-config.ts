@@ -124,6 +124,97 @@ export const ESPN_HALF_PPR: FullScoringConfig = {
 export const DEFAULT_SCORING = ESPN_STANDARD;
 
 /**
+ * The `scoringConfigs` Convex document shape, which names its kicking/defense
+ * fields differently from FullScoringConfig and may omit them entirely.
+ */
+export interface StoredScoringConfig {
+  name: string;
+  passing: { yardsPerPoint: number; tdPoints: number; intPoints: number };
+  rushing: { yardsPerPoint: number; tdPoints: number };
+  receiving: {
+    yardsPerPoint: number;
+    tdPoints: number;
+    receptionPoints: number;
+  };
+  kicking?: {
+    fgPoints: number;
+    fg40_49Points: number;
+    fg50PlusPoints: number;
+    patPoints: number;
+    missPoints: number;
+  };
+  defense?: {
+    sackPoints: number;
+    intPoints: number;
+    fumbleRecPoints: number;
+    tdPoints: number;
+    safetyPoints: number;
+    ptsAllowed0?: number;
+    ptsAllowed1_6?: number;
+    ptsAllowed7_13?: number;
+    ptsAllowed14_20?: number;
+    ptsAllowed21_27?: number;
+    ptsAllowed28_34?: number;
+    ptsAllowed35Plus?: number;
+  };
+}
+
+/**
+ * Widen a stored config into the full one the calculators expect, keeping ESPN
+ * standard values for anything the stored config does not carry.
+ */
+export function toFullScoringConfig(
+  stored: StoredScoringConfig | null | undefined
+): FullScoringConfig {
+  if (!stored) return DEFAULT_SCORING;
+
+  const k = stored.kicking;
+  const d = stored.defense;
+
+  return {
+    passing: { ...ESPN_STANDARD.passing, ...stored.passing },
+    rushing: { ...ESPN_STANDARD.rushing, ...stored.rushing },
+    receiving: { ...ESPN_STANDARD.receiving, ...stored.receiving },
+    kicking: k
+      ? {
+          fgMade0_39: k.fgPoints,
+          fgMade40_49: k.fg40_49Points,
+          fgMade50Plus: k.fg50PlusPoints,
+          fgMissed0_39: k.missPoints,
+          fgMissed40_49: k.missPoints,
+          fgMissed50Plus: k.missPoints,
+          xpMade: k.patPoints,
+          xpMissed: k.missPoints,
+        }
+      : ESPN_STANDARD.kicking,
+    defense: d
+      ? {
+          sack: d.sackPoints,
+          interception: d.intPoints,
+          fumbleRecovery: d.fumbleRecPoints,
+          defensiveTd: d.tdPoints,
+          safety: d.safetyPoints,
+          blockedKick: ESPN_STANDARD.defense.blockedKick,
+          returnTd: d.tdPoints,
+          pointsAllowed0: d.ptsAllowed0 ?? ESPN_STANDARD.defense.pointsAllowed0,
+          pointsAllowed1_6:
+            d.ptsAllowed1_6 ?? ESPN_STANDARD.defense.pointsAllowed1_6,
+          pointsAllowed7_13:
+            d.ptsAllowed7_13 ?? ESPN_STANDARD.defense.pointsAllowed7_13,
+          pointsAllowed14_20:
+            d.ptsAllowed14_20 ?? ESPN_STANDARD.defense.pointsAllowed14_20,
+          pointsAllowed21_27:
+            d.ptsAllowed21_27 ?? ESPN_STANDARD.defense.pointsAllowed21_27,
+          pointsAllowed28_34:
+            d.ptsAllowed28_34 ?? ESPN_STANDARD.defense.pointsAllowed28_34,
+          pointsAllowed35Plus:
+            d.ptsAllowed35Plus ?? ESPN_STANDARD.defense.pointsAllowed35Plus,
+        }
+      : ESPN_STANDARD.defense,
+  };
+}
+
+/**
  * Get points allowed fantasy points based on tier.
  */
 export function getPointsAllowedScore(

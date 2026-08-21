@@ -20,11 +20,13 @@ import { DataGridTableVirtual } from "@/components/reui/data-grid/data-grid-tabl
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
+import { PredictionSourceDot } from "@/components/ui/prediction-source";
 import { PositionTabs } from "./PositionTabs";
 import { PlayerTableFilters } from "./PlayerTableFilters";
-import { Plus, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { useSimulation } from "@/hooks/useSimulation";
-import { usePlayerTablePredictions } from "@/hooks/usePlayerTablePredictions";
+import { Plus } from "lucide-react";
+import { useWeekProjections } from "@/hooks/usePredictions";
+import { formatMatchup, type SourceMix } from "@/lib/prediction-points";
+import { getCurrentNFLWeek, getCurrentSeason } from "@/lib/season";
 
 interface PlayerTableProps {
   onPlayerClick: (player: {
@@ -37,28 +39,17 @@ interface PlayerTableProps {
   onAddToLineup?: (playerId: string) => void;
 }
 
-interface PlayerWithStats {
+interface PlayerWithProjection {
   playerId: string;
   name: string;
   position: string;
   team: string;
   headshotUrl?: string;
-  seasonAvg: number;
-  thisWeekProj: number;
-  lastWeekActual: number;
-  lastWeekPred: number;
-  trend: "up" | "down" | "flat";
-}
-
-// Trend icon component (defined outside to avoid recreating during render)
-function TrendIcon({ trend }: { trend: "up" | "down" | "flat" }) {
-  if (trend === "up") {
-    return <TrendingUp className="h-4 w-4 text-success" />;
-  }
-  if (trend === "down") {
-    return <TrendingDown className="h-4 w-4 text-destructive" />;
-  }
-  return <Minus className="h-4 w-4 text-muted-foreground" />;
+  matchup: string | null;
+  projectedPoints: number | null;
+  sourceMix: SourceMix | null;
+  modelCount: number;
+  baselineCount: number;
 }
 
 const NUMERIC_COLUMN_META = {
@@ -71,19 +62,19 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "thisWeekProj", desc: true },
+    { id: "projectedPoints", desc: true },
   ]);
 
-  // Fetch players
+  const season = getCurrentSeason();
+  const week = getCurrentNFLWeek(season);
+
   const allPlayersQuery = useQuery(api.players.list);
   const allPlayers = useMemo(() => allPlayersQuery ?? [], [allPlayersQuery]);
 
-  // Track recent players
   const addRecentPlayer = useMutation(api.recentPlayers.add);
 
-  // Simulation context
-  const simulation = useSimulation();
-  const { playerStats, playerStatsByName, isLoading: predictionsLoading, currentWeek } = usePlayerTablePredictions();
+  const { projections, scoringName, isLoading: projectionsLoading } =
+    useWeekProjections(season, week);
 
   // Get unique teams for filter
   const teams = useMemo(() => {
@@ -100,86 +91,30 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
     return counts;
   }, [allPlayers]);
 
-  // Enhance players with simulation data when available, otherwise mock stats
-  const playersWithStats: PlayerWithStats[] = useMemo(() => {
-    // In simulation mode with predictions, use real data
-    if (simulation.isActive && (playerStats.size > 0 || playerStatsByName.size > 0)) {
-      return allPlayers.map((player) => {
-        // Try to match by player ID first, then by name
-        let stats = playerStats.get(player.playerId);
-        if (!stats) {
-          const normalizedName = player.name.toLowerCase().trim();
-          stats = playerStatsByName.get(normalizedName);
-        }
+  const playersWithProjections: PlayerWithProjection[] = useMemo(
+    () =>
+      allPlayers.map((player) => {
+        const projection = projections.get(player.playerId);
 
-        if (stats) {
-          return {
-            playerId: player.playerId,
-            name: player.name,
-            position: player.position,
-            team: player.team || "N/A",
-            headshotUrl: player.headshotUrl,
-            seasonAvg: stats.seasonAvg ?? 0,
-            thisWeekProj: stats.thisWeekProj ?? 0,
-            lastWeekActual: stats.lastWeekActual ?? 0,
-            lastWeekPred: stats.lastWeekPred ?? 0,
-            trend: stats.trend,
-          };
-        }
-
-        // Player not in predictions (maybe K or DEF without predictions)
         return {
           playerId: player.playerId,
           name: player.name,
           position: player.position,
           team: player.team || "N/A",
           headshotUrl: player.headshotUrl,
-          seasonAvg: 0,
-          thisWeekProj: 0,
-          lastWeekActual: 0,
-          lastWeekPred: 0,
-          trend: "flat" as const,
+          matchup: projection ? formatMatchup(projection) : null,
+          projectedPoints: projection?.points ?? null,
+          sourceMix: projection?.sourceMix ?? null,
+          modelCount: projection?.modelCount ?? 0,
+          baselineCount: projection?.baselineCount ?? 0,
         };
-      });
-    }
-
-    // Fallback: mock position-based stats for non-simulation mode
-    const positionStats: Record<string, { avg: number; proj: number; actual: number }> = {
-      QB: { avg: 22.5, proj: 24.0, actual: 23.5 },
-      RB: { avg: 14.0, proj: 15.0, actual: 13.5 },
-      WR: { avg: 13.5, proj: 14.5, actual: 15.0 },
-      TE: { avg: 10.5, proj: 11.0, actual: 9.5 },
-      K: { avg: 8.0, proj: 8.5, actual: 7.5 },
-      DEF: { avg: 7.5, proj: 8.0, actual: 6.5 },
-    };
-
-    return allPlayers.map((player, index) => {
-      const stats = positionStats[player.position] ?? { avg: 12.0, proj: 12.5, actual: 11.5 };
-      const variation = (index % 10) * 0.5;
-      const seasonAvg = stats.avg + variation;
-      const thisWeekProj = stats.proj + variation;
-      const lastWeekActual = stats.actual + variation;
-      const lastWeekPred = lastWeekActual * 0.95;
-      const trendValue = thisWeekProj - seasonAvg;
-
-      return {
-        playerId: player.playerId,
-        name: player.name,
-        position: player.position,
-        team: player.team || "N/A",
-        headshotUrl: player.headshotUrl,
-        seasonAvg,
-        thisWeekProj,
-        lastWeekActual,
-        lastWeekPred,
-        trend: trendValue > 2 ? "up" : trendValue < -2 ? "down" : "flat",
-      };
-    });
-  }, [allPlayers, simulation.isActive, playerStats, playerStatsByName]);
+      }),
+    [allPlayers, projections]
+  );
 
   // Filter players (sorting is owned by the grid)
   const filteredPlayers = useMemo(() => {
-    let filtered = playersWithStats;
+    let filtered = playersWithProjections;
 
     if (selectedPosition) {
       filtered = filtered.filter((p) => p.position === selectedPosition);
@@ -199,10 +134,15 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
     }
 
     return filtered;
-  }, [playersWithStats, selectedPosition, selectedTeam, searchQuery]);
+  }, [playersWithProjections, selectedPosition, selectedTeam, searchQuery]);
+
+  const projectedCount = useMemo(
+    () => filteredPlayers.filter((p) => p.projectedPoints !== null).length,
+    [filteredPlayers]
+  );
 
   const handlePlayerClick = useCallback(
-    async (player: PlayerWithStats) => {
+    async (player: PlayerWithProjection) => {
       // Track in recent players
       await addRecentPlayer({ playerId: player.playerId });
 
@@ -217,15 +157,8 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
     [addRecentPlayer, onPlayerClick]
   );
 
-  const lastWeekHeader =
-    simulation.isActive && simulation.completedWeeks > 0
-      ? `Wk ${simulation.completedWeeks}`
-      : "Last Wk";
-  const thisWeekHeader = simulation.isActive ? `Wk ${currentWeek} Proj` : "This Wk";
-  const hideLastWeek = simulation.isActive && simulation.completedWeeks === 0;
-
-  const columns = useMemo<ColumnDef<DataGridFeatures, PlayerWithStats>[]>(() => {
-    const defs: ColumnDef<DataGridFeatures, PlayerWithStats>[] = [
+  const columns = useMemo<ColumnDef<DataGridFeatures, PlayerWithProjection>[]>(() => {
+    const defs: ColumnDef<DataGridFeatures, PlayerWithProjection>[] = [
       {
         accessorKey: "name",
         id: "name",
@@ -261,69 +194,43 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
         size: 90,
       },
       {
-        accessorKey: "lastWeekActual",
-        id: "lastWeekActual",
-        header: ({ column }) => (
-          <DataGridColumnHeader title={lastWeekHeader} column={column} />
-        ),
-        cell: ({ row }) => {
-          if (hideLastWeek || row.original.lastWeekActual <= 0) {
-            return <span className="text-muted-foreground">—</span>;
-          }
-          return (
-            <div className="space-y-0.5">
-              <div className="font-medium">{row.original.lastWeekActual.toFixed(1)}</div>
-              {row.original.lastWeekPred > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  ({row.original.lastWeekPred.toFixed(1)})
-                </div>
-              )}
-            </div>
-          );
-        },
-        size: 110,
-        meta: NUMERIC_COLUMN_META,
+        accessorFn: (row: PlayerWithProjection) => row.matchup ?? "",
+        id: "matchup",
+        header: ({ column }) => <DataGridColumnHeader title="Opp" column={column} />,
+        cell: ({ row }) =>
+          row.original.matchup ? (
+            <span className="text-sm">{row.original.matchup}</span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
+        size: 100,
       },
       {
-        accessorKey: "thisWeekProj",
-        id: "thisWeekProj",
+        // Players without a prediction sort to the bottom of a descending sort
+        // rather than clumping at the top as nulls would.
+        accessorFn: (row: PlayerWithProjection) =>
+          row.projectedPoints ?? Number.NEGATIVE_INFINITY,
+        id: "projectedPoints",
         header: ({ column }) => (
-          <DataGridColumnHeader title={thisWeekHeader} column={column} />
+          <DataGridColumnHeader title={`Wk ${week} Proj`} column={column} />
         ),
         cell: ({ row }) =>
-          row.original.thisWeekProj > 0 ? (
-            <span className="font-semibold text-primary">
-              {row.original.thisWeekProj.toFixed(1)}
+          row.original.projectedPoints !== null && row.original.sourceMix ? (
+            <span className="inline-flex items-center justify-end gap-1.5">
+              <PredictionSourceDot
+                mix={row.original.sourceMix}
+                modelCount={row.original.modelCount}
+                baselineCount={row.original.baselineCount}
+              />
+              <span className="font-semibold text-primary">
+                {row.original.projectedPoints.toFixed(1)}
+              </span>
             </span>
           ) : (
             <span className="text-muted-foreground">—</span>
           ),
-        size: 110,
+        size: 120,
         meta: NUMERIC_COLUMN_META,
-      },
-      {
-        accessorKey: "seasonAvg",
-        id: "seasonAvg",
-        header: ({ column }) => <DataGridColumnHeader title="Proj Avg" column={column} />,
-        cell: ({ row }) =>
-          row.original.seasonAvg > 0 ? (
-            <span className="text-sm">{row.original.seasonAvg.toFixed(1)}</span>
-          ) : (
-            <span className="text-muted-foreground">—</span>
-          ),
-        size: 110,
-        meta: NUMERIC_COLUMN_META,
-      },
-      {
-        id: "trend",
-        header: ({ column }) => <DataGridColumnHeader title="Trend" column={column} />,
-        cell: ({ row }) => <TrendIcon trend={row.original.trend} />,
-        size: 80,
-        enableSorting: false,
-        meta: {
-          headerClassName: "text-center *:justify-center",
-          cellClassName: "text-center [&>*]:mx-auto",
-        },
       },
     ];
 
@@ -350,7 +257,7 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
     }
 
     return defs;
-  }, [lastWeekHeader, thisWeekHeader, hideLastWeek, onAddToLineup]);
+  }, [week, onAddToLineup]);
 
   const table = useTable({
     features: dataGridFeatures,
@@ -359,7 +266,7 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
     manualPagination: true,
     columns,
     data: filteredPlayers,
-    getRowId: (row: PlayerWithStats) => row.playerId,
+    getRowId: (row: PlayerWithProjection) => row.playerId,
     state: { sorting },
     onSortingChange: setSorting,
   });
@@ -385,14 +292,11 @@ export function PlayerTable({ onPlayerClick, onAddToLineup }: PlayerTableProps) 
       {/* Results Count */}
       <div className="text-sm text-muted-foreground flex items-center gap-2">
         <span>{filteredPlayers.length} players</span>
-        {simulation.isActive && predictionsLoading && (
-          <span className="text-xs text-muted-foreground animate-pulse">
-            Loading predictions...
-          </span>
-        )}
-        {simulation.isActive && !predictionsLoading && playerStats.size > 0 && (
-          <span className="text-xs text-info">
-            Week {currentWeek} projections loaded
+        {projectionsLoading ? (
+          <span className="text-xs animate-pulse">Loading projections...</span>
+        ) : (
+          <span className="text-xs">
+            {projectedCount} projected for Week {week} · {scoringName} scoring
           </span>
         )}
       </div>

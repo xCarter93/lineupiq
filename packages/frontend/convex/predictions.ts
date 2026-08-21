@@ -31,6 +31,33 @@ export const byPlayerWeek = query({
   },
 });
 
+// Query: Every target predicted for a handful of named players in one week.
+// Lineup surfaces need ~9-15 players and would otherwise pull the whole weekly grid.
+export const byPlayersWeek = query({
+  args: {
+    playerIds: v.array(v.string()),
+    season: v.number(),
+    week: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const rows = await Promise.all(
+      args.playerIds.map((playerId) =>
+        ctx.db
+          .query("cachedPredictions")
+          .withIndex("by_player_week", (q) =>
+            q
+              .eq("playerId", playerId)
+              .eq("season", args.season)
+              .eq("week", args.week)
+          )
+          .collect()
+      )
+    );
+
+    return rows.flat();
+  },
+});
+
 // Internal mutation: idempotent upsert on the natural key
 // (playerId, season, week, target). Reached only through the
 // /ingest-predictions HTTP action. The batch job sends chunks of 100 rows.
