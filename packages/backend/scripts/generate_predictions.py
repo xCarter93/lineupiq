@@ -120,12 +120,6 @@ def team_names() -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 
-def _concat_future(base: pl.DataFrame, future: pl.DataFrame, group: str) -> pl.DataFrame:
-    """Append stat-less future rows so the lagged rollups reach back into real games."""
-    shared = pl.Schema({c: base.schema[c] for c in future.columns if c in base.columns})
-    return pl.concat([base, future.cast(shared)], how="diagonal").sort([group, "season", "week"])
-
-
 def _prior_games(group: str) -> pl.Expr:
     return pl.col(group).cum_count().over(group) - 1
 
@@ -151,49 +145,21 @@ def skill_scoring_frame(
     )
 
 
-def kicker_scoring_frame(
-    stats_seasons: list[int], future: pl.DataFrame, targets: list[str], season: int, week: int
-) -> pl.DataFrame:
-    base = process_kicker_data(stats_seasons)
-    frame = _concat_future(base, future, "player_id").with_columns(
-        **{f"naive_{t}": lagged_mean(pl.col(t), "player_id") for t in targets},
-    )
-    return _upcoming(frame, season, week, "player_id").with_columns(
-        entity_id=pl.col("player_id"),
-        entity_name=pl.col("player_name"),
-    )
+def team_week_sides(schedule: pl.DataFrame, season: int, week: int) -> pl.DataFrame:
+    """One row per team playing that week, with its opponent.
 
-
-def defense_scoring_frame(
-    stats_seasons: list[int], future: pl.DataFrame, targets: list[str], season: int, week: int
-) -> pl.DataFrame:
-    base = process_defense_data(stats_seasons)
-    frame = _concat_future(base, future, "team").with_columns(
-        **{f"naive_{t}": lagged_mean(pl.col(t), "team") for t in targets},
-    )
-    names = team_names()
-    return _upcoming(frame, season, week, "team").with_columns(
-        entity_id=pl.format("DEF_{}", pl.col("team")),
-        entity_name=pl.col("team").replace_strict(names, default=pl.col("team") + " Defense")
-        + " D/ST",
-        position=pl.lit("DEF"),
-    )
-
-
-def build_defense_entities(schedule: pl.DataFrame, season: int, week: int) -> pl.DataFrame:
-    """One row per team playing that week, with its opponent."""
+    Doubles as the DEF future rows (minus `opponent`) and as the opponent lookup for
+    both team-keyed pipelines. `is_home` is deliberately absent: the K/DEF pipelines
+    derive it from the Vegas context, and a second copy here would collide on the join.
+    """
     games = schedule.filter(pl.col("week") == week)
     sides = pl.concat(
         [
             games.select(
-                pl.col("home_team").alias("team"),
-                pl.col("away_team").alias("opponent"),
-                pl.lit(True).alias("is_home"),
+                pl.col("home_team").alias("team"), pl.col("away_team").alias("opponent")
             ),
             games.select(
-                pl.col("away_team").alias("team"),
-                pl.col("home_team").alias("opponent"),
-                pl.lit(False).alias("is_home"),
+                pl.col("away_team").alias("team"), pl.col("home_team").alias("opponent")
             ),
         ]
     )
@@ -201,6 +167,57 @@ def build_defense_entities(schedule: pl.DataFrame, season: int, week: int) -> pl
         pl.lit(season, dtype=pl.Int32).alias("season"),
         pl.lit(week, dtype=pl.Int32).alias("week"),
     )
+
+
+def _with_opponent(frame: pl.DataFrame, sides: pl.DataFrame) -> pl.DataFrame:
+    """Attach the week's opponent; neither team-keyed pipeline carries one."""
+    return frame.join(
+        sides.cast({"season": frame.schema["season"], "week": frame.schema["week"]}),
+        on=["season", "week", "team"],
+        how="left",
+    )
+
+
+def kicker_scoring_frame(
+    stats_seasons: list[int],
+    future: pl.DataFrame,
+    sides: pl.DataFrame,
+    targets: list[str],
+    season: int,
+    week: int,
+) -> pl.DataFrame:
+    # Identity only: any extra column the pipeline also produces (notably is_home) would
+    # survive the concat and get suffixed away by the Vegas join, blanking that feature.
+    future = future.select("player_id", "player_name", "team", "season", "week")
+    frame = (
+        process_kicker_data(stats_seasons, future_rows=future)
+        .sort(["player_id", "season", "week"])
+        .with_columns(**{f"naive_{t}": lagged_mean(pl.col(t), "player_id") for t in targets})
+    )
+    upcoming = _upcoming(frame, season, week, "player_id").with_columns(
+        entity_id=pl.col("player_id"),
+        entity_name=pl.col("player_name"),
+        position=pl.lit("K"),
+    )
+    return _with_opponent(upcoming, sides)
+
+
+def defense_scoring_frame(
+    stats_seasons: list[int], sides: pl.DataFrame, targets: list[str], season: int, week: int
+) -> pl.DataFrame:
+    frame = (
+        process_defense_data(stats_seasons, future_rows=sides.select("season", "week", "team"))
+        .sort(["team", "season", "week"])
+        .with_columns(**{f"naive_{t}": lagged_mean(pl.col(t), "team") for t in targets})
+    )
+    names = team_names()
+    upcoming = _upcoming(frame, season, week, "team").with_columns(
+        entity_id=pl.format("DEF_{}", pl.col("team")),
+        entity_name=pl.col("team").replace_strict(names, default=pl.col("team") + " Defense")
+        + " D/ST",
+        position=pl.lit("DEF"),
+    )
+    return _with_opponent(upcoming, sides)
 
 
 # ---------------------------------------------------------------------------
@@ -458,16 +475,19 @@ def main() -> None:
         scoring = skill_scoring_frame(frame, position, targets, season, week)
         rows += predict_rows(scoring, position, targets, feature_cols, verdicts, run_id)
 
+    sides = team_week_sides(schedule, season, week)
+
     kicker_targets = targets_for(verdicts, "K")
     future_kickers = build_future_player_rows(rosters, schedule, season, week, ("K",))
-    kickers = kicker_scoring_frame(stats_seasons, future_kickers, kicker_targets, season, week)
+    kickers = kicker_scoring_frame(
+        stats_seasons, future_kickers, sides, kicker_targets, season, week
+    )
     rows += predict_rows(
         kickers, "K", kicker_targets, get_kicker_feature_columns(), verdicts, run_id
     )
 
     defense_targets = targets_for(verdicts, "DEF")
-    future_defenses = build_defense_entities(schedule, season, week)
-    defenses = defense_scoring_frame(stats_seasons, future_defenses, defense_targets, season, week)
+    defenses = defense_scoring_frame(stats_seasons, sides, defense_targets, season, week)
     rows += predict_rows(
         defenses, "DEF", defense_targets, get_defense_feature_columns(), verdicts, run_id
     )
