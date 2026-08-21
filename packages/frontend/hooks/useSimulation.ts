@@ -45,7 +45,7 @@ export function useSimulation(): SimulationInfo {
       targetSeason: 2025,
       completedWeeks: 0,
       currentWeek: getCurrentNFLWeek(),
-      trainingSeasons: [2022, 2023, 2024, 2025],
+      trainingSeasons: [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025],
       status: "ready",
       isBusy: false,
     };
@@ -62,7 +62,7 @@ export function useSimulation(): SimulationInfo {
     targetSeason: state.targetSeason,
     completedWeeks,
     currentWeek: appWeek,
-    trainingSeasons: state.trainingSeasons,
+    trainingSeasons: [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025],
     status: state.status,
     isBusy: state.status !== "ready",
   };

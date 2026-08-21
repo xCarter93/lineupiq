@@ -165,7 +165,7 @@ export default function SimulationPage() {
       // Create in Convex first
       await initializeSimulation({
         targetSeason: 2025,
-        trainingSeasons: [2022, 2023, 2024],
+        trainingSeasons: [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024],
       });
 
       // Then trigger backend

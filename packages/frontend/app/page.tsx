@@ -58,7 +58,7 @@ export default function Page() {
     ? simulation.completedWeeks === 0
       ? simulation.trainingSeasons.filter(s => s < simulation.targetSeason).join("-")
       : `${simulation.trainingSeasons[0]}-${simulation.targetSeason} (through Wk ${simulation.completedWeeks})`
-    : "2022-2025";
+    : "2016-2025";
 
   return (
     <div className="min-h-screen bg-background">
@@ -179,7 +179,7 @@ export default function Page() {
               <div className="flex items-center gap-4">
                 <div>
                   <span className="text-muted-foreground">Models: </span>
-                  <span className="font-medium">32 LightGBM</span>
+                  <span className="font-medium">124 Ensemble (LightGBM + XGBoost + CatBoost)</span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Training Data: </span>
@@ -188,7 +188,7 @@ export default function Page() {
                 {!simulation.isActive && (
                   <div>
                     <span className="text-muted-foreground">Last Updated: </span>
-                    <span className="font-medium">Jan 24, 2026</span>
+                    <span className="font-medium">Mar 6, 2026</span>
                   </div>
                 )}
               </div>
