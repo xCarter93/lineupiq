@@ -244,6 +244,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--positions", nargs="+", default=POSITIONS, choices=POSITIONS)
     parser.add_argument("--trials", type=int, default=12, help="Optuna trials per target")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=OUTPUT_PATH,
+        help="Manifest path; use a separate file for partial-position runs",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
@@ -253,7 +259,7 @@ def main() -> None:
     feature_df = build_features(SEASONS) if skill_positions else None
 
     results: list[dict[str, Any]] = []
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
 
     for position in args.positions:
         if position == "K":
@@ -277,10 +283,10 @@ def main() -> None:
             )
             # Rewrite after every target so a crash never costs the whole run.
             manifest = build_manifest(results, args.trials, time.time() - run_started)
-            OUTPUT_PATH.write_text(json.dumps(manifest, indent=2))
+            args.output.write_text(json.dumps(manifest, indent=2))
 
     print_table(results)
-    print(f"\nWrote {OUTPUT_PATH}")
+    print(f"\nWrote {args.output}")
     print(f"Total wall-clock: {time.time() - run_started:.1f}s")
 
 

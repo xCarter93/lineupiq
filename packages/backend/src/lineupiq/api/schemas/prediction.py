@@ -452,6 +452,17 @@ class KickerPredictionRequest(BaseModel):
     fg_pct_roll5: float = Field(
         ..., description="5-week rolling average of FG percentage"
     )
+    is_home: int = Field(default=0, description="1 if the kicker's team is at home")
+    total_line: float = Field(default=45.0, description="Vegas over/under for the game")
+    team_spread: float = Field(
+        default=0.0, description="Vegas spread from the team's side (positive = favored)"
+    )
+    implied_team_total: float = Field(
+        default=22.5, description="Vegas implied points for the kicker's team"
+    )
+    opp_implied_total: float = Field(
+        default=22.5, description="Vegas implied points for the opponent"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -460,6 +471,11 @@ class KickerPredictionRequest(BaseModel):
                     "fg_att_roll5": 2.5,
                     "pat_att_roll5": 3.2,
                     "fg_pct_roll5": 0.85,
+                    "is_home": 1,
+                    "total_line": 46.0,
+                    "team_spread": 3.0,
+                    "implied_team_total": 24.5,
+                    "opp_implied_total": 21.5,
                 }
             ]
         }
@@ -533,6 +549,17 @@ class DefensePredictionRequest(BaseModel):
     def_tds_roll5: float = Field(
         ..., description="5-week rolling average of defensive/ST touchdowns"
     )
+    is_home: int = Field(default=0, description="1 if the defense is at home")
+    total_line: float = Field(default=45.0, description="Vegas over/under for the game")
+    team_spread: float = Field(
+        default=0.0, description="Vegas spread from the team's side (positive = favored)"
+    )
+    implied_team_total: float = Field(
+        default=22.5, description="Vegas implied points for the defense's own team"
+    )
+    opp_implied_total: float = Field(
+        default=22.5, description="Vegas implied points for the opponent (points allowed proxy)"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -543,6 +570,11 @@ class DefensePredictionRequest(BaseModel):
                     "def_ints_roll5": 1.2,
                     "def_fumbles_roll5": 0.8,
                     "def_tds_roll5": 0.3,
+                    "is_home": 1,
+                    "total_line": 46.0,
+                    "team_spread": 3.0,
+                    "implied_team_total": 24.5,
+                    "opp_implied_total": 21.5,
                 }
             ]
         }

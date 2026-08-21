@@ -18,6 +18,8 @@ import logging
 import polars as pl
 
 from lineupiq.data.fetchers import fetch_schedules, fetch_team_defense_stats
+from lineupiq.data.normalization import normalize_team_columns
+from lineupiq.data.team_context import TEAM_CONTEXT_COLUMNS, attach_team_vegas_context
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +49,7 @@ def process_defense_data(
     seasons: list[int],
     target_season: int | None = None,
     include_weeks: list[int] | None = None,
+    future_rows: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """Process team defense data for model training.
 
@@ -54,6 +57,9 @@ def process_defense_data(
         seasons: List of seasons to process.
         target_season: If provided, filter this season to only include specific weeks.
         include_weeks: Weeks to include from target_season (required if target_season set).
+        future_rows: Identity-only rows (season, week, team) for an upcoming week.
+            Stats stay null so rolling features lag onto them from prior games and
+            Vegas context is joined from the schedule.
 
     Returns:
         DataFrame with defense features and targets, one row per team-game.
@@ -68,8 +74,13 @@ def process_defense_data(
     # Fetch team stats
     team_df = fetch_team_defense_stats(seasons)
 
-    # Fetch schedules for points allowed
-    schedules = fetch_schedules(seasons)
+    # Fetch schedules for points allowed and Vegas context
+    schedule_seasons = set(seasons)
+    if future_rows is not None:
+        schedule_seasons |= set(future_rows.select("season").to_series().to_list())
+    # Pre-2020 schedules use OAK/SD/STL; team stats use LV/LAC/LA, so points_allowed
+    # silently missed those franchises before this normalization.
+    schedules = normalize_team_columns(fetch_schedules(sorted(schedule_seasons)))
 
     # Compute points allowed from schedules
     # For home team: points_allowed = away_score
@@ -133,6 +144,13 @@ def process_defense_data(
     else:
         df = df.with_columns(pl.lit(0).alias("total_def_tds"))
 
+    # Append upcoming-week rows before the rolling block so their windows lag onto
+    # prior games; their stat columns stay null and never enter a feature.
+    if future_rows is not None:
+        df = pl.concat([df, future_rows], how="diagonal_relaxed")
+
+    df = attach_team_vegas_context(df, schedules, "team")
+
     # Sort for rolling calculations
     df = df.sort(["team", "season", "week"])
 
@@ -190,7 +208,7 @@ def get_defense_feature_columns() -> list[str]:
         "def_ints_roll5",
         "def_fumbles_roll5",
         "def_tds_roll5",
-    ]
+    ] + TEAM_CONTEXT_COLUMNS
 
 
 def get_defense_target_columns() -> list[str]:

@@ -11,7 +11,8 @@ import logging
 
 import polars as pl
 
-from lineupiq.data.fetchers import fetch_kicker_stats
+from lineupiq.data.fetchers import fetch_kicker_stats, fetch_schedules
+from lineupiq.data.team_context import TEAM_CONTEXT_COLUMNS, attach_team_vegas_context
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ def process_kicker_data(
     seasons: list[int],
     target_season: int | None = None,
     include_weeks: list[int] | None = None,
+    future_rows: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """Process kicker data for model training.
 
@@ -58,6 +60,9 @@ def process_kicker_data(
         seasons: List of seasons to process.
         target_season: If provided, filter this season to only include specific weeks.
         include_weeks: Weeks to include from target_season (required if target_season set).
+        future_rows: Identity-only rows (player_id, player_name, team, season, week)
+            for an upcoming week. Stats stay null so rolling features lag onto them
+            from prior games and Vegas context is joined from the schedule.
 
     Returns:
         DataFrame with kicker features and targets, one row per kicker-game.
@@ -72,12 +77,17 @@ def process_kicker_data(
     # Fetch raw kicker stats
     df = fetch_kicker_stats(seasons)
 
-    # Select relevant columns
-    id_cols = ["player_id", "player_name", "recent_team", "season", "week"]
+    # Select relevant columns; nflreadpy renamed recent_team -> team
+    team_col = "recent_team" if "recent_team" in df.columns else "team"
+    id_cols = ["player_id", "player_name", "season", "week"]
     available_id = [c for c in id_cols if c in df.columns]
     available_stats = [c for c in KICKER_STAT_COLUMNS if c in df.columns]
 
-    df = df.select(available_id + available_stats)
+    df = df.select(
+        [pl.col(c) for c in available_id]
+        + [pl.col(team_col).alias("team")]
+        + [pl.col(c) for c in available_stats]
+    )
 
     # Fill nulls with 0 for stat columns
     for col in available_stats:
@@ -109,6 +119,14 @@ def process_kicker_data(
             ).alias("fg_att_50_plus"),
         ]
     )
+
+    # Append upcoming-week rows before the rolling block so their windows lag onto
+    # prior games; their stat columns stay null and never enter a feature.
+    if future_rows is not None:
+        df = pl.concat([df, future_rows], how="diagonal_relaxed")
+
+    schedule_seasons = sorted(set(df.select("season").to_series().to_list()))
+    df = attach_team_vegas_context(df, fetch_schedules(schedule_seasons), "team")
 
     # Add rolling features for kicker consistency
     df = df.sort(["player_id", "season", "week"])
@@ -161,7 +179,7 @@ def get_kicker_feature_columns() -> list[str]:
         "fg_att_roll5",
         "pat_att_roll5",
         "fg_pct_roll5",
-    ]
+    ] + TEAM_CONTEXT_COLUMNS
 
 
 def get_kicker_target_columns() -> list[str]:
