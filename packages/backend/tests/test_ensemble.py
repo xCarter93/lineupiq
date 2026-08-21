@@ -2,17 +2,16 @@
 
 import numpy as np
 import pytest
-from pathlib import Path
 from sklearn.datasets import make_regression
 from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import VotingRegressor, StackingRegressor
+from sklearn.ensemble import StackingRegressor, VotingRegressor
 
 from lineupiq.models.ensemble import (
-    create_voting_ensemble,
-    create_stacking_ensemble,
-    save_ensemble,
-    load_ensemble,
     MODELS_DIR,
+    create_stacking_ensemble,
+    create_voting_ensemble,
+    load_ensemble,
+    save_ensemble,
 )
 
 
@@ -24,7 +23,7 @@ class TestCreateVotingSimple:
         lgbm_model = DummyRegressor(strategy="mean")
         xgb_model = DummyRegressor(strategy="mean")
 
-        ensemble = create_voting_ensemble(lgbm_model, xgb_model, weights=None)
+        ensemble = create_voting_ensemble({"lgbm": lgbm_model, "xgb": xgb_model}, weights=None)
 
         assert isinstance(ensemble, VotingRegressor)
         assert ensemble.weights is None  # Simple averaging uses equal weights
@@ -43,7 +42,7 @@ class TestCreateVotingSimple:
         xgb_model.fit(X, y)
 
         # Create and fit ensemble
-        ensemble = create_voting_ensemble(lgbm_model, xgb_model)
+        ensemble = create_voting_ensemble({"lgbm": lgbm_model, "xgb": xgb_model})
         ensemble.fit(X, y)
 
         # Predictions should be average of both models
@@ -63,7 +62,9 @@ class TestCreateVotingWeighted:
         lgbm_model = DummyRegressor(strategy="mean")
         xgb_model = DummyRegressor(strategy="mean")
 
-        ensemble = create_voting_ensemble(lgbm_model, xgb_model, weights=[0.6, 0.4])
+        ensemble = create_voting_ensemble(
+            {"lgbm": lgbm_model, "xgb": xgb_model}, weights=[0.6, 0.4]
+        )
 
         assert isinstance(ensemble, VotingRegressor)
         assert ensemble.weights == [0.6, 0.4]
@@ -82,7 +83,9 @@ class TestCreateVotingWeighted:
         xgb_model.fit(X, y)
 
         # Create weighted ensemble (60% LightGBM, 40% XGBoost)
-        ensemble = create_voting_ensemble(lgbm_model, xgb_model, weights=[0.6, 0.4])
+        ensemble = create_voting_ensemble(
+            {"lgbm": lgbm_model, "xgb": xgb_model}, weights=[0.6, 0.4]
+        )
         ensemble.fit(X, y)
 
         # Predictions should be weighted average
@@ -102,7 +105,7 @@ class TestCreateStacking:
         lgbm_model = DummyRegressor(strategy="mean")
         xgb_model = DummyRegressor(strategy="mean")
 
-        ensemble = create_stacking_ensemble(lgbm_model, xgb_model, cv=3)
+        ensemble = create_stacking_ensemble({"lgbm": lgbm_model, "xgb": xgb_model}, cv=3)
 
         assert isinstance(ensemble, StackingRegressor)
         assert ensemble.cv == 3
@@ -118,7 +121,7 @@ class TestCreateStacking:
         xgb_model = DummyRegressor(strategy="median")
 
         # Create stacking ensemble
-        ensemble = create_stacking_ensemble(lgbm_model, xgb_model, cv=3)
+        ensemble = create_stacking_ensemble({"lgbm": lgbm_model, "xgb": xgb_model}, cv=3)
 
         # Fit ensemble (this trains meta-learner)
         ensemble.fit(X, y)
@@ -137,7 +140,7 @@ class TestCreateStacking:
         lgbm_model = DummyRegressor(strategy="mean")
         xgb_model = DummyRegressor(strategy="median")
 
-        ensemble = create_stacking_ensemble(lgbm_model, xgb_model, cv=3)
+        ensemble = create_stacking_ensemble({"lgbm": lgbm_model, "xgb": xgb_model}, cv=3)
         ensemble.fit(X, y)
 
         # Should be able to predict
@@ -161,7 +164,7 @@ class TestSaveLoadEnsemble:
         lgbm_model.fit(X, y)
         xgb_model.fit(X, y)
 
-        ensemble = create_voting_ensemble(lgbm_model, xgb_model)
+        ensemble = create_voting_ensemble({"lgbm": lgbm_model, "xgb": xgb_model})
         ensemble.fit(X, y)
 
         # Get predictions before save
@@ -199,7 +202,9 @@ class TestSaveLoadEnsemble:
         lgbm_model.fit(X, y)
         xgb_model.fit(X, y)
 
-        ensemble = create_voting_ensemble(lgbm_model, xgb_model, weights=[0.7, 0.3])
+        ensemble = create_voting_ensemble(
+            {"lgbm": lgbm_model, "xgb": xgb_model}, weights=[0.7, 0.3]
+        )
         ensemble.fit(X, y)
 
         original_pred = ensemble.predict(X[:10])
@@ -227,7 +232,7 @@ class TestSaveLoadEnsemble:
         lgbm_model = DummyRegressor(strategy="mean")
         xgb_model = DummyRegressor(strategy="median")
 
-        ensemble = create_stacking_ensemble(lgbm_model, xgb_model, cv=3)
+        ensemble = create_stacking_ensemble({"lgbm": lgbm_model, "xgb": xgb_model}, cv=3)
         ensemble.fit(X, y)
 
         original_pred = ensemble.predict(X[:10])
@@ -261,7 +266,7 @@ class TestSaveLoadEnsemble:
         lgbm_model.fit(X, y)
         xgb_model.fit(X, y)
 
-        ensemble = create_voting_ensemble(lgbm_model, xgb_model)
+        ensemble = create_voting_ensemble({"lgbm": lgbm_model, "xgb": xgb_model})
         ensemble.fit(X, y)
 
         # Point to new directory that doesn't exist

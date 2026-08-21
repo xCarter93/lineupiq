@@ -17,6 +17,7 @@ import pytest
 from lineupiq.features.pipeline import get_feature_columns
 from lineupiq.models.persistence import load_model
 from lineupiq.models.rb import RB_TARGETS, prepare_rb_data, train_rb_models
+from tests.conftest import skip_if_model_schema_stale
 
 
 @pytest.fixture
@@ -49,6 +50,9 @@ def sample_rb_dataframe() -> pl.DataFrame:
     data["carries"] = (np.random.randn(n_samples) * 5 + 12).clip(0, 30).tolist()
     data["receiving_yards"] = (np.random.randn(n_samples) * 15 + 20).clip(0, 100).tolist()
     data["receptions"] = (np.random.randn(n_samples) * 1.5 + 2).clip(0, 10).tolist()
+    data["receiving_tds"] = (np.random.randn(n_samples) * 0.3 + 0.2).clip(0, 2).tolist()
+    data["rushing_fumbles_lost"] = (np.random.randn(n_samples) * 0.1).clip(0, 1).tolist()
+    data["receiving_fumbles_lost"] = (np.random.randn(n_samples) * 0.1).clip(0, 1).tolist()
     data["passing_yards"] = (np.random.randn(n_samples) * 50 + 200).clip(0, 400).tolist()
     data["passing_tds"] = (np.random.randn(n_samples) * 0.8 + 1.5).clip(0, 5).tolist()
 
@@ -92,14 +96,15 @@ def test_train_rb_models_creates_models(tmp_path: pytest.TempPathFactory) -> Non
     models_dir = tmp_path / "models"
     models_dir.mkdir()
 
-    with patch("lineupiq.models.rb.save_model") as mock_save:
+    with patch("lineupiq.models.rb.save_model"):
         with patch("lineupiq.models.persistence.MODELS_DIR", models_dir):
             # Train with minimal settings for speed
             # Using 2024 only and just 5 trials
             results = train_rb_models(seasons=[2024], n_trials=5)
 
-            # Should have results for all 5 targets
-            assert len(results) == 5, f"Expected 5 targets, got {len(results)}"
+            assert len(results) == len(RB_TARGETS), (
+                f"Expected {len(RB_TARGETS)} targets, got {len(results)}"
+            )
 
             for target in RB_TARGETS:
                 assert target in results, f"Missing target in results: {target}"
@@ -126,10 +131,10 @@ def test_rb_model_predictions_reasonable() -> None:
     that predictions are within a relaxed range that allows for model extrapolation.
     """
     try:
-        # Try to load one model to check if models exist
-        load_model("RB", "rushing_yards")
+        probe, _ = load_model("RB", "rushing_yards")
     except FileNotFoundError:
         pytest.skip("RB models not trained yet - run train_rb_models first")
+    skip_if_model_schema_stale(probe, "RB", "rushing_yards")
 
     # Create sample input with correct feature count
     feature_cols = get_feature_columns()
@@ -147,6 +152,8 @@ def test_rb_model_predictions_reasonable() -> None:
         "carries": (-5, 40),
         "receiving_yards": (-30, 150),
         "receptions": (-2, 15),
+        "receiving_tds": (-1, 5),
+        "fumbles_lost": (-1, 5),
     }
 
     for target in RB_TARGETS:
@@ -161,5 +168,13 @@ def test_rb_model_predictions_reasonable() -> None:
 
 def test_rb_targets_constant() -> None:
     """Verify RB_TARGETS contains expected targets."""
-    expected = ["rushing_yards", "rushing_tds", "carries", "receiving_yards", "receptions"]
+    expected = [
+        "rushing_yards",
+        "rushing_tds",
+        "carries",
+        "receiving_yards",
+        "receptions",
+        "receiving_tds",
+        "fumbles_lost",
+    ]
     assert RB_TARGETS == expected, f"RB_TARGETS mismatch: {RB_TARGETS}"

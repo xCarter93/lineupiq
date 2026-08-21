@@ -15,7 +15,6 @@ from lineupiq.features import (
     build_features,
     get_feature_columns,
     get_target_columns,
-    save_features,
 )
 
 
@@ -163,15 +162,21 @@ class TestBuildFeaturesWithWindow:
     """Test custom rolling window parameter."""
 
     def test_window_5_creates_roll5_columns(self):
-        """Using window=5 should create _roll5 columns."""
+        """Using window=5 should create _roll5 columns alongside the fixed roll3 set."""
         df = build_features([2024], rolling_window=5)
 
         roll5_cols = [c for c in df.columns if "_roll5" in c]
         assert len(roll5_cols) >= 6, f"Expected _roll5 columns, got {roll5_cols}"
 
-        # Should NOT have _roll3 columns (old default)
-        roll3_cols = [c for c in df.columns if "_roll3" in c]
-        assert len(roll3_cols) == 0, f"Should not have _roll3 columns with window=5: {roll3_cols}"
+        # The multi-window step always adds a fixed 3-game window for momentum,
+        # independent of rolling_window.
+        expected_roll3 = {
+            "passing_yards_roll3",
+            "rushing_yards_roll3",
+            "receiving_yards_roll3",
+            "receptions_roll3",
+        }
+        assert expected_roll3.issubset(set(df.columns))
 
 
 class TestSaveAndLoadFeatures:

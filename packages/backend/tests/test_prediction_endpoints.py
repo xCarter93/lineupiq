@@ -8,6 +8,20 @@ import pytest
 from fastapi.testclient import TestClient
 
 from lineupiq.api.main import app
+from lineupiq.api.schemas.prediction import PredictionRequest
+
+
+def build_prediction_payload(**overrides: object) -> dict:
+    """Full request body for the prediction endpoints.
+
+    Every PredictionRequest field is required, so the payload is derived from the
+    schema rather than hand-listed - a hardcoded subset 422s on any schema change.
+    """
+    payload: dict = {}
+    for name, field in PredictionRequest.model_fields.items():
+        payload[name] = False if field.annotation is bool else 0.0
+    payload.update(overrides)
+    return payload
 
 
 @pytest.fixture
@@ -20,25 +34,25 @@ def client() -> Generator[TestClient, None, None]:
 @pytest.fixture
 def sample_features() -> dict:
     """Sample feature values for testing predictions."""
-    return {
-        "passing_yards_roll5": 250.0,
-        "passing_tds_roll5": 1.8,
-        "rushing_yards_roll5": 15.0,
-        "rushing_tds_roll5": 0.2,
-        "carries_roll5": 3.0,
-        "receiving_yards_roll5": 45.0,
-        "receiving_tds_roll5": 0.3,
-        "receptions_roll5": 4.5,
-        "opp_pass_defense_strength": 0.95,
-        "opp_rush_defense_strength": 1.05,
-        "opp_pass_yards_allowed_rank": 15.0,
-        "opp_rush_yards_allowed_rank": 20.0,
-        "opp_total_yards_allowed_rank": 18.0,
-        "temp_normalized": 0.6,
-        "wind_normalized": 0.2,
-        "is_home": True,
-        "is_dome": False,
-    }
+    return build_prediction_payload(
+        passing_yards_roll5=250.0,
+        passing_tds_roll5=1.8,
+        rushing_yards_roll5=15.0,
+        rushing_tds_roll5=0.2,
+        carries_roll5=3.0,
+        receiving_yards_roll5=45.0,
+        receiving_tds_roll5=0.3,
+        receptions_roll5=4.5,
+        opp_pass_defense_strength=0.95,
+        opp_rush_defense_strength=1.05,
+        opp_pass_yards_allowed_rank=15.0,
+        opp_rush_yards_allowed_rank=20.0,
+        opp_total_yards_allowed_rank=18.0,
+        temp_normalized=0.6,
+        wind_normalized=0.2,
+        is_home=True,
+        is_dome=False,
+    )
 
 
 def test_qb_prediction(client: TestClient, sample_features: dict) -> None:

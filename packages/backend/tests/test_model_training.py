@@ -9,7 +9,7 @@ Tests cover:
 - Model listing
 """
 
-import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 from unittest.mock import patch
 
@@ -46,11 +46,21 @@ def synthetic_data() -> tuple[np.ndarray, np.ndarray]:
 
 
 @pytest.fixture
-def temp_models_dir(tmp_path: Path) -> Path:
-    """Create temporary directory for model persistence tests."""
+def temp_models_dir(tmp_path: Path) -> Iterator[Path]:
+    """Redirect all three persistence directories at a temp tree.
+
+    save_model writes the canonical model, a versioned copy and a manifest to
+    three independent module globals - patching MODELS_DIR alone leaks the
+    other two into the real models/ tree.
+    """
     models_dir = tmp_path / "models"
     models_dir.mkdir()
-    return models_dir
+    with (
+        patch("lineupiq.models.persistence.MODELS_DIR", models_dir),
+        patch("lineupiq.models.persistence.MODELS_VERSIONS_DIR", models_dir / "versions"),
+        patch("lineupiq.models.persistence.MODELS_MANIFEST_DIR", models_dir / "manifests"),
+    ):
+        yield models_dir
 
 
 def test_get_xgb_params_returns_valid_dict() -> None:
@@ -159,30 +169,27 @@ def test_save_and_load_model_roundtrip(
     # Get predictions before save
     predictions_before = model.predict(X[:10])
 
-    # Mock MODELS_DIR to use temp directory
-    with patch("lineupiq.models.persistence.MODELS_DIR", temp_models_dir):
-        # Save model
-        metadata = {
-            "n_samples": len(y),
-            "cv_scores": scores.tolist(),
-        }
-        path = save_model(model, "QB", "passing_yards", metadata)
+    metadata = {
+        "n_samples": len(y),
+        "cv_scores": scores.tolist(),
+    }
+    path = save_model(model, "QB", "passing_yards", metadata)
 
-        assert path.exists()
-        assert path.name == "QB_passing_yards.joblib"
+    assert path.exists()
+    assert path.name == "QB_passing_yards.joblib"
 
-        # Load model
-        loaded_model, loaded_metadata = load_model("QB", "passing_yards")
+    # Load model
+    loaded_model, loaded_metadata = load_model("QB", "passing_yards")
 
-        # Get predictions after load
-        predictions_after = loaded_model.predict(X[:10])
+    # Get predictions after load
+    predictions_after = loaded_model.predict(X[:10])
 
-        # Predictions should be identical
-        np.testing.assert_array_almost_equal(predictions_before, predictions_after)
+    # Predictions should be identical
+    np.testing.assert_array_almost_equal(predictions_before, predictions_after)
 
-        # Metadata should be preserved
-        assert loaded_metadata["n_samples"] == len(y)
-        assert loaded_metadata["cv_scores"] == scores.tolist()
+    # Metadata should be preserved
+    assert loaded_metadata["n_samples"] == len(y)
+    assert loaded_metadata["cv_scores"] == scores.tolist()
 
 
 def test_list_models_finds_saved(
@@ -192,22 +199,21 @@ def test_list_models_finds_saved(
     """Save a model, verify list_models includes it."""
     X, y = synthetic_data
 
-    with patch("lineupiq.models.persistence.MODELS_DIR", temp_models_dir):
-        # Initially empty
-        assert list_models() == []
+    # Initially empty
+    assert list_models() == []
 
-        # Train and save a model
-        model, _ = train_model(X, y, n_splits=2)
-        save_model(model, "QB", "passing_yards")
+    # Train and save a model
+    model, _ = train_model(X, y, n_splits=2)
+    save_model(model, "QB", "passing_yards")
 
-        # Should now find the model
-        models = list_models()
-        assert ("QB", "passing_yards") in models
+    # Should now find the model
+    models = list_models()
+    assert ("QB", "passing_yards") in models
 
-        # Save another model
-        save_model(model, "RB", "rushing_yards")
+    # Save another model
+    save_model(model, "RB", "rushing_yards")
 
-        models = list_models()
-        assert len(models) == 2
-        assert ("QB", "passing_yards") in models
-        assert ("RB", "rushing_yards") in models
+    models = list_models()
+    assert len(models) == 2
+    assert ("QB", "passing_yards") in models
+    assert ("RB", "rushing_yards") in models

@@ -9,13 +9,13 @@ Tests cover:
 - Batch evaluation of all models
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import polars as pl
 import pytest
 
+from lineupiq.features.pipeline import get_feature_columns
 from lineupiq.models.evaluation import (
     calculate_metrics,
     create_holdout_split,
@@ -118,34 +118,15 @@ def mock_test_df() -> pl.DataFrame:
     np.random.seed(42)
     n_samples = 50
 
-    # Create feature columns
     feature_data = {
         "position": ["QB"] * n_samples,
         "player_id": [f"player_{i}" for i in range(n_samples)],
         "passing_yards": np.random.randint(150, 350, n_samples).astype(float),
         "passing_tds": np.random.randint(0, 4, n_samples).astype(float),
-        # Rolling features
-        "passing_yards_roll5": np.random.uniform(150, 350, n_samples),
-        "passing_tds_roll5": np.random.uniform(0, 3, n_samples),
-        "rushing_yards_roll5": np.random.uniform(0, 50, n_samples),
-        "rushing_tds_roll5": np.random.uniform(0, 1, n_samples),
-        "carries_roll5": np.random.uniform(0, 10, n_samples),
-        "receiving_yards_roll5": np.random.uniform(0, 20, n_samples),
-        "receiving_tds_roll5": np.random.uniform(0, 0.5, n_samples),
-        "receptions_roll5": np.random.uniform(0, 3, n_samples),
-        # Opponent features
-        "opp_pass_defense_strength": np.random.uniform(0, 1, n_samples),
-        "opp_rush_defense_strength": np.random.uniform(0, 1, n_samples),
-        "opp_pass_yards_allowed_rank": np.random.randint(1, 33, n_samples),
-        "opp_rush_yards_allowed_rank": np.random.randint(1, 33, n_samples),
-        "opp_total_yards_allowed_rank": np.random.randint(1, 33, n_samples),
-        # Weather features
-        "temp_normalized": np.random.uniform(-1, 1, n_samples),
-        "wind_normalized": np.random.uniform(0, 1, n_samples),
-        # Context features
-        "is_home": np.random.choice([0, 1], n_samples),
-        "is_dome": np.random.choice([0, 1], n_samples),
     }
+    # evaluate_model selects every column in get_feature_columns()
+    for col in get_feature_columns():
+        feature_data[col] = np.random.uniform(0, 1, n_samples)
 
     return pl.DataFrame(feature_data)
 

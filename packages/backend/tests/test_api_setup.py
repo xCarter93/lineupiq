@@ -8,6 +8,20 @@ from fastapi.testclient import TestClient
 
 from lineupiq.api import app
 from lineupiq.api.models_loader import get_position_models, load_models
+from lineupiq.models import QB_TARGETS, RB_TARGETS, RECEIVER_TARGETS
+from lineupiq.models.defense import DEF_TARGETS
+from lineupiq.models.kicker import KICKER_TARGETS
+
+# Derived from the src target constants so adding a target doesn't rot these tests
+EXPECTED_TARGETS_BY_POSITION = {
+    "QB": QB_TARGETS,
+    "RB": RB_TARGETS,
+    "WR": RECEIVER_TARGETS,
+    "TE": RECEIVER_TARGETS,
+    "K": KICKER_TARGETS,
+    "DEF": DEF_TARGETS,
+}
+EXPECTED_MODEL_COUNT = sum(len(t) for t in EXPECTED_TARGETS_BY_POSITION.values())
 
 
 def test_app_exists() -> None:
@@ -25,9 +39,7 @@ def test_health_endpoint() -> None:
 
         data = response.json()
         assert data["status"] == "healthy"
-        assert data["models_loaded"] > 0
-        # Should have all 13 models: QB (2) + RB (5) + WR (3) + TE (3)
-        assert data["models_loaded"] == 13
+        assert data["models_loaded"] == EXPECTED_MODEL_COUNT
 
 
 def test_load_models() -> None:
@@ -35,60 +47,23 @@ def test_load_models() -> None:
     models = load_models()
 
     assert isinstance(models, dict)
-    assert len(models) == 13
+    assert len(models) == EXPECTED_MODEL_COUNT
 
-    # Verify expected model names exist
-    expected_models = [
-        "QB_passing_yards",
-        "QB_passing_tds",
-        "RB_rushing_yards",
-        "RB_rushing_tds",
-        "RB_carries",
-        "RB_receiving_yards",
-        "RB_receptions",
-        "WR_receiving_yards",
-        "WR_receiving_tds",
-        "WR_receptions",
-        "TE_receiving_yards",
-        "TE_receiving_tds",
-        "TE_receptions",
-    ]
-
-    for model_name in expected_models:
-        assert model_name in models, f"Missing model: {model_name}"
+    for position, targets in EXPECTED_TARGETS_BY_POSITION.items():
+        for target in targets:
+            model_name = f"{position}_{target}"
+            assert model_name in models, f"Missing model: {model_name}"
 
 
 def test_get_position_models() -> None:
     """Verify get_position_models() filters correctly for each position."""
     models = load_models()
 
-    # Test QB models (should have 2)
-    qb_models = get_position_models(models, "QB")
-    assert len(qb_models) == 2
-    assert "passing_yards" in qb_models
-    assert "passing_tds" in qb_models
-    # Keys should NOT have position prefix
-    assert "QB_passing_yards" not in qb_models
+    for position, targets in EXPECTED_TARGETS_BY_POSITION.items():
+        position_models = get_position_models(models, position)
 
-    # Test RB models (should have 5)
-    rb_models = get_position_models(models, "RB")
-    assert len(rb_models) == 5
-    assert "rushing_yards" in rb_models
-    assert "rushing_tds" in rb_models
-    assert "carries" in rb_models
-    assert "receiving_yards" in rb_models
-    assert "receptions" in rb_models
-
-    # Test WR models (should have 3)
-    wr_models = get_position_models(models, "WR")
-    assert len(wr_models) == 3
-    assert "receiving_yards" in wr_models
-    assert "receiving_tds" in wr_models
-    assert "receptions" in wr_models
-
-    # Test TE models (should have 3)
-    te_models = get_position_models(models, "TE")
-    assert len(te_models) == 3
-    assert "receiving_yards" in te_models
-    assert "receiving_tds" in te_models
-    assert "receptions" in te_models
+        assert len(position_models) == len(targets)
+        for target in targets:
+            assert target in position_models
+            # Keys should NOT have position prefix
+            assert f"{position}_{target}" not in position_models

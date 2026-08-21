@@ -1,5 +1,7 @@
 """Tests for QB-specific model training module."""
 
+from unittest.mock import patch
+
 import numpy as np
 import polars as pl
 import pytest
@@ -7,6 +9,7 @@ import pytest
 from lineupiq.features.pipeline import get_feature_columns
 from lineupiq.models import QB_TARGETS, load_model, prepare_qb_data
 from lineupiq.models.qb import train_qb_models
+from tests.conftest import skip_if_model_schema_stale
 
 
 @pytest.fixture
@@ -25,9 +28,14 @@ def sample_qb_data() -> pl.DataFrame:
         "team": ["KC"] * n_rows,
         "season": [2024] * n_rows,
         "week": list(range(1, n_rows + 1)),
-        # Target columns
+        # Raw stat columns prepare_qb_data derives QB_TARGETS from
         "passing_yards": np.random.uniform(150, 350, n_rows).tolist(),
         "passing_tds": np.random.uniform(0, 4, n_rows).tolist(),
+        "passing_interceptions": np.random.uniform(0, 2, n_rows).tolist(),
+        "rushing_yards": np.random.uniform(0, 60, n_rows).tolist(),
+        "rushing_tds": np.random.uniform(0, 1, n_rows).tolist(),
+        "sack_fumbles_lost": np.random.uniform(0, 1, n_rows).tolist(),
+        "rushing_fumbles_lost": np.random.uniform(0, 1, n_rows).tolist(),
     }
 
     # Add feature columns with random values
@@ -52,6 +60,9 @@ def sample_qb_data() -> pl.DataFrame:
         elif col in ["is_home", "is_dome"]:
             # Binary features
             data[col] = np.random.choice([0, 1], n_rows).tolist()
+        else:
+            # Every feature column must be present or prepare_qb_data rejects the frame
+            data[col] = np.random.uniform(0, 1, n_rows).tolist()
 
     return pl.DataFrame(data)
 
@@ -130,6 +141,7 @@ class TestQbModelPredictions:
             model, metadata = load_model("QB", "passing_yards")
         except FileNotFoundError:
             pytest.skip("QB passing_yards model not trained yet")
+        skip_if_model_schema_stale(model, "QB", "passing_yards")
 
         # Get feature data
         X, _ = prepare_qb_data(sample_qb_data)
@@ -161,6 +173,7 @@ class TestQbModelPredictions:
             model, metadata = load_model("QB", "passing_tds")
         except FileNotFoundError:
             pytest.skip("QB passing_tds model not trained yet")
+        skip_if_model_schema_stale(model, "QB", "passing_tds")
 
         # Get feature data
         X, _ = prepare_qb_data(sample_qb_data)
@@ -188,9 +201,10 @@ class TestTrainQbModels:
     @pytest.mark.slow
     def test_train_qb_models_creates_models(self):
         """Integration test - train models with minimal trials for speed."""
-        # Use small n_trials for fast test
-        # This test trains real models, so mark as slow
-        results = train_qb_models(seasons=[2023, 2024], n_trials=5)
+        # save_model is patched out: unmocked it overwrites models/QB_*.joblib
+        # with these 5-trial throwaways.
+        with patch("lineupiq.models.qb.save_model"):
+            results = train_qb_models(seasons=[2023, 2024], n_trials=5)
 
         # Should return results for both targets
         assert "passing_yards" in results

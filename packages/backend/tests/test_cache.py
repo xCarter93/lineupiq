@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from lineupiq.api.cache import PredictionCache
 from lineupiq.api.main import app
-
+from tests.test_prediction_endpoints import build_prediction_payload
 
 # =============================================================================
 # Unit tests for PredictionCache
@@ -163,25 +163,22 @@ def client():
 
 
 # Sample prediction request data
-SAMPLE_REQUEST = {
-    "passing_yards_roll5": 250.5,
-    "passing_tds_roll5": 1.8,
-    "rushing_yards_roll5": 15.0,
-    "rushing_tds_roll5": 0.2,
-    "carries_roll5": 3.0,
-    "receiving_yards_roll5": 0.0,
-    "receiving_tds_roll5": 0.0,
-    "receptions_roll5": 0.0,
-    "opp_pass_defense_strength": 0.95,
-    "opp_rush_defense_strength": 1.05,
-    "opp_pass_yards_allowed_rank": 15.0,
-    "opp_rush_yards_allowed_rank": 20.0,
-    "opp_total_yards_allowed_rank": 18.0,
-    "temp_normalized": 0.6,
-    "wind_normalized": 0.2,
-    "is_home": True,
-    "is_dome": False,
-}
+SAMPLE_REQUEST = build_prediction_payload(
+    passing_yards_roll5=250.5,
+    passing_tds_roll5=1.8,
+    rushing_yards_roll5=15.0,
+    rushing_tds_roll5=0.2,
+    carries_roll5=3.0,
+    opp_pass_defense_strength=0.95,
+    opp_rush_defense_strength=1.05,
+    opp_pass_yards_allowed_rank=15.0,
+    opp_rush_yards_allowed_rank=20.0,
+    opp_total_yards_allowed_rank=18.0,
+    temp_normalized=0.6,
+    wind_normalized=0.2,
+    is_home=True,
+    is_dome=False,
+)
 
 
 def test_prediction_caching(client: TestClient) -> None:

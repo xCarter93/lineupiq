@@ -31,10 +31,14 @@ class TestFetchers:
         required = {"player_id", "passing_yards", "rushing_yards", "receiving_yards"}
         assert required.issubset(set(df.columns))
 
-    def test_fetch_player_stats_has_114_columns(self) -> None:
-        """Player stats has expected column count (114)."""
+    def test_fetch_player_stats_has_at_least_114_columns(self) -> None:
+        """Player stats keeps at least the 114 columns the pipeline was built against.
+
+        nflverse adds columns upstream over time (150 as of 2026), so this is a
+        floor, not an equality - a drop below 114 means columns went away.
+        """
         df = fetch_player_stats([2024])
-        assert df.shape[1] == 114
+        assert df.shape[1] >= 114
 
     def test_fetch_schedules_returns_polars(self) -> None:
         """Schedules returns Polars DataFrame."""

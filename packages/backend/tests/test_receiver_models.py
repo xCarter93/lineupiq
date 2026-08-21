@@ -1,5 +1,7 @@
 """Tests for receiver (WR/TE) model training module."""
 
+from unittest.mock import patch
+
 import numpy as np
 import polars as pl
 import pytest
@@ -7,6 +9,7 @@ import pytest
 from lineupiq.features.pipeline import get_feature_columns
 from lineupiq.models import RECEIVER_TARGETS, load_model, prepare_receiver_data
 from lineupiq.models.receiver import train_te_models, train_wr_models
+from tests.conftest import skip_if_model_schema_stale
 
 
 @pytest.fixture
@@ -29,6 +32,7 @@ def sample_wr_data() -> pl.DataFrame:
         "receiving_yards": np.random.uniform(20, 120, n_rows).tolist(),
         "receiving_tds": np.random.uniform(0, 2, n_rows).tolist(),
         "receptions": np.random.uniform(2, 10, n_rows).tolist(),
+        "receiving_fumbles_lost": np.random.uniform(0, 1, n_rows).tolist(),
     }
 
     # Add feature columns with random values
@@ -53,6 +57,9 @@ def sample_wr_data() -> pl.DataFrame:
         elif col in ["is_home", "is_dome"]:
             # Binary features
             data[col] = np.random.choice([0, 1], n_rows).tolist()
+        else:
+            # Every feature column must be present or prepare_receiver_data drops the frame
+            data[col] = np.random.uniform(0, 1, n_rows).tolist()
 
     return pl.DataFrame(data)
 
@@ -77,6 +84,7 @@ def sample_te_data() -> pl.DataFrame:
         "receiving_yards": np.random.uniform(10, 80, n_rows).tolist(),
         "receiving_tds": np.random.uniform(0, 1.5, n_rows).tolist(),
         "receptions": np.random.uniform(1, 7, n_rows).tolist(),
+        "receiving_fumbles_lost": np.random.uniform(0, 1, n_rows).tolist(),
     }
 
     # Add feature columns with random values
@@ -101,6 +109,9 @@ def sample_te_data() -> pl.DataFrame:
         elif col in ["is_home", "is_dome"]:
             # Binary features
             data[col] = np.random.choice([0, 1], n_rows).tolist()
+        else:
+            # Every feature column must be present or prepare_receiver_data drops the frame
+            data[col] = np.random.uniform(0, 1, n_rows).tolist()
 
     return pl.DataFrame(data)
 
@@ -202,6 +213,7 @@ class TestWRModelPredictions:
             model, metadata = load_model("WR", "receiving_yards")
         except FileNotFoundError:
             pytest.skip("WR receiving_yards model not trained yet")
+        skip_if_model_schema_stale(model, "WR", "receiving_yards")
 
         # Get feature data
         X, _ = prepare_receiver_data(sample_wr_data, "WR")
@@ -230,6 +242,7 @@ class TestWRModelPredictions:
             model, metadata = load_model("WR", "receiving_tds")
         except FileNotFoundError:
             pytest.skip("WR receiving_tds model not trained yet")
+        skip_if_model_schema_stale(model, "WR", "receiving_tds")
 
         # Get feature data
         X, _ = prepare_receiver_data(sample_wr_data, "WR")
@@ -254,6 +267,7 @@ class TestWRModelPredictions:
             model, metadata = load_model("WR", "receptions")
         except FileNotFoundError:
             pytest.skip("WR receptions model not trained yet")
+        skip_if_model_schema_stale(model, "WR", "receptions")
 
         # Get feature data
         X, _ = prepare_receiver_data(sample_wr_data, "WR")
@@ -282,6 +296,7 @@ class TestTEModelPredictions:
             model, metadata = load_model("TE", "receiving_yards")
         except FileNotFoundError:
             pytest.skip("TE receiving_yards model not trained yet")
+        skip_if_model_schema_stale(model, "TE", "receiving_yards")
 
         # Get feature data
         X, _ = prepare_receiver_data(sample_te_data, "TE")
@@ -306,6 +321,7 @@ class TestTEModelPredictions:
             model, metadata = load_model("TE", "receiving_tds")
         except FileNotFoundError:
             pytest.skip("TE receiving_tds model not trained yet")
+        skip_if_model_schema_stale(model, "TE", "receiving_tds")
 
         # Get feature data
         X, _ = prepare_receiver_data(sample_te_data, "TE")
@@ -330,6 +346,7 @@ class TestTEModelPredictions:
             model, metadata = load_model("TE", "receptions")
         except FileNotFoundError:
             pytest.skip("TE receptions model not trained yet")
+        skip_if_model_schema_stale(model, "TE", "receptions")
 
         # Get feature data
         X, _ = prepare_receiver_data(sample_te_data, "TE")
@@ -352,8 +369,10 @@ class TestTrainWRModels:
     @pytest.mark.slow
     def test_train_wr_models_creates_models(self):
         """Integration test - train WR models with minimal trials for speed."""
-        # Use small n_trials for fast test
-        results = train_wr_models(seasons=[2023, 2024], n_trials=5)
+        # save_model is patched out: unmocked it overwrites models/WR_*.joblib
+        # with these 5-trial throwaways.
+        with patch("lineupiq.models.receiver.save_model"):
+            results = train_wr_models(seasons=[2023, 2024], n_trials=5)
 
         # Should return results for all receiver targets
         for target in RECEIVER_TARGETS:
@@ -381,8 +400,10 @@ class TestTrainTEModels:
     @pytest.mark.slow
     def test_train_te_models_creates_models(self):
         """Integration test - train TE models with minimal trials for speed."""
-        # Use small n_trials for fast test
-        results = train_te_models(seasons=[2023, 2024], n_trials=5)
+        # save_model is patched out: unmocked it overwrites models/TE_*.joblib
+        # with these 5-trial throwaways.
+        with patch("lineupiq.models.receiver.save_model"):
+            results = train_te_models(seasons=[2023, 2024], n_trials=5)
 
         # Should return results for all receiver targets
         for target in RECEIVER_TARGETS:

@@ -5,13 +5,34 @@ import polars as pl
 import pytest
 from xgboost import XGBRegressor
 
+from lineupiq.features.pipeline import get_feature_columns
+from lineupiq.models import QB_TARGETS, RB_TARGETS, RECEIVER_TARGETS
 from lineupiq.models.diagnostics import (
     compute_overfit_ratio,
     compute_train_metrics,
     diagnose_overfitting,
     run_diagnostics,
 )
-from lineupiq.models.persistence import MODELS_DIR, list_models
+from lineupiq.models.persistence import MODELS_DIR, list_models, load_model
+from tests.conftest import skip_if_model_schema_stale
+
+# K and DEF train on their own narrow feature sets, not get_feature_columns().
+# Only base targets are listed - list_models() also surfaces _xgb/_catboost/ensemble
+# variants, and load_model() cannot read the ensemble artifacts.
+SHARED_SCHEMA_TARGETS = {
+    "QB": QB_TARGETS,
+    "RB": RB_TARGETS,
+    "WR": RECEIVER_TARGETS,
+    "TE": RECEIVER_TARGETS,
+}
+
+
+def _loadable_models() -> list[tuple[str, str]]:
+    return [
+        (position, target)
+        for position, target in list_models()
+        if target in SHARED_SCHEMA_TARGETS.get(position, ())
+    ]
 
 
 class TestComputeOverfitRatio:
@@ -132,39 +153,20 @@ class TestRunDiagnostics:
 
     def test_run_diagnostics_returns_complete_dict(self):
         """Test that run_diagnostics returns dict with all expected keys."""
-        # Check if any models are saved
-        models = list_models()
+        models = _loadable_models()
 
         if not models:
             pytest.skip("No saved models available for testing")
 
-        # Use first available model
         position, target = models[0]
+        model, metadata = load_model(position, target)
+        skip_if_model_schema_stale(model, position, target, metadata)
 
         # Create minimal synthetic DataFrames
         np.random.seed(42)
         n_samples = 100
 
-        # Feature columns from get_feature_columns
-        feature_cols = [
-            "passing_yards_roll5",
-            "passing_tds_roll5",
-            "rushing_yards_roll5",
-            "rushing_tds_roll5",
-            "carries_roll5",
-            "receiving_yards_roll5",
-            "receiving_tds_roll5",
-            "receptions_roll5",
-            "opp_pass_defense_strength",
-            "opp_rush_defense_strength",
-            "opp_pass_yards_allowed_rank",
-            "opp_rush_yards_allowed_rank",
-            "opp_total_yards_allowed_rank",
-            "temp_normalized",
-            "wind_normalized",
-            "is_home",
-            "is_dome",
-        ]
+        feature_cols = get_feature_columns()
 
         # Create test DataFrames
         train_data = {
@@ -218,32 +220,15 @@ class TestRunDiagnostics:
         np.random.seed(42)
         n_samples = 100
 
-        feature_cols = [
-            "passing_yards_roll5",
-            "passing_tds_roll5",
-            "rushing_yards_roll5",
-            "rushing_tds_roll5",
-            "carries_roll5",
-            "receiving_yards_roll5",
-            "receiving_tds_roll5",
-            "receptions_roll5",
-            "opp_pass_defense_strength",
-            "opp_rush_defense_strength",
-            "opp_pass_yards_allowed_rank",
-            "opp_rush_yards_allowed_rank",
-            "opp_total_yards_allowed_rank",
-            "temp_normalized",
-            "wind_normalized",
-            "is_home",
-            "is_dome",
-        ]
+        feature_cols = get_feature_columns()
 
-        # Find first QB target
-        qb_models = [m for m in list_models() if m[0] == "QB"]
+        qb_models = [m for m in _loadable_models() if m[0] == "QB"]
         if not qb_models:
             pytest.skip("No QB models available")
 
         position, target = qb_models[0]
+        model, metadata = load_model(position, target)
+        skip_if_model_schema_stale(model, position, target, metadata)
 
         # Create test DataFrames
         train_data = {
